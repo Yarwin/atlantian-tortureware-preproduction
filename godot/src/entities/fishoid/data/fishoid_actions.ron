@@ -1,0 +1,23 @@
+#![enable(unwrap_newtypes)]
+#![enable(unwrap_variant_newtypes)]
+#![enable(implicit_some)]
+[
+    GoTo(
+        cost: 1,
+        preconditions: WorldState(),
+        effects: WorldState(
+			at_target_position: Truth(true)
+        ),
+		animation: Walk
+    ),
+    Patrol(
+        cost: 1,
+        preconditions: WorldState(
+			at_target_position: Truth(true)
+        ),
+        effects: WorldState(
+			is_area_surveyed: Truth(true)
+        ),
+		animation: Idle
+    )
+]

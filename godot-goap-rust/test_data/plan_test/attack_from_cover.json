@@ -1,0 +1,131 @@
+{
+  "actions": [
+    {
+      "name": "reload weapon",
+      "preconditions": {
+        "state": {}
+      },
+      "effects": {
+        "state": {
+          "IsWeaponLoaded": {
+            "IsWeaponLoaded": true
+          }
+        }
+      },
+      "cost": 2
+    },
+    {
+      "name": "reload in cover",
+      "preconditions": {
+        "state": {
+          "CoverStatus": {
+            "CoverStatus": "Covered"
+          }
+        }
+      },
+      "effects": {
+        "state": {
+          "IsWeaponLoaded": {
+            "IsWeaponLoaded": true
+          }
+        }
+      },
+      "cost": 1
+    },
+    {
+      "name": "shoot from cover",
+      "preconditions": {
+        "state": {
+          "IsWeaponLoaded": {
+            "IsWeaponLoaded": true
+          },
+          "CoverStatus": {
+            "CoverStatus": "Covered"
+          }
+        }
+      },
+      "effects": {
+        "state": {
+          "IsTargetDead": {
+            "IsTargetDead": true
+          }
+        }
+      },
+      "cost": 1
+    },
+    {
+      "name": "Go to Cover",
+      "preconditions": {
+        "state": {}
+      },
+      "effects": {
+        "state": {
+          "CoverStatus": {
+            "CoverStatus": "Covered"
+          }
+        }
+      },
+      "cost": 1
+    },
+    {
+      "name": "Rush Target",
+      "preconditions": {
+        "state": {}
+      },
+      "effects": {
+        "state": {
+          "DistanceToTarget": {
+            "DistanceToTarget": "Close"
+          }
+        }
+      },
+      "cost": 4
+    },
+    {
+      "name": "Attack melee",
+      "preconditions": {
+        "state": {
+          "DistanceToTarget": {
+            "DistanceToTarget": "Close"
+          }
+        }
+      },
+      "effects": {
+        "state": {
+          "IsTargetDead": {
+            "IsTargetDead": true
+          }
+        }
+      },
+      "cost": 2
+    }
+  ],
+
+  "initial_state": {
+    "state": {
+      "IsTargetDead": {
+        "IsTargetDead": false
+      },
+      "DistanceToTarget": {
+        "DistanceToTarget": "Far"
+      },
+      "IsWeaponLoaded": {
+        "IsWeaponLoaded": false
+      }
+    }
+  },
+
+  "goal_state": {
+    "state": {
+      "IsTargetDead": {
+        "IsTargetDead": true
+      }
+    }
+  },
+
+  "expected_actions": [
+    "Go to Cover",
+    "reload in cover",
+    "shoot from cover"
+  ]
+}

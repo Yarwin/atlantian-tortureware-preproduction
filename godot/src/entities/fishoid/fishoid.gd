@@ -1,0 +1,1 @@
+class_name Fishoid extends CharacterBody3D

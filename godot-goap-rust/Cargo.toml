@@ -1,0 +1,27 @@
+[package]
+name = "godot_goap_rust"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = []
+use_serde = ["serde_derive"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+bitflags = "2.5.0"
+enum_dispatch = "0.3.13"
+godot = { git = "https://github.com/godot-rust/gdext", features = ["serde", "experimental-threads", "experimental-godot-api", "formatted", "api-custom"], branch = "master" }
+pathfinding = "4.2.1"
+rayon = "1.10.0"
+ron = "0.8"
+serde = { version = "^1.0", features = ["derive"] }
+serde_derive = { version = "^1.0", optional = true }
+static_enum_dispatch = { path= "static_enum_dispatch"}
+strum = "0.26.2"
+strum_macros = "0.26.4"
+
+[dev-dependencies]
+serde_json = "^1.0"

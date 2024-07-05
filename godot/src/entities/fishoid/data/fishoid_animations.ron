@@ -1,0 +1,16 @@
+#![enable(unwrap_newtypes)]
+#![enable(unwrap_variant_newtypes)]
+#![enable(implicit_some)]
+AnimationsData(
+    walk: AnimationProps(
+        name: "walk",
+        value: true,
+        cyclic: true
+    ),
+    patrol: AnimationProps(
+        name: "Patrol",
+        oneshot: false,
+        loop_time: 4.2,
+        cylic: false
+    )
+)

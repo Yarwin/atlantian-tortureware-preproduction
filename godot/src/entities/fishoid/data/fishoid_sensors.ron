@@ -1,0 +1,13 @@
+#![enable(unwrap_newtypes)]
+#![enable(unwrap_variant_newtypes)]
+#![enable(implicit_some)]
+[
+    PatrolPointSensor(
+        update_every: 4.2,
+        last_update_delta: 4.3
+    ),
+    VisionCharacterSensor(
+        update_every: 0.3,
+        last_update_delta: 0.4,
+    )
+]
