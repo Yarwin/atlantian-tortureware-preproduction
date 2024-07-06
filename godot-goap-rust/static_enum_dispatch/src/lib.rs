@@ -1,14 +1,13 @@
 extern crate proc_macro;
 
-use quote::{quote};
+use quote::quote;
 use syn;
-use syn::{DeriveInput, parse_macro_input};
+use syn::{parse_macro_input, DeriveInput};
 
 #[proc_macro_derive(ActionDispatchEnum, attributes(implementation))]
 pub fn static_enum_dispatch(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     static_enum_dispatch2(input.into()).into()
 }
-
 
 fn static_enum_dispatch2(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let cloned_input = input.clone();
@@ -17,17 +16,61 @@ fn static_enum_dispatch2(input: proc_macro::TokenStream) -> proc_macro::TokenStr
         data,
         ..
     } = parse_macro_input!(cloned_input as DeriveInput);
-    let (effects, preconditions, execute_action, finish, is_complete, is_interruptible, check_precondtions, cost) = {
+    let (
+        effects,
+        preconditions,
+        execute_action,
+        finish,
+        is_complete,
+        is_interruptible,
+        check_precondtions,
+        cost,
+    ) = {
         if let syn::Data::Enum(e) = data {
             (
-                generate_description_for_enum(&e, "get_effects", quote! {action_arguments}, &enum_name_ident),
+                generate_description_for_enum(
+                    &e,
+                    "get_effects",
+                    quote! {action_arguments},
+                    &enum_name_ident,
+                ),
                 generate_description_for_enum(&e, "get_preconditions", quote! {}, &enum_name_ident),
-                generate_description_for_enum(&e, "execute_action", quote! {action_arguments}, &enum_name_ident),
-                generate_description_for_enum(&e, "finish", quote! {action_arguments}, &enum_name_ident),
-                generate_description_for_enum(&e, "is_action_complete", quote! {action_arguments}, &enum_name_ident),
-                generate_description_for_enum(&e, "is_action_interruptible", quote! {action_arguments}, &enum_name_ident),
-                generate_description_for_enum(&e, "check_procedural_preconditions", quote! {action_arguments}, &enum_name_ident),
-                generate_description_for_enum(&e, "get_cost", quote! {action_arguments}, &enum_name_ident),
+                generate_description_for_enum(
+                    &e,
+                    "execute_action",
+                    quote! {action_arguments},
+                    &enum_name_ident,
+                ),
+                generate_description_for_enum(
+                    &e,
+                    "finish",
+                    quote! {action_arguments},
+                    &enum_name_ident,
+                ),
+                generate_description_for_enum(
+                    &e,
+                    "is_action_complete",
+                    quote! {action_arguments},
+                    &enum_name_ident,
+                ),
+                generate_description_for_enum(
+                    &e,
+                    "is_action_interruptible",
+                    quote! {action_arguments},
+                    &enum_name_ident,
+                ),
+                generate_description_for_enum(
+                    &e,
+                    "check_procedural_preconditions",
+                    quote! {action_arguments},
+                    &enum_name_ident,
+                ),
+                generate_description_for_enum(
+                    &e,
+                    "get_cost",
+                    quote! {action_arguments},
+                    &enum_name_ident,
+                ),
             )
         } else {
             panic!("")
@@ -81,8 +124,12 @@ fn static_enum_dispatch2(input: proc_macro::TokenStream) -> proc_macro::TokenStr
     expanded.into()
 }
 
-
-fn generate_description_for_enum(e: &syn::DataEnum, method_name: &str, args: proc_macro2::TokenStream, enum_name_ident: &proc_macro2::Ident) -> proc_macro2::TokenStream {
+fn generate_description_for_enum(
+    e: &syn::DataEnum,
+    method_name: &str,
+    args: proc_macro2::TokenStream,
+    enum_name_ident: &proc_macro2::Ident,
+) -> proc_macro2::TokenStream {
     e
         .variants
         .iter()

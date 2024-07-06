@@ -1,10 +1,12 @@
 #![allow(warnings, unused)]
-use crate::actions::action_types::{AgentActionPlanContext, AgentActionWorldContext};
 use crate::actions::action_component::ActionComponent;
+use crate::actions::action_types::{AgentActionPlanContext, AgentActionWorldContext};
 use crate::ai::world_state::WorldState;
 
-
-pub fn get_effects<'a>(inner: &'a ActionComponent, _action_arguments: &'a AgentActionPlanContext) -> &'a WorldState {
+pub fn get_effects<'a>(
+    inner: &'a ActionComponent,
+    _action_arguments: &'a AgentActionPlanContext,
+) -> &'a WorldState {
     &inner.effects
 }
 
@@ -24,15 +26,23 @@ pub fn finish(inner: &ActionComponent, action_arguments: AgentActionWorldContext
     todo!()
 }
 
-pub fn is_action_complete(inner: &ActionComponent, action_arguments: &AgentActionWorldContext) -> bool {
+pub fn is_action_complete(
+    inner: &ActionComponent,
+    action_arguments: &AgentActionWorldContext,
+) -> bool {
     todo!()
 }
 
-pub fn is_action_interruptible(inner: &ActionComponent, action_arguments: &AgentActionWorldContext) -> bool {
+pub fn is_action_interruptible(
+    inner: &ActionComponent,
+    action_arguments: &AgentActionWorldContext,
+) -> bool {
     todo!()
 }
 
-pub fn check_procedural_preconditions(inner: &ActionComponent, action_arguments: &AgentActionPlanContext) -> bool {
+pub fn check_procedural_preconditions(
+    inner: &ActionComponent,
+    action_arguments: &AgentActionPlanContext,
+) -> bool {
     todo!()
 }
-

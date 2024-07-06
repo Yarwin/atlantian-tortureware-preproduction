@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use crate::ai::world_state::{NodeTypeEnum, WorldState};
-use crate::goals::goal_types::{GoalType};
+use crate::goals::goal_types::GoalType;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct GoalComponent {

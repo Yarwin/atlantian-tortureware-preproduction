@@ -1,8 +1,8 @@
-use bitflags::bitflags;
 use crate::targeting::target_select_character::select_character;
+use bitflags::bitflags;
 
 bitflags! {
-    #[derive(Debug)]
+    #[derive(Debug, Clone, Copy)]
     pub struct TargetMask: u32 {
         const None = 0;
         /// patrol point select
@@ -24,7 +24,6 @@ impl Default for TargetMask {
     }
 }
 
-
 impl TargetMask {
     pub fn priority() -> [(TargetMask, impl Fn()); 3] {
         [
@@ -37,7 +36,7 @@ impl TargetMask {
     pub fn get_valid_target_selector(&self) -> Option<impl Fn()> {
         for (bits, func) in TargetMask::priority() {
             if self.contains(bits) {
-                return Some(func)
+                return Some(func);
             }
         }
         None

@@ -1,13 +1,13 @@
-mod godot_api;
-pub mod ai;
 mod actions;
-mod goals;
-mod thinker_states;
-mod sensors;
-mod targeting;
+pub mod ai;
 mod ai_nodes;
 mod animations;
+mod goals;
+mod godot_api;
 mod godot_thinker_components;
+mod sensors;
+mod targeting;
+mod thinker_states;
 
 use godot::prelude::*;
 

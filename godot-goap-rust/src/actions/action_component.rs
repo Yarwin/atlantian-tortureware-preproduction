@@ -1,15 +1,14 @@
-use std::hash::{Hash, Hasher};
 use crate::ai::world_state::WorldState;
-use serde::{Deserialize, Serialize};
 use crate::animations::animation_data::AnimationType;
-
+use serde::{Deserialize, Serialize};
+use std::hash::{Hash, Hasher};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ActionComponent {
     pub cost: u32,
     pub preconditions: WorldState,
     pub effects: WorldState,
-    pub animation: AnimationType
+    pub animation: AnimationType,
 }
 
 impl Hash for ActionComponent {
@@ -23,8 +22,13 @@ impl Eq for ActionComponent {}
 
 impl PartialEq for ActionComponent {
     fn eq(&self, other: &Self) -> bool {
-        if self.preconditions.count_state_differences(&other.preconditions) == 0 && self.effects.count_state_differences(&other.effects) == 0 {
-            return true
+        if self
+            .preconditions
+            .count_state_differences(&other.preconditions)
+            == 0
+            && self.effects.count_state_differences(&other.effects) == 0
+        {
+            return true;
         }
         false
     }

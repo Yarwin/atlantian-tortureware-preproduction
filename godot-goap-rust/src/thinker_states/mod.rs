@@ -1,7 +1,7 @@
-pub mod goto;
 pub mod animate;
-pub mod types;
-pub mod process_thinker;
-mod use_ai_node;
 mod character_utils;
+pub mod goto;
 pub(crate) mod navigation_subsystem;
+pub mod process_thinker;
+pub mod types;
+mod use_ai_node;

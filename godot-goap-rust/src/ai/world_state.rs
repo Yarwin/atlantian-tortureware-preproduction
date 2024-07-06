@@ -2,25 +2,22 @@ use std::cmp::PartialEq;
 use std::hash::{Hash, Hasher};
 use std::ops::{Index, IndexMut};
 
-use strum::{IntoEnumIterator};
-use strum_macros::{EnumIter};
-use serde::{Serialize, Deserialize};
-use crate::targeting::target::{TargetType};
+use crate::targeting::target::TargetType;
+use serde::{Deserialize, Serialize};
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
-#[derive(Serialize, Deserialize)]
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum AIWorldStateEvent {
     None,
     Block,
     BlockedPath,
     Damage,
     EnemyInPlaceForSurpriseAttack,
-    Stunned
+    Stunned,
 }
 
-
-#[derive(Serialize, Deserialize)]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum NodeTypeEnum {
     Ambush,
     Cover,
@@ -32,31 +29,26 @@ pub enum NodeTypeEnum {
     View,
 }
 
-
-#[derive(Serialize, Deserialize)]
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum CoverStatusType {
     /// in cover
     Covered,
     /// in open
-    Exposed
+    Exposed,
 }
 
-
 /// enum representing relative combat distance to given target
-#[derive(Serialize, Deserialize)]
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum DistanceToTargetType {
     /// melee attack range
     Close,
     Medium,
     Far,
     /// enemy can't be attacked
-    OutsideReach
+    OutsideReach,
 }
 
-#[derive(Serialize, Deserialize)]
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum WSProperty {
     String(String),
     Truth(bool),
@@ -67,11 +59,9 @@ pub enum WSProperty {
     Target(TargetType),
 }
 
-
 /// An abstraction that keeps symbolic representation of the world
 /// for planing purposes
-#[derive(Serialize, Deserialize)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, EnumIter)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Hash, EnumIter)]
 pub enum WorldStateProperty {
     AnimLooped,
     AnimPlayed,
@@ -94,9 +84,7 @@ pub enum WorldStateProperty {
     ReactedToWorldStateEvent,
 }
 
-
-#[derive(Serialize, Deserialize)]
-#[derive(Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct WorldState {
     pub anim_looped: Option<WSProperty>,
     pub anim_played: Option<WSProperty>,
@@ -120,7 +108,6 @@ pub struct WorldState {
     // pub state: HashMap<WorldStatePropertyKey, WorldStateProperty>
 }
 
-
 impl<const N: usize> From<[(WorldStateProperty, WSProperty); N]> for WorldState {
     fn from(arr: [(WorldStateProperty, WSProperty); N]) -> Self {
         let mut state = WorldState::default();
@@ -131,62 +118,59 @@ impl<const N: usize> From<[(WorldStateProperty, WSProperty); N]> for WorldState 
     }
 }
 
-
 impl Index<WorldStateProperty> for WorldState {
     type Output = Option<WSProperty>;
 
     fn index(&self, index: WorldStateProperty) -> &Self::Output {
         match index {
-            WorldStateProperty::AnimLooped => {&self.anim_looped}
-            WorldStateProperty::AnimPlayed => {&self.anim_looped}
-            WorldStateProperty::ReactedToWorldStateEvent => {&self.reacted_to_world_state_event}
-            WorldStateProperty::AtNode => {&self.at_node}
-            WorldStateProperty::AtNodeType => {&self.at_node_type}
-            WorldStateProperty::CoverStatus => {&self.cover_status}
-            WorldStateProperty::DistanceToTarget => {&self.distance_to_target}
-            WorldStateProperty::HasTarget => {&self.has_target}
-            WorldStateProperty::IsInCombat => {&self.is_in_combat}
-            WorldStateProperty::IsIdling => {&self.is_idling}
-            WorldStateProperty::IsPositionValid => {&self.is_position_valid}
-            WorldStateProperty::IsAreaSurveyed => {&self.is_area_surveyed}
-            WorldStateProperty::IsTargetAimingAtMe => {&self.is_target_looking_at_me}
-            WorldStateProperty::IsTargetLookingAtMe => {&self.is_target_aiming_at_me}
-            WorldStateProperty::IsTargetDead => {&self.is_target_dead}
-            WorldStateProperty::AtTargetPosition => {&self.at_target_position}
-            WorldStateProperty::IsWeaponArmed => {&self.is_weapon_armed}
-            WorldStateProperty::IsWeaponLoaded => {&self.is_weapon_loaded}
-            WorldStateProperty::IsNavigationFinished => {&self.is_navigation_finished}
+            WorldStateProperty::AnimLooped => &self.anim_looped,
+            WorldStateProperty::AnimPlayed => &self.anim_looped,
+            WorldStateProperty::ReactedToWorldStateEvent => &self.reacted_to_world_state_event,
+            WorldStateProperty::AtNode => &self.at_node,
+            WorldStateProperty::AtNodeType => &self.at_node_type,
+            WorldStateProperty::CoverStatus => &self.cover_status,
+            WorldStateProperty::DistanceToTarget => &self.distance_to_target,
+            WorldStateProperty::HasTarget => &self.has_target,
+            WorldStateProperty::IsInCombat => &self.is_in_combat,
+            WorldStateProperty::IsIdling => &self.is_idling,
+            WorldStateProperty::IsPositionValid => &self.is_position_valid,
+            WorldStateProperty::IsAreaSurveyed => &self.is_area_surveyed,
+            WorldStateProperty::IsTargetAimingAtMe => &self.is_target_looking_at_me,
+            WorldStateProperty::IsTargetLookingAtMe => &self.is_target_aiming_at_me,
+            WorldStateProperty::IsTargetDead => &self.is_target_dead,
+            WorldStateProperty::AtTargetPosition => &self.at_target_position,
+            WorldStateProperty::IsWeaponArmed => &self.is_weapon_armed,
+            WorldStateProperty::IsWeaponLoaded => &self.is_weapon_loaded,
+            WorldStateProperty::IsNavigationFinished => &self.is_navigation_finished,
         }
     }
 }
-
 
 impl IndexMut<WorldStateProperty> for WorldState {
     fn index_mut(&mut self, index: WorldStateProperty) -> &mut Self::Output {
         match index {
-            WorldStateProperty::AnimLooped => {&mut self.anim_looped}
-            WorldStateProperty::AnimPlayed => {&mut self.anim_looped}
-            WorldStateProperty::ReactedToWorldStateEvent => {&mut self.reacted_to_world_state_event}
-            WorldStateProperty::AtNode => {&mut self.at_node}
-            WorldStateProperty::AtNodeType => {&mut self.at_node_type}
-            WorldStateProperty::CoverStatus => {&mut self.cover_status}
-            WorldStateProperty::DistanceToTarget => {&mut self.distance_to_target}
-            WorldStateProperty::HasTarget => {&mut self.has_target}
-            WorldStateProperty::IsInCombat => {&mut self.is_in_combat}
-            WorldStateProperty::IsIdling => {&mut self.is_idling}
-            WorldStateProperty::IsPositionValid => {&mut self.is_position_valid}
-            WorldStateProperty::IsAreaSurveyed => {&mut self.is_area_surveyed}
-            WorldStateProperty::IsTargetAimingAtMe => {&mut self.is_target_looking_at_me}
-            WorldStateProperty::IsTargetLookingAtMe => {&mut self.is_target_aiming_at_me}
-            WorldStateProperty::IsTargetDead => {&mut self.is_target_dead}
-            WorldStateProperty::AtTargetPosition => {&mut self.at_target_position}
-            WorldStateProperty::IsWeaponArmed => {&mut self.is_weapon_armed}
-            WorldStateProperty::IsWeaponLoaded => {&mut self.is_weapon_loaded}
-            WorldStateProperty::IsNavigationFinished => {&mut self.is_navigation_finished}
+            WorldStateProperty::AnimLooped => &mut self.anim_looped,
+            WorldStateProperty::AnimPlayed => &mut self.anim_looped,
+            WorldStateProperty::ReactedToWorldStateEvent => &mut self.reacted_to_world_state_event,
+            WorldStateProperty::AtNode => &mut self.at_node,
+            WorldStateProperty::AtNodeType => &mut self.at_node_type,
+            WorldStateProperty::CoverStatus => &mut self.cover_status,
+            WorldStateProperty::DistanceToTarget => &mut self.distance_to_target,
+            WorldStateProperty::HasTarget => &mut self.has_target,
+            WorldStateProperty::IsInCombat => &mut self.is_in_combat,
+            WorldStateProperty::IsIdling => &mut self.is_idling,
+            WorldStateProperty::IsPositionValid => &mut self.is_position_valid,
+            WorldStateProperty::IsAreaSurveyed => &mut self.is_area_surveyed,
+            WorldStateProperty::IsTargetAimingAtMe => &mut self.is_target_looking_at_me,
+            WorldStateProperty::IsTargetLookingAtMe => &mut self.is_target_aiming_at_me,
+            WorldStateProperty::IsTargetDead => &mut self.is_target_dead,
+            WorldStateProperty::AtTargetPosition => &mut self.at_target_position,
+            WorldStateProperty::IsWeaponArmed => &mut self.is_weapon_armed,
+            WorldStateProperty::IsWeaponLoaded => &mut self.is_weapon_loaded,
+            WorldStateProperty::IsNavigationFinished => &mut self.is_navigation_finished,
         }
     }
 }
-
 
 impl Hash for WorldState {
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -196,9 +180,7 @@ impl Hash for WorldState {
     }
 }
 
-
 impl WorldState {
-
     pub fn get_world_state_property(&self, value: WorldStateProperty) -> Option<WSProperty> {
         if let Some(property) = self[value].clone() {
             return Some(property);
@@ -221,9 +203,9 @@ impl WorldState {
         for key in WorldStateProperty::iter() {
             let (property, other_property) = (self[key].as_ref(), other[key].as_ref());
             if let Some(other_val) = property {
-                if let Some(equality) = other_property.map(|v| v == other_val ) {
+                if let Some(equality) = other_property.map(|v| v == other_val) {
                     if equality {
-                        continue
+                        continue;
                     }
                 }
             }
@@ -239,30 +221,29 @@ impl WorldState {
         let mut count: u32 = 0;
         for key in WorldStateProperty::iter() {
             if let Some(property) = self[key].as_ref() {
-                if let Some(equality) = other[key].as_ref().map(|other_property| other_property == property) {
+                if let Some(equality) = other[key]
+                    .as_ref()
+                    .map(|other_property| other_property == property)
+                {
                     if equality {
-                        continue
+                        continue;
                     }
                 }
                 count += 1;
             }
         }
         count
-
     }
-
 }
-
 
 #[cfg(test)]
 mod tests {
-    use crate::ai::world_state::WSProperty::Truth;
     use super::*;
+    use crate::ai::world_state::WSProperty::Truth;
     #[test]
     fn test_get_prop() {
-        let mut state = WorldState::from([(WorldStateProperty::IsIdling, Truth(true))]);;
+        let mut state = WorldState::from([(WorldStateProperty::IsIdling, Truth(true))]);
         assert_eq!(state[WorldStateProperty::IsIdling], Some(Truth(true)));
-
     }
 
     #[test]
@@ -276,7 +257,7 @@ mod tests {
     fn test_apply_world_state() {
         let goal_state = WorldState::from([
             (WorldStateProperty::IsIdling, Truth(true)),
-            (WorldStateProperty::IsPositionValid, Truth(false))
+            (WorldStateProperty::IsPositionValid, Truth(false)),
         ]);
         let mut state_1 = WorldState::from([(WorldStateProperty::IsIdling, Truth(true))]);
         assert_eq!(goal_state.count_unsatisfied_world_state_props(&state_1), 1);
@@ -290,12 +271,12 @@ mod tests {
         let state = WorldState::from([
             (WorldStateProperty::IsIdling, Truth(true)),
             (WorldStateProperty::IsPositionValid, Truth(false)),
-            (WorldStateProperty::IsTargetAimingAtMe, Truth(true))
+            (WorldStateProperty::IsTargetAimingAtMe, Truth(true)),
         ]);
         let other_state = WorldState::from([
             (WorldStateProperty::IsIdling, Truth(false)),
             (WorldStateProperty::IsPositionValid, Truth(false)),
-            (WorldStateProperty::IsAreaSurveyed, Truth(true))
+            (WorldStateProperty::IsAreaSurveyed, Truth(true)),
         ]);
         assert_eq!(3, state.count_state_differences(&other_state));
         assert_eq!(2, state.count_unsatisfied_world_state_props(&other_state));

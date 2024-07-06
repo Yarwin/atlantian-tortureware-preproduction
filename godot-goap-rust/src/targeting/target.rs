@@ -1,12 +1,9 @@
-use std::sync::{Arc, Mutex};
 use godot::obj::InstanceId;
 use godot::prelude::Vector3;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use strum_macros::EnumDiscriminants;
-use crate::ai_nodes::ai_node::AINode;
 
-#[derive(Debug)]
-#[derive(EnumDiscriminants)]
+#[derive(Debug, EnumDiscriminants)]
 #[strum_discriminants(name(TargetType))]
 #[strum_discriminants(derive(Serialize, Deserialize, Hash))]
 pub enum Target {
@@ -22,7 +19,4 @@ pub enum Target {
     Object(InstanceId),
     /// interactable
     SmartObject(InstanceId),
-    /// patrol point
-    PatrolPoint(Arc<Mutex<AINode>>, Vector3),
 }
-

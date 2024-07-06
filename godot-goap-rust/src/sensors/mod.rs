@@ -1,4 +1,4 @@
-pub mod sensor_types;
-pub mod get_patrol_points_sensor;
 mod damage_sensor;
+pub mod get_patrol_points_sensor;
+pub mod sensor_types;
 mod vision_character_sensor;

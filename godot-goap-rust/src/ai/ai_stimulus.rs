@@ -20,5 +20,5 @@ pub enum AIStimulusType {
     DamageExplode,
     DamageMelee,
     DamageStun,
-    CombatOpportunity
+    CombatOpportunity,
 }

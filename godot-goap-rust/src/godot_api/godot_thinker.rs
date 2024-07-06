@@ -1,11 +1,11 @@
-use godot::prelude::*;
-use godot::classes::{Engine, NavigationAgent3D, CharacterBody3D, AnimationTree, Shape3D, Marker3D};
 use crate::godot_api::ai_manager::GodotAIManager;
-
+use godot::classes::{
+    AnimationTree, CharacterBody3D, Engine, Marker3D, NavigationAgent3D, Shape3D,
+};
+use godot::prelude::*;
 
 /// an interface to speak with AI manager
-#[derive(GodotClass)]
-#[derive(Debug)]
+#[derive(GodotClass, Debug)]
 #[class(init, base=Node3D, rename=thinker)]
 pub struct GodotThinker {
     #[export(file = "*.ron")]
@@ -56,18 +56,19 @@ pub struct GodotThinker {
     base: Base<Node3D>,
 }
 
-
 impl GodotThinker {}
 
 #[godot_api]
 impl GodotThinker {
     #[func]
     fn register_self(&mut self) {
-        let mut ai_manager = Engine::singleton().get_singleton("AIManager".into()).unwrap().cast::<GodotAIManager>();
+        let mut ai_manager = Engine::singleton()
+            .get_singleton("AIManager".into())
+            .unwrap()
+            .cast::<GodotAIManager>();
         self.thinker_id = ai_manager.bind_mut().register_thinker(self);
     }
 }
-
 
 #[godot_api]
 impl INode3D for GodotThinker {

@@ -7,4 +7,3 @@ pub struct GodotVisibilityArea3D {
     #[export]
     pub owner: Option<Gd<Node3D>>,
 }
-

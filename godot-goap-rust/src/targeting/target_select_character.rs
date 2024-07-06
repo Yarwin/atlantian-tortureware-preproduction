@@ -1,2 +1,1 @@
-pub fn select_character() {
-}
+pub fn select_character() {}

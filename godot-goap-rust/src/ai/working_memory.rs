@@ -1,8 +1,6 @@
-use std::collections::VecDeque;
-use std::sync::{Arc, Mutex};
 use godot::prelude::*;
+use std::collections::VecDeque;
 use strum_macros::EnumDiscriminants;
-use crate::ai_nodes::ai_node::AINode;
 
 /// AIWorking memory is a central place to store the AI's observations about the world.
 /// AISensors and AIGoals publish and retrieve data to/from AIWorkingMemory to make decisions.
@@ -10,7 +8,7 @@ use crate::ai_nodes::ai_node::AINode;
 #[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
 #[strum_discriminants(name(WorkingMemoryFactKnowledgeTypeKey))]
 pub enum KnowledgeType {
-    Invalid
+    Invalid,
 }
 
 #[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
@@ -28,27 +26,27 @@ pub enum TaskType {
     Advance,
 }
 
-
 #[derive(Debug, EnumDiscriminants)]
 #[strum_discriminants(name(WorkingMemoryFactValueNodeTypeKey))]
 pub enum NodeType {
-    Patrol{ainode: Arc<Mutex<AINode>>, position: Vector3},
+    Patrol {
+        ainode_id: u32,
+        position: Vector3,
+    },
 }
-
 
 #[derive(Debug, EnumDiscriminants)]
 #[strum_discriminants(name(WorkingMemoryFactTypeKey))]
 pub enum WorkingMemoryFactType {
     Invalid,
     Character(InstanceId),
-    Damage{amount: f64, direction: Vector3},
+    Damage { amount: f64, direction: Vector3 },
     Desire(DesireType),
     Disturbance,
     Node(NodeType),
     Task(TaskType),
-    Knowledge
+    Knowledge,
 }
-
 
 #[derive(Debug)]
 pub struct WorkingMemoryFact {
@@ -95,24 +93,23 @@ impl WorkingMemoryFact {
                         if WorkingMemoryFactValueTaskTypeKey::from(t) != *task_type {
                             return false;
                         }
-                    }  else {
-                        return false
+                    } else {
+                        return false;
                     }
                 }
                 FactQueryCheck::Character(character_id) => {
                     if let WorkingMemoryFactType::Character(other_id) = &self.f_type {
                         if other_id == character_id {
-                            return true
+                            return true;
                         }
                     }
-                    return false
+                    return false;
                 }
             }
         }
         true
     }
 }
-
 
 #[derive(Debug)]
 pub struct WorkingMemory {
@@ -124,7 +121,6 @@ pub struct WorkingMemory {
     /// a queue that holds a list of facts to remove/replace
     to_remove: VecDeque<usize>,
 }
-
 
 impl Default for WorkingMemory {
     fn default() -> Self {
@@ -159,7 +155,12 @@ impl WorkingMemory {
         self.elapsed_time += delta;
     }
 
-    pub fn add_working_memory_fact(&mut self, f_type: WorkingMemoryFactType, confidence: f32, expiration: f64) {
+    pub fn add_working_memory_fact(
+        &mut self,
+        f_type: WorkingMemoryFactType,
+        confidence: f32,
+        expiration: f64,
+    ) {
         let id = self.next_id();
         let fact = WorkingMemoryFact {
             confidence,
@@ -176,7 +177,6 @@ impl WorkingMemory {
         }
     }
 
-
     pub fn count_facts(&self, query: FactQuery) -> u32 {
         let mut count: u32 = 0;
         for fact in self.facts_list.iter() {
@@ -191,26 +191,24 @@ impl WorkingMemory {
     // marks facts as invalid
     pub fn validate(&mut self) {
         let elapsed_time = self.elapsed_time;
-        self.to_remove.extend(
-            self.facts_list.iter_mut().enumerate().filter_map(|(i, f)| {
+        self.to_remove
+            .extend(self.facts_list.iter_mut().enumerate().filter_map(|(i, f)| {
                 if ((f.update_time + f.expiration) < elapsed_time) && f.is_valid {
                     f.is_valid = false;
-                    return Some(i)
+                    return Some(i);
                 }
                 None
-            })
-        );
-
+            }));
     }
 
-    fn facts(&self) -> impl Iterator<Item=&WorkingMemoryFact> {
+    fn facts(&self) -> impl Iterator<Item = &WorkingMemoryFact> {
         self.facts_list.iter().filter(|f| f.is_valid)
     }
 
-    fn facts_mut(&mut self) -> impl Iterator<Item=&mut WorkingMemoryFact> {
+    fn facts_mut(&mut self) -> impl Iterator<Item = &mut WorkingMemoryFact> {
         self.facts_list.iter_mut().filter_map(|f| {
             if !f.is_valid {
-                return None
+                return None;
             }
             Some(f)
         })
@@ -226,7 +224,10 @@ impl WorkingMemory {
 
     /// marks given fact as invalid and returns mutable reference
     pub fn find_and_mark_as_invalid(&mut self, query: FactQuery) -> Option<&mut WorkingMemoryFact> {
-        let fact_index = self.facts_list.iter().position(|fact| fact.matches_query(&query))?;
+        let fact_index = self
+            .facts_list
+            .iter()
+            .position(|fact| fact.matches_query(&query))?;
         self.to_remove.push_back(fact_index);
         let fact = &mut self.facts_list[fact_index];
         fact.is_valid = false;
@@ -234,19 +235,18 @@ impl WorkingMemory {
     }
 }
 
-
 pub enum FactQueryCheck {
     FactId(u32),
     UpdateTime(f64),
     FactType(WorkingMemoryFactTypeKey),
     NodeValue(WorkingMemoryFactValueNodeTypeKey),
     TaskType(WorkingMemoryFactValueTaskTypeKey),
-    Character(InstanceId)
+    Character(InstanceId),
 }
 
 #[derive(Default)]
 pub struct FactQuery {
-    pub checks: Vec<FactQueryCheck>
+    pub checks: Vec<FactQueryCheck>,
 }
 
 impl FactQuery {

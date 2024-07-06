@@ -1,10 +1,9 @@
-use std::fmt::Debug;
-use crate::godot_api::godot_thinker::GodotThinker;
-use godot::prelude::*;
 use crate::ai::blackboard::Blackboard;
 use crate::ai::working_memory::WorkingMemory;
 use crate::ai::world_state::WorldState;
-
+use crate::godot_api::godot_thinker::GodotThinker;
+use godot::prelude::*;
+use std::fmt::Debug;
 
 pub struct StateArguments<'a> {
     pub base: Gd<GodotThinker>,
