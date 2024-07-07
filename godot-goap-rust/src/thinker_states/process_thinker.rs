@@ -10,6 +10,7 @@ use godot::engine::PhysicsServer3D;
 use godot::prelude::*;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use crate::targeting::targeting_systems::TargetMask;
 
 /// a struct that lazily polls the world around an agent
 #[derive(Debug)]
@@ -167,6 +168,7 @@ pub fn process_thinker(
     };
     let shared = &mut *shared_guard;
     let mut sensor_args = SensorArguments {
+        id: thinker.id,
         character_rid: base.bind().character_body.as_ref().unwrap().get_rid(),
         head_position: base
             .bind()
@@ -194,6 +196,14 @@ pub fn process_thinker(
         sensor.process(delta, &mut sensor_args);
     }
     // update target selectors
+    if sensor_args.blackboard.invalidate_target {
+        let valid_target_selectors = TargetMask::valid_target_selectors(sensor_args.blackboard.valid_targets);
+        for (_target_mask, target_selector) in valid_target_selectors {
+            target_selector(&mut sensor_args);
+            // found a target
+            if !sensor_args.blackboard.invalidate_target {break}
+        }
+    }
 
     // state change
     let new_bb_state = shared.blackboard.new_state.take();

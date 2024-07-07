@@ -17,6 +17,7 @@ use std::sync::{Arc, Mutex};
 #[allow(unused_attributes, dead_code)]
 #[derive(Debug)]
 pub struct SensorArguments<'a> {
+    pub id: u32,
     // pub base: Gd<GodotThinker>,
     pub character_rid: Rid,
     pub head_position: Vector3,

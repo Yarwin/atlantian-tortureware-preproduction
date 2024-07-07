@@ -82,8 +82,6 @@ impl ThinkerState for GotoState {
             // slow down
             if velocity.length() > 0.4 {
                 args.blackboard.desired_velocity = Some(Vector3::ZERO);
-                // character.set_velocity(velocity.move_toward(Vector3::ZERO, 4.0 * acceleration * delta as f32));
-                // character.move_and_slide();
                 args.blackboard.thinker_position = character.get_global_position();
             }
             return;

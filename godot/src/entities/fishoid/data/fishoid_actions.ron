@@ -19,5 +19,11 @@
 			is_area_surveyed: Truth(true)
         ),
 		animation: Idle
+    ),
+    Animate(
+        cost: 1,
+        preconditions: WorldState(),
+        effects: WorldState(anim_played: Truth(true)),
+        animation: Idle
     )
 ]

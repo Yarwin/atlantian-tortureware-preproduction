@@ -15,6 +15,7 @@ pub enum AIWorldStateEvent {
     Damage,
     EnemyInPlaceForSurpriseAttack,
     Stunned,
+    Surprised
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
@@ -63,6 +64,7 @@ pub enum WSProperty {
 /// for planing purposes
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Hash, EnumIter)]
 pub enum WorldStateProperty {
+    AmILookingAtTarget,
     AnimLooped,
     AnimPlayed,
     AtNode,
@@ -86,26 +88,26 @@ pub enum WorldStateProperty {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct WorldState {
+    pub i_am_looking_at_target: Option<WSProperty>,
     pub anim_looped: Option<WSProperty>,
     pub anim_played: Option<WSProperty>,
-    pub reacted_to_world_state_event: Option<WSProperty>,
     pub at_node: Option<WSProperty>,
     pub at_node_type: Option<WSProperty>,
+    pub at_target_position: Option<WSProperty>,
     pub cover_status: Option<WSProperty>,
     pub distance_to_target: Option<WSProperty>,
     pub has_target: Option<WSProperty>,
-    pub is_in_combat: Option<WSProperty>,
-    pub is_idling: Option<WSProperty>,
-    pub is_position_valid: Option<WSProperty>,
     pub is_area_surveyed: Option<WSProperty>,
-    pub is_target_looking_at_me: Option<WSProperty>,
+    pub is_idling: Option<WSProperty>,
+    pub is_in_combat: Option<WSProperty>,
+    pub is_navigation_finished: Option<WSProperty>,
+    pub is_position_valid: Option<WSProperty>,
     pub is_target_aiming_at_me: Option<WSProperty>,
     pub is_target_dead: Option<WSProperty>,
-    pub at_target_position: Option<WSProperty>,
+    pub is_target_looking_at_me: Option<WSProperty>,
     pub is_weapon_armed: Option<WSProperty>,
     pub is_weapon_loaded: Option<WSProperty>,
-    pub is_navigation_finished: Option<WSProperty>,
-    // pub state: HashMap<WorldStatePropertyKey, WorldStateProperty>
+    pub reacted_to_world_state_event: Option<WSProperty>,
 }
 
 impl<const N: usize> From<[(WorldStateProperty, WSProperty); N]> for WorldState {
@@ -123,8 +125,9 @@ impl Index<WorldStateProperty> for WorldState {
 
     fn index(&self, index: WorldStateProperty) -> &Self::Output {
         match index {
+            WorldStateProperty::AmILookingAtTarget => &self.i_am_looking_at_target,
             WorldStateProperty::AnimLooped => &self.anim_looped,
-            WorldStateProperty::AnimPlayed => &self.anim_looped,
+            WorldStateProperty::AnimPlayed => &self.anim_played,
             WorldStateProperty::ReactedToWorldStateEvent => &self.reacted_to_world_state_event,
             WorldStateProperty::AtNode => &self.at_node,
             WorldStateProperty::AtNodeType => &self.at_node_type,
@@ -149,8 +152,9 @@ impl Index<WorldStateProperty> for WorldState {
 impl IndexMut<WorldStateProperty> for WorldState {
     fn index_mut(&mut self, index: WorldStateProperty) -> &mut Self::Output {
         match index {
+            WorldStateProperty::AmILookingAtTarget => &mut self.i_am_looking_at_target,
             WorldStateProperty::AnimLooped => &mut self.anim_looped,
-            WorldStateProperty::AnimPlayed => &mut self.anim_looped,
+            WorldStateProperty::AnimPlayed => &mut self.anim_played,
             WorldStateProperty::ReactedToWorldStateEvent => &mut self.reacted_to_world_state_event,
             WorldStateProperty::AtNode => &mut self.at_node,
             WorldStateProperty::AtNodeType => &mut self.at_node_type,
@@ -221,14 +225,11 @@ impl WorldState {
         let mut count: u32 = 0;
         for key in WorldStateProperty::iter() {
             if let Some(property) = self[key].as_ref() {
-                if let Some(equality) = other[key]
-                    .as_ref()
-                    .map(|other_property| other_property == property)
-                {
-                    if equality {
-                        continue;
-                    }
+                let are_props_equal = other[key].as_ref().map(|other_property| other_property == property).unwrap_or(false);
+                if are_props_equal {
+                    continue
                 }
+
                 count += 1;
             }
         }
@@ -242,7 +243,7 @@ mod tests {
     use crate::ai::world_state::WSProperty::Truth;
     #[test]
     fn test_get_prop() {
-        let mut state = WorldState::from([(WorldStateProperty::IsIdling, Truth(true))]);
+        let state = WorldState::from([(WorldStateProperty::IsIdling, Truth(true))]);
         assert_eq!(state[WorldStateProperty::IsIdling], Some(Truth(true)));
     }
 

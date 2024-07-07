@@ -47,13 +47,7 @@ pub fn execute_action(inner: &ActionComponent, action_arguments: AgentActionWorl
     action_arguments.blackboard.rotation_target = rotation_target;
     action_arguments.blackboard.animation_completed = false;
     let patrol_animation_props = &action_arguments.animations[AnimationType::Patrol];
-    let new_state = Box::new(AnimateState {
-        name: patrol_animation_props.name.clone(),
-        loops: patrol_animation_props.loops,
-        cyclic: patrol_animation_props.cyclic,
-        total_time: patrol_animation_props.loop_time,
-        elapsed_time: 0.0,
-    });
+    let new_state = AnimateState::new_boxed(patrol_animation_props.name.clone(), patrol_animation_props.mode.clone());
     action_arguments.blackboard.new_state = Some(new_state);
 }
 

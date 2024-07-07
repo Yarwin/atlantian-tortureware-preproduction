@@ -1,9 +1,12 @@
-use crate::ai::working_memory::{FactQuery, FactQueryCheck, WorkingMemoryFactType};
+use std::time::SystemTime;
+use crate::ai::working_memory::{FactQuery, FactQueryCheck, Knowledge, Stimuli, WorkingMemoryFactType};
 use crate::godot_api::godot_visible_area_3d::GodotVisibilityArea3D;
 use crate::sensors::sensor_types::{SensorArguments, SensorPolling};
 use godot::classes::{PhysicsRayQueryParameters3D, PhysicsServer3D};
 use godot::prelude::*;
 use serde::{Deserialize, Serialize};
+use crate::ai::working_memory::Desire::Surprise;
+use crate::targeting::targeting_systems::TargetMask;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VisionCharacterSensor {
@@ -22,6 +25,7 @@ impl SensorPolling for VisionCharacterSensor {
         if args.polls.get_visible().is_none() {
             return false;
         }
+
         for target in args.polls.get_visible().unwrap() {
             // bail if target outside vision cone
             if args.thinker_forward_axis.dot(
@@ -34,8 +38,8 @@ impl SensorPolling for VisionCharacterSensor {
 
             let mut is_target_visible: bool = false;
             let target_height = target.area_transform.basis.col_b() * target.shape_height;
-            // visibility check
 
+            // visibility check
             // todo –  project ray targets on a clipped plane that uses area direction to the head as its normal
             // we assume that target's visible area is always a cylinder
 
@@ -45,10 +49,11 @@ impl SensorPolling for VisionCharacterSensor {
                 target.area_transform.origin,                       // bottom
                 target.area_transform.origin
                     + target_height
-                    + target.area_transform.basis.col_a() * target.shape_radius, // left
+                    + target.area_transform.basis.col_a() * target.shape_radius, // """left"""
                 target.area_transform.origin + target_height
-                    - target.area_transform.basis.col_a() * target.shape_radius, // right
+                    - target.area_transform.basis.col_a() * target.shape_radius, // """right"""
             ];
+
             let mut ray_params = PhysicsRayQueryParameters3D::new_gd();
             ray_params.set_collision_mask(4);
             ray_params.set_from(args.head_position);
@@ -61,6 +66,7 @@ impl SensorPolling for VisionCharacterSensor {
             else {
                 return false;
             };
+
             let mut distance_to_target: f32 = 0.0;
             let mut character_id: Option<InstanceId> = None;
 
@@ -72,7 +78,7 @@ impl SensorPolling for VisionCharacterSensor {
                     .map(|r| r.to::<Rid>() == target.area_rid)
                     .unwrap_or(false);
 
-                // bail if we found a target
+                // bail if we see a target
                 if is_target_visible {
                     distance_to_target = intersection_result
                         .get("position")
@@ -89,36 +95,63 @@ impl SensorPolling for VisionCharacterSensor {
 
             // bail if target is not visible
             if !is_target_visible {
-                return false;
+                continue;
             }
-            // get detection strength
-            let detection_strength = ((11.0 - distance_to_target) / 11.0).min(1.0);
+            // get detection strength – it takes at least two updates to spot one target
+            let detection_strength = ((11.0 - distance_to_target.min(11.0)) / 11.0).min(1.);
             let mut previous_stimulation: f32 = 0.0;
             let current_stimulation: f32;
-            // check for fact
             let fact_query =
-                FactQuery::with_check(FactQueryCheck::Character(character_id.unwrap()));
+                FactQuery::with_check(
+                    FactQueryCheck::Match(
+                        WorkingMemoryFactType::Stimuli(Stimuli::Character(character_id.unwrap()))
+                    )
+                );
             // update fact
-            let update_time = args.working_memory.elapsed_time;
             if let Some(fact) = args.working_memory.find_fact_mut(fact_query) {
-                fact.update_time = update_time;
+                fact.update_time = SystemTime::now();
                 previous_stimulation = fact.confidence;
                 fact.confidence = (fact.confidence + detection_strength).min(1.1);
                 current_stimulation = fact.confidence;
             } else {
-                // write new fact
                 args.working_memory.add_working_memory_fact(
-                    WorkingMemoryFactType::Character(character_id.unwrap()),
+                    WorkingMemoryFactType::Stimuli(Stimuli::Character(character_id.unwrap())),
                     detection_strength,
-                    120.0,
+                    // Store a stimuli for four updates – don't keep it if character isn't actually visible
+                    self.update_every * 3.0,
                 );
                 current_stimulation = detection_strength;
             }
+
+            // new target spotted
             if current_stimulation >= 1.0 && previous_stimulation < 1.0 {
-                // let Ok(mut bb) = args.blackboard.lock() else {panic!("mutex failed!")};
+                let fact_query =
+                    FactQuery::with_check(
+                        FactQueryCheck::Match(WorkingMemoryFactType::Knowledge(Knowledge::Character(character_id.unwrap()))));
+                if let Some(fact) = args.working_memory.find_fact_mut(fact_query) {
+                    // update
+                    fact.confidence = distance_to_target;
+                    fact.update_time = SystemTime::now();
+                } else {
+                    godot_print!("new character spotted!");
+                    // new character spotted!!
+                    args.working_memory.add_working_memory_fact(
+                        WorkingMemoryFactType::Knowledge(Knowledge::Character(character_id.unwrap())),
+                        distance_to_target,
+                        30.0
+                    );
+                    // add desire to be surprised upon spotting new enemy
+                    args.working_memory.add_working_memory_fact(
+                        WorkingMemoryFactType::Desire(Surprise),
+                        1.0,
+                        15.0
+                    );
+                }
+                // force retargeting
+                args.blackboard.invalidate_target = true;
+                args.blackboard.valid_targets = args.blackboard.valid_targets.union(TargetMask::VisibleCharacter);
             }
         }
-
         false
     }
 }

@@ -1,4 +1,4 @@
-[gd_scene load_steps=48 format=4 uid="uid://d0bf2uc5t4h08"]
+[gd_scene load_steps=49 format=4 uid="uid://d0bf2uc5t4h08"]
 
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_it88m"]
 [ext_resource type="Material" uid="uid://cvex6toty8yn7" path="res://addons/func_godot/textures/default_material.tres" id="3_h3rck"]
@@ -10,6 +10,16 @@
 [ext_resource type="Material" uid="uid://b0u3uvu72leoe" path="res://src/trenchbroom/textures/prototype/Dark/texture_09.tres" id="6_mwlo7"]
 [ext_resource type="Material" uid="uid://bfxdlek4lyqo4" path="res://src/trenchbroom/textures/prototype/Dark/texture_03.tres" id="7_u72ts"]
 [ext_resource type="PackedScene" uid="uid://b4tvyguynxs6f" path="res://src/entities/debug_player/debug_player.tscn" id="10_75pgr"]
+
+[sub_resource type="GDScript" id="GDScript_rjhqx"]
+script/source = "extends Node
+
+func _ready() -> void:
+	return
+	$\"../Fishoid2/thinker\".is_active = false;
+	$\"../Fishoid3/thinker\".is_active = false;
+	$\"../Fishoid4/thinker\".is_active = false;
+"
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1pmtb"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -287,6 +297,9 @@ data = PackedVector3Array(-0.4375, -1.5, -0.4375, -0.4375, -2.25, -0.4375, 2.562
 
 [node name="Node" type="Node3D"]
 metadata/_edit_lock_ = true
+
+[node name="Node" type="Node" parent="."]
+script = SubResource("GDScript_rjhqx")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_spn3t")

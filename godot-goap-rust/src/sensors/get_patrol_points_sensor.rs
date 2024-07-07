@@ -1,11 +1,8 @@
-use crate::ai::working_memory::{
-    FactQuery, FactQueryCheck, NodeType, WorkingMemoryFactType, WorkingMemoryFactValueNodeTypeKey,
-};
+use crate::ai::working_memory::{FactQuery, FactQueryCheck, Node, WMNodeType, WorkingMemoryFactType};
 use crate::ai_nodes::ai_node::AINode;
 use crate::ai_nodes::godot_ai_node::AINodeType;
 use crate::sensors::sensor_types::SensorArguments;
 use crate::sensors::sensor_types::SensorPolling;
-use crate::targeting::targeting_systems::TargetMask;
 use godot::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -17,7 +14,7 @@ pub struct PatrolPointSensor {
 }
 
 impl PatrolPointSensor {
-    const MINIMAL_DIST: f32 = 1.6;
+    const MINIMAL_DIST: f32 = 2.0;
 
     fn find_nearest(args: &mut SensorArguments) -> Option<(u32, Vector3)> {
         let ainodes = args.polls.get_ainodes()?;
@@ -39,19 +36,19 @@ impl PatrolPointSensor {
                 let distance = base.position.distance_to(thinker_position);
                 // agent is standing on the patrol node. Take its dependency (next node)
                 if distance < Self::MINIMAL_DIST && next.is_some() {
-                    let next_node_guard = ainodes_guard
+                    let next_node = ainodes_guard
                         .get(&next.unwrap())
                         .expect("logic error – no node with given id");
                     // bail if next node is locked.
-                    if !next_node_guard.is_locked() {
-                        if let AINode::Patrol { base: b, .. } = next_node_guard {
+                    if !next_node.is_locked_not_by(args.id) {
+                        if let AINode::Patrol { base: b, .. } = next_node {
                             return Some((next.unwrap(), b.position));
                         }
                     }
                 }
 
                 // bail if current node is locked
-                if node.is_locked() {
+                if node.is_locked_not_by(args.id) {
                     continue;
                 }
 
@@ -78,8 +75,8 @@ impl SensorPolling for PatrolPointSensor {
             return false;
         }
 
-        let fact_query = FactQuery::with_check(FactQueryCheck::NodeValue(
-            WorkingMemoryFactValueNodeTypeKey::Patrol,
+        let fact_query = FactQuery::with_check(FactQueryCheck::Node(
+            WMNodeType::Patrol,
         ));
         let is_patrol_point_already_known = args.working_memory.find_fact(fact_query).is_some();
         if is_patrol_point_already_known {
@@ -88,14 +85,13 @@ impl SensorPolling for PatrolPointSensor {
 
         let nearest_node = Self::find_nearest(args);
         if let Some((node, pos)) = nearest_node {
-            *args.target_mask = args.target_mask.union(TargetMask::PatrolPoint);
             args.working_memory.add_working_memory_fact(
-                WorkingMemoryFactType::Node(NodeType::Patrol {
+                WorkingMemoryFactType::Node(Node::Patrol {
                     ainode_id: node,
                     position: pos,
                 }),
                 1.0,
-                200.0,
+                self.update_every * 4.0,
             );
         }
 

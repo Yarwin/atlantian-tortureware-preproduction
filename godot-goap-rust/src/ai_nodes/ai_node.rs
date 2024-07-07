@@ -47,6 +47,19 @@ impl AINode {
         }
     }
 
+    pub fn is_locked_not_by(&self, not_by: u32) -> bool {
+        match self {
+            AINode::Patrol { base, .. } => {
+                let AINodeStatus::Locked(other_id) = &base.status else {return false};
+                if *other_id == not_by {
+                    return false
+                }
+                true
+                },
+            _ => todo!(),
+        }
+    }
+
     pub fn is_locked(&self) -> bool {
         match self {
             AINode::Patrol { base, .. } => !matches!(base.status, AINodeStatus::Free),

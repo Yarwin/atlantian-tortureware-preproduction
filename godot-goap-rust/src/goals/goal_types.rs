@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
+
 #[derive(Debug)]
 pub struct AgentGoalWorldContext<'a> {
     pub id: &'a u32,
@@ -21,6 +22,7 @@ pub struct AgentGoalWorldContext<'a> {
     pub blackboard: &'a mut Blackboard,
     pub ai_nodes: &'a mut Option<Arc<Mutex<HashMap<u32, AINode>>>>,
 }
+
 
 #[allow(clippy::derivable_impls, clippy::enum_variant_names)]
 #[enum_dispatch]
@@ -49,6 +51,7 @@ pub trait GoalBehaviour {
             .desired_state
             .count_unsatisfied_world_state_props(agent_world_context.current_world_state)
             != 0;
+
         required_state_meet && desired_state_not_meet
     }
 

@@ -19,6 +19,7 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use crate::ai::working_memory::WorkingMemoryFactType;
 
 #[derive(GodotClass)]
 #[class(init, base=Node, rename=AIManager)]
@@ -47,7 +48,6 @@ impl INode for GodotAIManager {
             let Ok(mut shared) = shared.lock() else {
                 panic!("mutex failed")
             };
-            shared.working_memory.increase_time(delta);
             shared.working_memory.validate();
         });
         drop(memories);
@@ -125,6 +125,13 @@ impl GodotAIManager {
 }
 
 impl GodotAIManager {
+
+    pub fn add_new_wm_fact(&mut self, thinker_id: u32, fact: WorkingMemoryFactType, confidence: f32, expiration: f64) {
+        let Ok(mut guard) = self.thinkers[&thinker_id].shared.lock() else {panic!("mutex failed!")};
+        guard.working_memory.add_working_memory_fact(fact, confidence, expiration);
+        drop(guard)
+    }
+
     fn get_ainode_id(&mut self) -> u32 {
         self.current_node_id += 1;
         self.current_node_id

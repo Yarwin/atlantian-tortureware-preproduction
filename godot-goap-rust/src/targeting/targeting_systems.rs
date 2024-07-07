@@ -1,20 +1,20 @@
 use crate::targeting::target_select_character::select_character;
 use bitflags::bitflags;
+use crate::sensors::sensor_types::SensorArguments;
 
 bitflags! {
     #[derive(Debug, Clone, Copy)]
     pub struct TargetMask: u32 {
         const None = 0;
         /// patrol point select
-        const PatrolPoint = 1;
         /// character select
-        const VisibleCharacter = 1 << 1;
+        const VisibleCharacter = 1;
         /// Damager Select
-        const Damager = 1 << 2;
-        const Interest = 1 << 3;
-        const Node = 1 << 4;
-        const Danger = 1 << 5;
-        const CharacterAimingAtMe = 1 << 6;
+        const Damager = 1 << 1;
+        const Interest = 1 << 2;
+        const Node = 1 << 3;
+        const Danger = 1 << 4;
+        const CharacterAimingAtMe = 1 << 5;
     }
 }
 
@@ -25,20 +25,16 @@ impl Default for TargetMask {
 }
 
 impl TargetMask {
-    pub fn priority() -> [(TargetMask, impl Fn()); 3] {
+    fn priority() -> [(TargetMask, for<'a, 'b> fn(&'a mut SensorArguments<'b>)); 1]
+    {
         [
-            (TargetMask::CharacterAimingAtMe, select_character),
+            // (TargetMask::CharacterAimingAtMe, select_character),
             (TargetMask::VisibleCharacter, select_character),
-            (TargetMask::PatrolPoint, select_character),
         ]
     }
 
-    pub fn get_valid_target_selector(&self) -> Option<impl Fn()> {
-        for (bits, func) in TargetMask::priority() {
-            if self.contains(bits) {
-                return Some(func);
-            }
-        }
-        None
+    pub fn valid_target_selectors(other: TargetMask) -> impl Iterator<Item=(TargetMask, for<'a, 'b> fn(&'a mut SensorArguments<'b>))> + 'static
+    {
+        TargetMask::priority().into_iter().filter(move |(bits, _func)| other.contains(*bits))
     }
 }

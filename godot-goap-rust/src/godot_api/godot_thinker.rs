@@ -3,6 +3,8 @@ use godot::classes::{
     AnimationTree, CharacterBody3D, Engine, Marker3D, NavigationAgent3D, Shape3D,
 };
 use godot::prelude::*;
+use crate::ai::working_memory::Event::AnimationCompleted;
+use crate::ai::working_memory::WorkingMemoryFactType;
 
 /// an interface to speak with AI manager
 #[derive(GodotClass, Debug)]
@@ -68,6 +70,17 @@ impl GodotThinker {
             .cast::<GodotAIManager>();
         self.thinker_id = ai_manager.bind_mut().register_thinker(self);
     }
+    #[func]
+    fn on_animation_finished(&self, animation_name: StringName) {
+        if self.thinker_id == 0 {return;}
+        let fact = WorkingMemoryFactType::Event(AnimationCompleted(animation_name.into()));
+        let mut ai_manager = Engine::singleton()
+            .get_singleton("AIManager".into())
+            .unwrap()
+            .cast::<GodotAIManager>();
+        ai_manager.bind_mut().add_new_wm_fact(self.thinker_id, fact, 1.0, 15.0);
+    }
+
 }
 
 #[godot_api]

@@ -46,19 +46,15 @@ pub struct ThinkerProcess {
     pub id: u32,
     pub base_id: Option<InstanceId>,
     pub shared: Arc<Mutex<ThinkerShared>>,
-    // pub blackboard: Arc<Mutex<Blackboard>>,
     pub actions: Arc<Vec<Action>>,
     pub goals: Arc<Vec<GoalComponent>>,
     pub animations: Arc<AnimationsData>,
-    // pub working_memory: Arc<Mutex<WorkingMemory>>,
-    // pub world_state: Arc<Mutex<WorldState>>,
     pub navigation_map_rid: Option<Rid>,
     pub ai_nodes: Option<Arc<Mutex<HashMap<u32, AINode>>>>,
 }
 
 pub struct ThinkerPlanView<'a> {
     pub id: &'a u32,
-    // pub shared: &'a mut ThinkerShared,
     pub goals: &'a Arc<Vec<GoalComponent>>,
     pub actions: &'a Arc<Vec<Action>>,
     pub animations: &'a Arc<AnimationsData>,
@@ -95,15 +91,22 @@ fn get_relevant_goal(thinker: &mut ThinkerPlanView) -> Option<usize> {
     let current_goal: Option<usize> = thinker.blackboard.current_goal;
     let mut best_priority: u32 = 0;
     let context = thinker_process_to_goal_view!(thinker);
+
     if let Some(current) = current_goal {
-        best_priority = thinker.goals[current]
-            .goal_type
-            .calculate_goal_relevance(&thinker.goals[current], &context);
+        if thinker.goals[current].goal_type.is_valid(&thinker.goals[current], &context) {
+            best_priority = thinker.goals[current]
+                .goal_type
+                .calculate_goal_relevance(&thinker.goals[current], &context);
+        }
     }
 
     let mut best_goal: Option<usize> = None;
 
     for (id, goal) in thinker.goals.iter().enumerate() {
+        // bail if already checked
+        if current_goal.map(|c| c == id).unwrap_or(false) {
+            continue
+        }
         // bail if world state doesn't match
         if !goal.goal_type.validate_context(goal, &context) {
             continue;
@@ -223,10 +226,8 @@ fn activate_plan(thinker_view: &mut ThinkerPlanView, new_plan: VecDeque<usize>, 
     let first_action: usize = new_plan[0];
 
     // update blackboard
-    {
-        thinker_view.blackboard.current_goal = Some(new_goal);
-        thinker_view.blackboard.current_plan_ids = new_plan;
-    }
+    thinker_view.blackboard.current_goal = Some(new_goal);
+    thinker_view.blackboard.current_plan_ids = new_plan;
 
     let action_arguments = action_arguments!(thinker_view);
     thinker_view.actions[first_action].execute_action(action_arguments);

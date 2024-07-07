@@ -4,13 +4,14 @@
 AnimationsData(
     walk: AnimationProps(
         name: "walk",
-        value: true,
-        cyclic: true
+        mode: Cyclic
     ),
     patrol: AnimationProps(
         name: "Patrol",
-        oneshot: false,
-        loop_time: 4.2,
-        cylic: false
+        mode: Timed(4.2)
+    ),
+    surprised: AnimationProps(
+        name: "Alert",
+        mode: OneShot
     )
 )

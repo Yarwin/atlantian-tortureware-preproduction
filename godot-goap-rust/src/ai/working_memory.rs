@@ -1,109 +1,147 @@
 use godot::prelude::*;
 use std::collections::VecDeque;
+use std::time::SystemTime;
 use strum_macros::EnumDiscriminants;
 
 /// AIWorking memory is a central place to store the AI's observations about the world.
 /// AISensors and AIGoals publish and retrieve data to/from AIWorkingMemory to make decisions.
 
 #[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
-#[strum_discriminants(name(WorkingMemoryFactKnowledgeTypeKey))]
-pub enum KnowledgeType {
+#[strum_discriminants(name(WMKnowledgeType))]
+pub enum Knowledge {
     Invalid,
+    Character(InstanceId)
 }
 
 #[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
-#[strum_discriminants(name(WorkingMemoryFactValueDesireTypeKey))]
-pub enum DesireType {
+#[strum_discriminants(name(WMDesireType))]
+pub enum Desire {
     Invalid,
     Stun,
     Stagger,
+    Surprise,
 }
 
-#[derive(Debug, EnumDiscriminants)]
-#[strum_discriminants(name(WorkingMemoryFactValueTaskTypeKey))]
-pub enum TaskType {
+#[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
+#[strum_discriminants(name(WMTaskType))]
+pub enum Task {
     Cover,
     Advance,
 }
 
 #[derive(Debug, EnumDiscriminants)]
-#[strum_discriminants(name(WorkingMemoryFactValueNodeTypeKey))]
-pub enum NodeType {
+#[strum_discriminants(name(WMNodeType))]
+pub enum Node {
     Patrol {
         ainode_id: u32,
         position: Vector3,
     },
 }
 
+impl Eq for Node {}
+
+impl PartialEq for Node {
+    fn eq(&self, other: &Self) -> bool {
+        match (&self, other) {
+            (Node::Patrol{ainode_id, ..}, Node::Patrol{ainode_id: other_ainode_id, ..}) => {
+                return ainode_id == other_ainode_id
+            },
+            _ => false
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
+#[strum_discriminants(name(WMEventType))]
+pub enum Event {
+    AnimationCompleted(String)
+}
+
 #[derive(Debug, EnumDiscriminants)]
-#[strum_discriminants(name(WorkingMemoryFactTypeKey))]
-pub enum WorkingMemoryFactType {
-    Invalid,
+#[strum_discriminants(name(WMStimuliType))]
+pub enum Stimuli {
+    /// visible character stimuli
     Character(InstanceId),
     Damage { amount: f64, direction: Vector3 },
-    Desire(DesireType),
-    Disturbance,
-    Node(NodeType),
-    Task(TaskType),
-    Knowledge,
 }
+
+impl Eq for Stimuli {}
+
+impl PartialEq for Stimuli {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Stimuli::Character(i), Stimuli::Character(other_i)) => {
+                if i == other_i {
+                    return true
+                }
+                false
+            }
+            _ => false
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
+#[strum_discriminants(name(WorkingMemoryFactTypeKey))]
+pub enum WorkingMemoryFactType {
+    Stimuli(Stimuli),
+    Desire(Desire),
+    Disturbance,
+    Node(Node),
+    Task(Task),
+    Knowledge(Knowledge),
+    Event(Event),
+}
+
 
 #[derive(Debug)]
 pub struct WorkingMemoryFact {
     /// a value in range of 0-100 telling about importance/confidence of a given fact
     pub confidence: f32,
-    pub id: u32,
+    id: u32,
     pub f_type: WorkingMemoryFactType,
     /// time since initialization at the time of adding this fact
-    pub update_time: f64,
+    pub update_time: SystemTime,
     expiration: f64,
-    pub is_valid: bool,
+    is_valid: bool,
 }
 
 impl WorkingMemoryFact {
     pub fn matches_query(&self, other: &FactQuery) -> bool {
         for check in other.checks.iter() {
             match check {
-                FactQueryCheck::UpdateTime(elapsed) => {
-                    if self.update_time > *elapsed {
-                        return false;
-                    }
-                }
-                FactQueryCheck::FactId(id) => {
-                    if self.id != *id {
-                        return false;
-                    }
-                }
-                FactQueryCheck::FactType(fact_type) => {
-                    if WorkingMemoryFactTypeKey::from(&self.f_type) != *fact_type {
-                        return false;
-                    }
-                }
-                FactQueryCheck::NodeValue(node_type) => {
-                    if let WorkingMemoryFactType::Node(v) = &self.f_type {
-                        if WorkingMemoryFactValueNodeTypeKey::from(v) != *node_type {
-                            return false;
-                        }
-                    } else {
-                        return false;
+                FactQueryCheck::Node(node_type) => {
+                    let WorkingMemoryFactType::Node(v) = &self.f_type else {return false};
+                    if WMNodeType::from(v) != *node_type {
+                        return false
                     }
                 }
                 FactQueryCheck::TaskType(task_type) => {
-                    if let WorkingMemoryFactType::Task(t) = &self.f_type {
-                        if WorkingMemoryFactValueTaskTypeKey::from(t) != *task_type {
-                            return false;
-                        }
-                    } else {
-                        return false;
+                    let WorkingMemoryFactType::Task(t) = &self.f_type else {return false};
+                    if WMTaskType::from(t) != *task_type {
+                        return false
                     }
                 }
-                FactQueryCheck::Character(character_id) => {
-                    if let WorkingMemoryFactType::Character(other_id) = &self.f_type {
-                        if other_id == character_id {
-                            return true;
-                        }
+                FactQueryCheck::Knowledge(knowledge_type) => {
+                    let WorkingMemoryFactType::Knowledge(k) = &self.f_type else {return false};
+                    if WMKnowledgeType::from(k) != *knowledge_type {return false}
+                }
+                FactQueryCheck::Desire(desire_type) => {
+                    let WorkingMemoryFactType::Desire(d) = &self.f_type else {return false};
+                    if WMDesireType::from(d) != *desire_type {return false}
+                }
+                FactQueryCheck::Event(e_type) => {
+                    let WorkingMemoryFactType::Event(e) = &self.f_type else {return false};
+                    if WMEventType::from(e) != *e_type {return false}
+                }
+                FactQueryCheck::Stimuli(s_type) => {
+                    let WorkingMemoryFactType::Stimuli(s) = &self.f_type else {return false};
+                    if WMStimuliType::from(s) != *s_type {return false}
+                }
+                FactQueryCheck::Match(wmfact_type) => {
+                    if wmfact_type != &self.f_type {
+                        return false
                     }
-                    return false;
                 }
             }
         }
@@ -113,8 +151,6 @@ impl WorkingMemoryFact {
 
 #[derive(Debug)]
 pub struct WorkingMemory {
-    /// time elapsed since initialization
-    pub elapsed_time: f64,
     current_id: u32,
     capacity: usize,
     facts_list: VecDeque<WorkingMemoryFact>,
@@ -126,7 +162,6 @@ impl Default for WorkingMemory {
     fn default() -> Self {
         let capacity = 32;
         WorkingMemory {
-            elapsed_time: 0.0,
             current_id: 0,
             capacity,
             facts_list: VecDeque::with_capacity(capacity),
@@ -143,16 +178,11 @@ impl WorkingMemory {
 
     pub fn with_capacity(capacity: usize) -> Self {
         WorkingMemory {
-            elapsed_time: 0.0,
             current_id: 0,
             capacity,
             facts_list: VecDeque::with_capacity(capacity),
             to_remove: Default::default(),
         }
-    }
-
-    pub fn increase_time(&mut self, delta: f64) {
-        self.elapsed_time += delta;
     }
 
     pub fn add_working_memory_fact(
@@ -166,7 +196,7 @@ impl WorkingMemory {
             confidence,
             id,
             f_type,
-            update_time: self.elapsed_time,
+            update_time: SystemTime::now(),
             expiration,
             is_valid: true,
         };
@@ -184,16 +214,14 @@ impl WorkingMemory {
                 count += 1;
             }
         }
-
         count
     }
 
     // marks facts as invalid
     pub fn validate(&mut self) {
-        let elapsed_time = self.elapsed_time;
         self.to_remove
             .extend(self.facts_list.iter_mut().enumerate().filter_map(|(i, f)| {
-                if ((f.update_time + f.expiration) < elapsed_time) && f.is_valid {
+                if f.is_valid && (f.update_time.elapsed().unwrap().as_secs_f64() > f.expiration) {
                     f.is_valid = false;
                     return Some(i);
                 }
@@ -201,25 +229,52 @@ impl WorkingMemory {
             }));
     }
 
+    pub fn clean(&mut self) {
+        self.to_remove.clear();
+        self.facts_list.retain(|f| f.is_valid);
+    }
+
     fn facts(&self) -> impl Iterator<Item = &WorkingMemoryFact> {
         self.facts_list.iter().filter(|f| f.is_valid)
     }
 
     fn facts_mut(&mut self) -> impl Iterator<Item = &mut WorkingMemoryFact> {
-        self.facts_list.iter_mut().filter_map(|f| {
-            if !f.is_valid {
-                return None;
-            }
-            Some(f)
-        })
+        self.facts_list.iter_mut().filter(|f| f.is_valid)
     }
 
     pub fn find_fact(&self, query: FactQuery) -> Option<&WorkingMemoryFact> {
         self.facts().find(|&fact| fact.matches_query(&query))
     }
 
+    pub fn find_fact_with_max_confidence(&self, fact_query: FactQuery) -> Option<&WorkingMemoryFact> {
+        let (fact, _max_confidence) = self.facts().filter(|f| f.matches_query(&fact_query))
+            .fold(
+                (None, 0.0),
+                |(max_f, max_c), other_f| {
+                    if max_f.is_none() {
+                        return (Some(other_f), other_f.confidence)
+                    }
+                    if other_f.confidence > max_c {
+                        return (Some(other_f), other_f.confidence)
+                    }
+                    (max_f, max_c)
+                }
+            );
+        fact
+    }
+
     pub fn find_fact_mut(&mut self, query: FactQuery) -> Option<&mut WorkingMemoryFact> {
         self.facts_mut().find(|fact| fact.matches_query(&query))
+    }
+
+    pub fn mark_as_invalid(&mut self, query: FactQuery) {
+        let Some(fact_index) = self
+            .facts_list
+            .iter()
+            .position(|fact| fact.matches_query(&query)) else {return;};
+        self.to_remove.push_back(fact_index);
+        let fact = &mut self.facts_list[fact_index];
+        fact.is_valid = false;
     }
 
     /// marks given fact as invalid and returns mutable reference
@@ -236,12 +291,13 @@ impl WorkingMemory {
 }
 
 pub enum FactQueryCheck {
-    FactId(u32),
-    UpdateTime(f64),
-    FactType(WorkingMemoryFactTypeKey),
-    NodeValue(WorkingMemoryFactValueNodeTypeKey),
-    TaskType(WorkingMemoryFactValueTaskTypeKey),
-    Character(InstanceId),
+    Match(WorkingMemoryFactType),
+    Stimuli(WMStimuliType),
+    Node(WMNodeType),
+    TaskType(WMTaskType),
+    Knowledge(WMKnowledgeType),
+    Desire(WMDesireType),
+    Event(WMEventType)
 }
 
 #[derive(Default)]

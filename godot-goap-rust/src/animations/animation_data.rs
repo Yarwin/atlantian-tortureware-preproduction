@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::ops::Index;
+use crate::thinker_states::animate::AnimationMode;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AnimationType {
@@ -12,24 +13,14 @@ pub enum AnimationType {
     CivilianPose,
     Hurt,
     Invalid,
+    Surprised
 }
 
-fn oneshot_default() -> bool {
-    true
-}
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AnimationProps {
     pub name: String,
-    #[serde(default = "oneshot_default")]
-    pub oneshot: bool,
-    #[serde(default)]
-    pub loop_time: f64,
-    #[serde(default)]
-    pub loops: u32,
-    /// cyclic animations don't end!
-    #[serde(default)]
-    pub cyclic: bool,
+    pub mode: AnimationMode,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -42,12 +33,21 @@ pub struct AnimationsData {
     attack_exhaustion: Option<AnimationProps>,
     civilian_pose: Option<AnimationProps>,
     hurt: Option<AnimationProps>,
+    surprised: Option<AnimationProps>
 }
 
 impl Index<AnimationType> for AnimationsData {
     type Output = AnimationProps;
 
     fn index(&self, index: AnimationType) -> &Self::Output {
+        return self.index(&index)
+    }
+}
+
+impl Index<&AnimationType> for AnimationsData {
+    type Output = AnimationProps;
+
+    fn index(&self, index: &AnimationType) -> &Self::Output {
         match index {
             AnimationType::Walk => self.walk.as_ref().expect("no animation data!"),
             AnimationType::Idle => self.idle.as_ref().expect("no animation data!"),
@@ -61,6 +61,7 @@ impl Index<AnimationType> for AnimationsData {
             AnimationType::CivilianPose => self.civilian_pose.as_ref().expect("no animation data!"),
             AnimationType::Hurt => self.hurt.as_ref().expect("no animation data!"),
             AnimationType::Patrol => self.patrol.as_ref().expect("no animation data!"),
+            AnimationType::Surprised => self.surprised.as_ref().expect("no animation data!"),
             _ => {
                 panic!("no animation data for {:?}!", index)
             }
