@@ -1,8 +1,10 @@
-use crate::ai::blackboard::MovementSpeed;
+use std::time::SystemTime;
+use crate::ai::blackboard::SpeedMod;
 use crate::ai::world_state::{WSProperty, WorldStateProperty};
 use crate::thinker_states::types::{StateArguments, ThinkerState};
-use godot::classes::AnimationNodeStateMachinePlayback;
+use godot::classes::{AnimationNodeStateMachinePlayback, MeshInstance3D};
 use godot::prelude::*;
+use crate::thinker_states::navigation_subsystem::RotationTarget;
 
 #[derive(Debug)]
 pub enum Destination {
@@ -11,22 +13,46 @@ pub enum Destination {
     Character(InstanceId),
 }
 
+impl Destination {
+    pub fn is_dynamic_pos(&self) -> bool {
+        match self {
+            Destination::Position(..) | Destination::Node(..) => false,
+            Destination::Character(..) => true
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct GotoState {
     pub destination: Destination,
+    pub animation_name: String,
     pub is_destination_blocked: bool,
     pub finished: bool,
+    pub should_repath: bool,
+    pub time_since_last_pathing: SystemTime
 }
 
 impl GotoState {
+    pub fn new_boxed(animation_name: String, destination: Destination) -> Box<Self> {
+        let state = GotoState {
+            destination,
+            animation_name,
+            is_destination_blocked: false,
+            finished: false,
+            should_repath: false,
+            time_since_last_pathing: SystemTime::now()
+        };
+        Box::new(state)
+    }
     fn get_target_pos(&self) -> Vector3 {
         match self.destination {
             Destination::Position(pos) => pos,
             Destination::Node(_id) => {
                 todo!()
             }
-            Destination::Character(_id) => {
-                todo!()
+            Destination::Character(id) => {
+                let char: Gd<Node3D> = Gd::from_instance_id(id);
+                char.get_global_position()
             }
         }
     }
@@ -41,6 +67,7 @@ impl ThinkerState for GotoState {
     }
 
     fn enter(&mut self, mut args: StateArguments) {
+        self.should_repath = self.destination.is_dynamic_pos();
         let mut bind = args.base.bind_mut();
         let Some(nav_agent) = bind.navigation_agent.as_mut() else {
             return;
@@ -52,7 +79,7 @@ impl ThinkerState for GotoState {
         let mut anim_node_state_machine = anim_tree
             .get("parameters/playback".into())
             .to::<Gd<AnimationNodeStateMachinePlayback>>();
-        anim_node_state_machine.travel("Walk".into());
+        anim_node_state_machine.travel(self.animation_name.clone().into());
     }
 
     fn physics_process(&mut self, delta: f64, mut args: StateArguments) {
@@ -60,21 +87,23 @@ impl ThinkerState for GotoState {
         let Some(character) = bind.character_body.clone() else {
             return;
         };
-        let Some(mut anim_tree) = bind.animation_tree.clone() else {
+        let Some(mut nav_agent) = bind.navigation_agent.as_mut().cloned() else {
             return;
         };
+
+        if self.should_repath && (self.time_since_last_pathing.elapsed().unwrap().as_secs_f64() > 0.25) {
+            self.time_since_last_pathing = SystemTime::now();
+            nav_agent.set_target_position(self.get_target_pos());
+        }
+
         let velocity = character.get_velocity();
         let (speed, acceleration) = match args.blackboard.walk_speed {
-            MovementSpeed::Invalid => {
-                godot_print!("invalid!!");
-                (bind.movement_speed, bind.acceleration)
-            }
-            MovementSpeed::Walk => (
+            SpeedMod::Slow => (
                 bind.movement_speed * bind.walk_speed_mod,
                 bind.acceleration * bind.walk_speed_mod,
             ),
-            MovementSpeed::Run => (bind.movement_speed, bind.acceleration),
-            MovementSpeed::Dash => (bind.movement_speed * 2.0, bind.acceleration * 2.0),
+            SpeedMod::Normal => (bind.movement_speed, bind.acceleration),
+            SpeedMod::Fast => (bind.movement_speed * 2.0, bind.acceleration * 2.0),
         };
 
         // bail if navigation finished
@@ -86,11 +115,7 @@ impl ThinkerState for GotoState {
             }
             return;
         }
-        let Some(nav_agent) = bind.navigation_agent.as_mut() else {
-            return;
-        };
         if nav_agent.is_navigation_finished() {
-            anim_tree.set("walk".into(), false.to_variant());
             self.finished = true;
             args.world_state[WorldStateProperty::IsNavigationFinished] =
                 Some(WSProperty::Truth(true));
@@ -107,14 +132,15 @@ impl ThinkerState for GotoState {
             return;
         }
         let look_target = lateral_plane.project(next_path_position);
-        let update_look_target = args
-            .blackboard
-            .rotation_target
-            .as_ref()
-            .map(|rt| !(*rt - look_target).is_zero_approx())
-            .unwrap_or(true);
-        if update_look_target {
-            args.blackboard.rotation_target = Some(look_target);
+        let mut debug_node = character.get_node_as::<MeshInstance3D>("Debug/DebugNav");
+        debug_node.set_global_position(look_target);
+
+        if let Some(RotationTarget::Position(current_look_target)) = args.blackboard.rotation_target.as_ref() {
+            if !(*current_look_target - look_target).is_zero_approx() {
+                args.blackboard.rotation_target = Some(RotationTarget::Position(look_target));
+            }
+        } else {
+            args.blackboard.rotation_target = Some(RotationTarget::Position(look_target));
         }
 
         let dot_product: f32 = 1.0;

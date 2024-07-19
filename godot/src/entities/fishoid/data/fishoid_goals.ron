@@ -10,8 +10,10 @@
         desired_state: WorldState(
             is_area_surveyed: Truth(true)
         ),
-        required_state: WorldState()
-    ),   
+        required_state: WorldState(
+            has_target: Truth(false)
+        )
+    ),
     GoalComponent(
         name: "Idle",
         goal_type: BasicGoal(),
@@ -28,25 +30,51 @@
     ),
     GoalComponent(
         name: "Dodge",
-        goal_type: DodgeGoal(),
+        goal_type: KillEnemyGoal(),
         priority: 10,
         desired_state: WorldState(
             is_target_aiming_at_me: Truth(false),
             ),
         required_state: WorldState(
             is_target_aiming_at_me: Truth(true),
-            is_in_combat: Truth(true),
             has_target: Target(Character)
         )
     ),
-        GoalComponent(
+    GoalComponent(
         name: "KillEnemy",
-        goal_type: KillEnemyGoal(),
-        priority: 5,
+        goal_type: BasicGoal(),
+        priority: 6,
         desired_state: WorldState(is_target_dead: Truth(true)),
         required_state: WorldState(
-            is_in_combat: Truth(true),
             has_target: Target(Character)
         )
-    )
+    ),
+    GoalComponent(
+        name: "ChaseEnemy",
+        goal_type: ChaseEnemyGoal(),
+        priority: 5,
+        desired_state: WorldState(
+            at_target_position: Truth(true)
+        ),
+        required_state: WorldState(
+            has_target: Target(Character),
+            is_weapon_armed: Truth(false)
+        )
+    ),
+    GoalComponent(
+        name: "ReleaseWeapon",
+        goal_type: BasicGoal(),
+        priority: 4,
+        desired_state: WorldState(is_weapon_armed: Truth(false)),
+        required_state: WorldState(is_weapon_armed: Truth(true)),
+    ),
+    GoalComponent(
+        name: "Recover From Attack",
+        goal_type: BasicGoal(),
+        priority: 1,
+        desired_state: WorldState(is_target_dead: Truth(true)),
+        required_state: WorldState(
+            has_target: Target(Character)
+        )
+    ),
 ]

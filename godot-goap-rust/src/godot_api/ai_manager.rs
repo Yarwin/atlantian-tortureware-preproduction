@@ -1,10 +1,10 @@
-use crate::actions::action_types::Action;
+use crate::goap_actions::action_types::Action;
 use crate::ai::process_plan::{process_plan, ThinkerPlanEvent, ThinkerProcess};
-use crate::ai::thinker::Thinker;
+use crate::ai::thinker::{Thinker, ThinkerShared};
 use crate::ai_nodes::ai_node::AINode;
 use crate::ai_nodes::godot_ai_node::GodotAINode;
 use crate::animations::animation_data::AnimationsData;
-use crate::goals::goal_component::GoalComponent;
+use crate::goap_goals::goal_component::GoalComponent;
 use crate::godot_api::godot_thinker::GodotThinker;
 use crate::godot_api::CONNECT_ONE_SHOT;
 use crate::sensors::sensor_types::PollingSensor;
@@ -19,7 +19,7 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use crate::ai::working_memory::WorkingMemoryFactType;
+use crate::ai::working_memory::WMProperty;
 
 #[derive(GodotClass)]
 #[class(init, base=Node, rename=AIManager)]
@@ -44,7 +44,7 @@ pub struct GodotAIManager {
 impl INode for GodotAIManager {
     fn physics_process(&mut self, delta: f64) {
         let mut memories: Vec<_> = self.thinkers.values().map(|t| t.shared.clone()).collect();
-        memories.par_iter_mut().for_each(|shared| {
+        memories.par_iter_mut().rev().for_each(|shared| {
             let Ok(mut shared) = shared.lock() else {
                 panic!("mutex failed")
             };
@@ -111,6 +111,36 @@ impl GodotAIManager {
     }
 
     #[func]
+    pub fn get_thinker_target(&self, thinker_id: u32) -> Variant {
+        let thinker = self.thinkers.get(&thinker_id).unwrap();
+        let shared = thinker.shared.lock().unwrap();
+        let Some(target) = shared.blackboard.target.as_ref().map(|t| t.get_target_pos().map(|pos| pos.to_variant())) else {return Variant::nil()};
+        target.unwrap_or(Variant::nil())
+    }
+
+    #[func]
+    fn get_thinker_debug_data(&self, thinker_id: u32) -> Dictionary {
+        let thinker = self.thinkers.get(&thinker_id).unwrap();
+        let shared = thinker.shared.lock().unwrap();
+        let current_goal: String = if let Some(current) = shared.blackboard.current_goal {
+            thinker.goals[current].name.clone()
+        } else {
+            "no goal".into()
+        };
+        let current_action: String = if let Some(current) = shared.blackboard.current_action() {
+            format!("{:?}", thinker.actions[current])
+        } else {
+            "no action".into()
+        };
+        let current_world_state = format!("{:?}", shared.world_state);
+        dict! {
+            "current_world_state": current_world_state,
+            "goal": current_goal,
+            "action": current_action
+        }
+    }
+
+    #[func]
     fn unregister_thinker(&mut self, id: u32) {
         self.thinkers.remove(&id);
     }
@@ -126,7 +156,7 @@ impl GodotAIManager {
 
 impl GodotAIManager {
 
-    pub fn add_new_wm_fact(&mut self, thinker_id: u32, fact: WorkingMemoryFactType, confidence: f32, expiration: f64) {
+    pub fn add_new_wm_fact(&mut self, thinker_id: u32, fact: WMProperty, confidence: f32, expiration: f64) {
         let Ok(mut guard) = self.thinkers[&thinker_id].shared.lock() else {panic!("mutex failed!")};
         guard.working_memory.add_working_memory_fact(fact, confidence, expiration);
         drop(guard)
@@ -182,7 +212,7 @@ impl GodotAIManager {
         }
         let node = AINode::from(&*ai_node);
         let Ok(mut ai_nodes) = self.ai_nodes.lock() else {
-            panic!("RwLock Writer failed!");
+            panic!("Mutex failed!");
         };
         ai_nodes.insert(id, node);
         id
@@ -210,6 +240,14 @@ impl GodotAIManager {
             .as_ref()
             .map(|agent| agent.get_navigation_map());
 
+        let mut shared = ThinkerShared {
+            working_memory: Default::default(),
+            blackboard: Default::default(),
+            world_state: Self::load(&godot_thinker.initial_state),
+            target_mask: Default::default(),
+        };
+        shared.blackboard.thinker_position = godot_thinker.base().get_global_position();
+
         let thinker = Thinker {
             id,
             base: Some(godot_thinker.base().clone().cast::<GodotThinker>()),
@@ -220,6 +258,7 @@ impl GodotAIManager {
             animations: self
                 .get_animations_data(&godot_thinker.animation_data)
                 .unwrap(),
+            shared: Arc::new(Mutex::new(shared)),
             navigation_map_rid,
             ..Default::default()
         };

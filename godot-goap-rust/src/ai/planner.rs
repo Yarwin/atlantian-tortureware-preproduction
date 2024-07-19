@@ -143,7 +143,7 @@ pub fn plan<'a, T: PlanAction<U>, U>(
 #[cfg(feature = "use_serde")]
 mod test {
     use super::*;
-    use serde_derive::Deserialize;
+    use serde::Deserialize;
     use std::fs;
     use std::path::Path;
     extern crate serde_json;

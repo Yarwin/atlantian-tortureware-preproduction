@@ -9,5 +9,13 @@
     VisionCharacterSensor(
         update_every: 0.3,
         last_update_delta: 0.4,
+    ),
+    DistanceToTargetSensor(
+        update_every: 0.1,
+        last_update_delta: 0.0,
+        distance_close: 2.5,
+        distance_medium: 12.0,
+        distance_far: 14.0,
+        max_distance: 16.0
     )
 ]

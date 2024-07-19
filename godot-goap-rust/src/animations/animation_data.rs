@@ -4,21 +4,24 @@ use crate::thinker_states::animate::AnimationMode;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AnimationType {
-    Walk,
-    Idle,
-    Patrol,
+    Attack,
+    AttackExhaustion,
     AttackPrepare,
     AttackReady,
-    AttackExhaustion,
+    AttackRelease,
     CivilianPose,
     Hurt,
+    Idle,
     Invalid,
-    Surprised
+    Patrol,
+    Surprised,
+    Walk,
 }
 
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AnimationProps {
+    pub tree_name: String,
     pub name: String,
     pub mode: AnimationMode,
 }
@@ -28,9 +31,11 @@ pub struct AnimationsData {
     walk: Option<AnimationProps>,
     idle: Option<AnimationProps>,
     patrol: Option<AnimationProps>,
+    attack: Option<AnimationProps>,
     attack_prepare: Option<AnimationProps>,
     attack_ready: Option<AnimationProps>,
     attack_exhaustion: Option<AnimationProps>,
+    attack_release: Option<AnimationProps>,
     civilian_pose: Option<AnimationProps>,
     hurt: Option<AnimationProps>,
     surprised: Option<AnimationProps>
@@ -54,7 +59,9 @@ impl Index<&AnimationType> for AnimationsData {
             AnimationType::AttackPrepare => {
                 self.attack_prepare.as_ref().expect("no animation data!")
             }
+            AnimationType::Attack => self.attack.as_ref().expect("no animation data!"),
             AnimationType::AttackReady => self.attack_ready.as_ref().expect("no animation data!"),
+            AnimationType::AttackRelease => self.attack_release.as_ref().expect("no animation data!"),
             AnimationType::AttackExhaustion => {
                 self.attack_exhaustion.as_ref().expect("no animation data!")
             }

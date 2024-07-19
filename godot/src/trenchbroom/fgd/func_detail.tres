@@ -26,5 +26,5 @@ class_property_descriptions = {}
 meta_properties = {
 "color": Color(0.8, 0.8, 0.8, 1)
 }
-node_class = "StaticBody3D"
+node_class = "StaticReactiveBody3D"
 name_property = ""

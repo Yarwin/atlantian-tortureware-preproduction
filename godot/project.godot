@@ -20,6 +20,8 @@ config/icon="res://icon.svg"
 [autoload]
 
 AiManager="*res://src/ai/managers/ai_manager.tscn"
+EventBus="*res://src/managers/event_bus.gd"
+GameEffectsManager="*res://src/managers/game_effects_manager.tscn"
 
 [editor_plugins]
 
@@ -63,6 +65,8 @@ move_forward={
 3d_physics/layer_3="vision"
 3d_physics/layer_4="avoidance"
 3d_physics/layer_5="sound"
+3d_physics/layer_6="projectiles"
+3d_physics/layer_7="frob"
 
 [physics]
 
@@ -70,4 +74,5 @@ common/physics_interpolation=true
 
 [rendering]
 
+anti_aliasing/quality/msaa_3d=1
 occlusion_culling/use_occlusion_culling=true

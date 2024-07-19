@@ -13,6 +13,7 @@ use godot::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use crate::sensors::distance_to_target_sensor::DistanceToTargetSensor;
 
 #[allow(unused_attributes, dead_code)]
 #[derive(Debug)]
@@ -30,17 +31,20 @@ pub struct SensorArguments<'a> {
     pub ainodes: &'a Arc<Mutex<HashMap<u32, AINode>>>,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[enum_dispatch]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum EventSensor {
     DamageSensor,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[enum_dispatch]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PollingSensor {
     PatrolPointSensor,
     VisionCharacterSensor,
+    DistanceToTargetSensor
 }
 
 #[enum_dispatch(PollingSensor)]

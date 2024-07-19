@@ -1,4 +1,4 @@
-use crate::ai::blackboard::Blackboard;
+use crate::ai::blackboard::{Blackboard, SpeedMod};
 use crate::godot_api::godot_thinker::GodotThinker;
 use godot::classes::{
     CharacterBody3D, MeshInstance3D, PhysicsRayQueryParameters3D, PhysicsServer3D,
@@ -34,6 +34,12 @@ pub struct NavigationArguments<'a> {
 #[derive(Default, Debug)]
 pub struct Navigator {
     pub danger_table: SteeringTable,
+}
+
+#[derive(Debug)]
+pub enum RotationTarget {
+    Position(Vector3),
+    Character(InstanceId)
 }
 
 fn combine_tables_and_get_velocity(
@@ -122,24 +128,15 @@ fn avoid(
             .map(|v| v.to::<Vector3>())
         {
             let distance = caster_pos.distance_to(colpos - UP_OFFSET);
-            if distance >= agent_radius {
+            if distance > agent_radius {
                 let current_danger =
                     (1.0 - (distance / (avoidance_radius - agent_radius))).max(0.0);
                 // interpolate the result over few frames to prevent "cycling"
                 danger_table[i] = old_danger_table[i].lerp(current_danger, 0.33);
                 continue;
             }
-
-            let is_colliding_with_other_character = intersection_result
-                .get("collider")
-                .map(|v| v.try_to::<Gd<CharacterBody3D>>().is_ok())
-                .unwrap_or(false);
-            if is_colliding_with_other_character {
-                // apply repulsion force
-                danger_table[i] = 1.10;
-            } else {
-                danger_table[i] = 1.0;
-            }
+            // apply repulsion force
+            danger_table[i] = 1.5;
         }
     }
     danger_table
@@ -147,10 +144,17 @@ fn avoid(
 
 pub fn rotate(
     character: &mut Gd<CharacterBody3D>,
-    target: Vector3,
+    rotation_target: &RotationTarget,
     rotation_speed: f32,
     delta: f64,
 ) {
+    let target = match rotation_target {
+        RotationTarget::Position(p) => {*p}
+        RotationTarget::Character(character_id) => {
+            let char: Gd<Node3D> = Gd::from_instance_id(*character_id);
+            char.get_global_position()
+        }
+    };
     let ground_offset = (character.get_global_transform().origin * Vector3::UP).y;
     let lateral_plane = Plane::new(Vector3::UP, ground_offset);
     let look_at_transform =
@@ -170,10 +174,13 @@ pub fn navigate(mut navigation_arguments: NavigationArguments, delta: f64) {
     };
 
     // rotate character
-    if let Some(rotation_target) = navigation_arguments.blackboard.rotation_target {
-        rotate(&mut character, rotation_target, bind.rotation_speed, delta);
-        let mut debug_node = character.get_node_as::<MeshInstance3D>("Debug/DebugNav");
-        debug_node.set_global_position(rotation_target);
+    if let Some(rotation_target) = navigation_arguments.blackboard.rotation_target.as_ref() {
+        let rotation_speed = match navigation_arguments.blackboard.rotation_speed {
+            SpeedMod::Slow => { bind.rotation_speed_walk }
+            SpeedMod::Normal => {bind.rotation_speed_normal}
+            SpeedMod::Fast => {bind.rotation_speed_fast}
+        };
+        rotate(&mut character, rotation_target, rotation_speed, delta);
     }
 
     let mut desired_velocity = navigation_arguments
@@ -181,7 +188,7 @@ pub fn navigate(mut navigation_arguments: NavigationArguments, delta: f64) {
         .desired_velocity
         .take()
         .unwrap_or(Vector3::ZERO);
-    // calculate the context steering – see http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter18_Context_Steering_Behavior-Driven_Steering_at_the_Macro_Scale.pdf
+    // calculate the Context steering – see http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter18_Context_Steering_Behavior-Driven_Steering_at_the_Macro_Scale.pdf
     if !desired_velocity.is_zero_approx() {
         let old_danger_table = &navigation_arguments.navigation_data.danger_table;
         let dir = desired_velocity.normalized();

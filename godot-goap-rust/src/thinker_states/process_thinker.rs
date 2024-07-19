@@ -10,6 +10,8 @@ use godot::engine::PhysicsServer3D;
 use godot::prelude::*;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use crate::ai::world_state::WorldStateProperty;
+use crate::ai::world_state::WSProperty::{Target, Truth};
 use crate::targeting::targeting_systems::TargetMask;
 
 /// a struct that lazily polls the world around an agent
@@ -196,12 +198,20 @@ pub fn process_thinker(
         sensor.process(delta, &mut sensor_args);
     }
     // update target selectors
+    // todo – replace with some more sophisticated target selectors (sensors-like)
     if sensor_args.blackboard.invalidate_target {
+        sensor_args.blackboard.target = None;
         let valid_target_selectors = TargetMask::valid_target_selectors(sensor_args.blackboard.valid_targets);
-        for (_target_mask, target_selector) in valid_target_selectors {
-            target_selector(&mut sensor_args);
-            // found a target
-            if !sensor_args.blackboard.invalidate_target {break}
+        for (_target_mask, target_type, target_selector) in valid_target_selectors {
+            if let Some(target) = target_selector(&mut sensor_args) {
+                sensor_args.blackboard.invalidate_target = false;
+                sensor_args.blackboard.target = Some(target);
+                sensor_args.world_state[WorldStateProperty::HasTarget] = Some(Target(target_type));
+                break
+            }
+        }
+        if sensor_args.blackboard.target.is_none() {
+            sensor_args.world_state[WorldStateProperty::HasTarget] = Some(Truth(false));
         }
     }
 

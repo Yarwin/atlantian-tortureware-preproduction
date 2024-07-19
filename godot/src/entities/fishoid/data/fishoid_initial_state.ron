@@ -1,0 +1,6 @@
+#![enable(unwrap_newtypes)]
+#![enable(unwrap_variant_newtypes)]
+#![enable(implicit_some)]
+WorldState(
+    has_target: Truth(false)
+)

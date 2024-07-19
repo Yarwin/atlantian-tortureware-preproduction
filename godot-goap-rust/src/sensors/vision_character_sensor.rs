@@ -1,5 +1,5 @@
 use std::time::SystemTime;
-use crate::ai::working_memory::{FactQuery, FactQueryCheck, Knowledge, Stimuli, WorkingMemoryFactType};
+use crate::ai::working_memory::{FactQuery, FactQueryCheck, Knowledge, AIStimuli, WMProperty};
 use crate::godot_api::godot_visible_area_3d::GodotVisibilityArea3D;
 use crate::sensors::sensor_types::{SensorArguments, SensorPolling};
 use godot::classes::{PhysicsRayQueryParameters3D, PhysicsServer3D};
@@ -69,10 +69,15 @@ impl SensorPolling for VisionCharacterSensor {
 
             let mut distance_to_target: f32 = 0.0;
             let mut character_id: Option<InstanceId> = None;
+            let mut see_point: Option<Vector3> = None;
 
             for raycast_target in raycast_directions {
                 ray_params.set_to(raycast_target);
                 let intersection_result = direct_space.intersect_ray(ray_params.clone());
+                let Some(intersection_point) = intersection_result
+                    .get("position")
+                    .map(|v| v.to::<Vector3>()) else {continue};
+
                 is_target_visible = intersection_result
                     .get("rid")
                     .map(|r| r.to::<Rid>() == target.area_rid)
@@ -80,31 +85,28 @@ impl SensorPolling for VisionCharacterSensor {
 
                 // bail if we see a target
                 if is_target_visible {
-                    distance_to_target = intersection_result
-                        .get("position")
-                        .map(|v| v.to::<Vector3>().distance_to(args.head_position))
-                        .unwrap();
+                    distance_to_target = intersection_point.distance_to(args.head_position);
                     character_id = intersection_result.get("collider").map(|v| {
                         let area = v.to::<Gd<GodotVisibilityArea3D>>();
                         let instance_id = area.bind().owner.as_ref().unwrap().instance_id();
                         instance_id
                     });
+                    see_point = Some(intersection_point);
                     break;
                 }
             }
-
             // bail if target is not visible
             if !is_target_visible {
                 continue;
             }
             // get detection strength – it takes at least two updates to spot one target
-            let detection_strength = ((11.0 - distance_to_target.min(11.0)) / 11.0).min(1.);
+            let detection_strength = ((16.0 - distance_to_target.min(16.0)) / 16.0).min(1.);
             let mut previous_stimulation: f32 = 0.0;
             let current_stimulation: f32;
             let fact_query =
                 FactQuery::with_check(
                     FactQueryCheck::Match(
-                        WorkingMemoryFactType::Stimuli(Stimuli::Character(character_id.unwrap()))
+                        WMProperty::AIStimuli(AIStimuli::Character(character_id.unwrap(), None))
                     )
                 );
             // update fact
@@ -113,12 +115,15 @@ impl SensorPolling for VisionCharacterSensor {
                 previous_stimulation = fact.confidence;
                 fact.confidence = (fact.confidence + detection_strength).min(1.1);
                 current_stimulation = fact.confidence;
+                if let WMProperty::AIStimuli(AIStimuli::Character(_i, pos)) = &mut fact.f_type {
+                    *pos = see_point;
+                }
             } else {
                 args.working_memory.add_working_memory_fact(
-                    WorkingMemoryFactType::Stimuli(Stimuli::Character(character_id.unwrap())),
+                    WMProperty::AIStimuli(AIStimuli::Character(character_id.unwrap(), see_point)),
                     detection_strength,
-                    // Store a stimuli for four updates – don't keep it if character isn't actually visible
-                    self.update_every * 3.0,
+                    // Store a stimuli for two updates – don't keep it if character isn't actually visible
+                    self.update_every * 3.0 + delta,
                 );
                 current_stimulation = detection_strength;
             }
@@ -127,22 +132,21 @@ impl SensorPolling for VisionCharacterSensor {
             if current_stimulation >= 1.0 && previous_stimulation < 1.0 {
                 let fact_query =
                     FactQuery::with_check(
-                        FactQueryCheck::Match(WorkingMemoryFactType::Knowledge(Knowledge::Character(character_id.unwrap()))));
+                        FactQueryCheck::Match(WMProperty::Knowledge(Knowledge::Character(character_id.unwrap(), None))));
                 if let Some(fact) = args.working_memory.find_fact_mut(fact_query) {
                     // update
                     fact.confidence = distance_to_target;
                     fact.update_time = SystemTime::now();
                 } else {
-                    godot_print!("new character spotted!");
                     // new character spotted!!
                     args.working_memory.add_working_memory_fact(
-                        WorkingMemoryFactType::Knowledge(Knowledge::Character(character_id.unwrap())),
+                        WMProperty::Knowledge(Knowledge::Character(character_id.unwrap(), see_point)),
                         distance_to_target,
-                        30.0
+                        240.0
                     );
                     // add desire to be surprised upon spotting new enemy
                     args.working_memory.add_working_memory_fact(
-                        WorkingMemoryFactType::Desire(Surprise),
+                        WMProperty::Desire(Surprise),
                         1.0,
                         15.0
                     );
@@ -150,6 +154,16 @@ impl SensorPolling for VisionCharacterSensor {
                 // force retargeting
                 args.blackboard.invalidate_target = true;
                 args.blackboard.valid_targets = args.blackboard.valid_targets.union(TargetMask::VisibleCharacter);
+            } else if current_stimulation > 1.0 {
+                // update character knowledge with latest known position
+                let fact_query =
+                    FactQuery::with_check(
+                        FactQueryCheck::Match(WMProperty::Knowledge(Knowledge::Character(character_id.unwrap(), None))));
+                let Some(fact) = args.working_memory.find_fact_mut(fact_query) else {return false};
+                fact.confidence = distance_to_target;
+                fact.update_time = SystemTime::now();
+                let WMProperty::Knowledge(Knowledge::Character(_i, pos)) = &mut fact.f_type else { return false };
+                *pos = see_point;
             }
         }
         false

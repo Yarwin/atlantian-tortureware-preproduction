@@ -6,11 +6,24 @@ use strum_macros::EnumDiscriminants;
 /// AIWorking memory is a central place to store the AI's observations about the world.
 /// AISensors and AIGoals publish and retrieve data to/from AIWorkingMemory to make decisions.
 
-#[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
+#[derive(Debug, EnumDiscriminants)]
 #[strum_discriminants(name(WMKnowledgeType))]
 pub enum Knowledge {
     Invalid,
-    Character(InstanceId)
+    Character(InstanceId, Option<Vector3>)
+}
+
+impl Eq for Knowledge {}
+
+impl PartialEq for Knowledge {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Knowledge::Character(i, ..), Knowledge::Character(other_i, ..)) => {
+                i == other_i
+            }
+            (_, _) => false
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
@@ -44,7 +57,7 @@ impl PartialEq for Node {
     fn eq(&self, other: &Self) -> bool {
         match (&self, other) {
             (Node::Patrol{ainode_id, ..}, Node::Patrol{ainode_id: other_ainode_id, ..}) => {
-                return ainode_id == other_ainode_id
+                ainode_id == other_ainode_id
             },
             _ => false
         }
@@ -59,18 +72,18 @@ pub enum Event {
 
 #[derive(Debug, EnumDiscriminants)]
 #[strum_discriminants(name(WMStimuliType))]
-pub enum Stimuli {
+pub enum AIStimuli {
     /// visible character stimuli
-    Character(InstanceId),
+    Character(InstanceId, Option<Vector3>),
     Damage { amount: f64, direction: Vector3 },
 }
 
-impl Eq for Stimuli {}
+impl Eq for AIStimuli {}
 
-impl PartialEq for Stimuli {
+impl PartialEq for AIStimuli {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Stimuli::Character(i), Stimuli::Character(other_i)) => {
+            (AIStimuli::Character(i, ..), AIStimuli::Character(other_i, ..)) => {
                 if i == other_i {
                     return true
                 }
@@ -83,8 +96,8 @@ impl PartialEq for Stimuli {
 
 #[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
 #[strum_discriminants(name(WorkingMemoryFactTypeKey))]
-pub enum WorkingMemoryFactType {
-    Stimuli(Stimuli),
+pub enum WMProperty {
+    AIStimuli(AIStimuli),
     Desire(Desire),
     Disturbance,
     Node(Node),
@@ -98,8 +111,7 @@ pub enum WorkingMemoryFactType {
 pub struct WorkingMemoryFact {
     /// a value in range of 0-100 telling about importance/confidence of a given fact
     pub confidence: f32,
-    id: u32,
-    pub f_type: WorkingMemoryFactType,
+    pub f_type: WMProperty,
     /// time since initialization at the time of adding this fact
     pub update_time: SystemTime,
     expiration: f64,
@@ -111,31 +123,31 @@ impl WorkingMemoryFact {
         for check in other.checks.iter() {
             match check {
                 FactQueryCheck::Node(node_type) => {
-                    let WorkingMemoryFactType::Node(v) = &self.f_type else {return false};
+                    let WMProperty::Node(v) = &self.f_type else {return false};
                     if WMNodeType::from(v) != *node_type {
                         return false
                     }
                 }
                 FactQueryCheck::TaskType(task_type) => {
-                    let WorkingMemoryFactType::Task(t) = &self.f_type else {return false};
+                    let WMProperty::Task(t) = &self.f_type else {return false};
                     if WMTaskType::from(t) != *task_type {
                         return false
                     }
                 }
                 FactQueryCheck::Knowledge(knowledge_type) => {
-                    let WorkingMemoryFactType::Knowledge(k) = &self.f_type else {return false};
+                    let WMProperty::Knowledge(k) = &self.f_type else {return false};
                     if WMKnowledgeType::from(k) != *knowledge_type {return false}
                 }
                 FactQueryCheck::Desire(desire_type) => {
-                    let WorkingMemoryFactType::Desire(d) = &self.f_type else {return false};
+                    let WMProperty::Desire(d) = &self.f_type else {return false};
                     if WMDesireType::from(d) != *desire_type {return false}
                 }
                 FactQueryCheck::Event(e_type) => {
-                    let WorkingMemoryFactType::Event(e) = &self.f_type else {return false};
+                    let WMProperty::Event(e) = &self.f_type else {return false};
                     if WMEventType::from(e) != *e_type {return false}
                 }
                 FactQueryCheck::Stimuli(s_type) => {
-                    let WorkingMemoryFactType::Stimuli(s) = &self.f_type else {return false};
+                    let WMProperty::AIStimuli(s) = &self.f_type else {return false};
                     if WMStimuliType::from(s) != *s_type {return false}
                 }
                 FactQueryCheck::Match(wmfact_type) => {
@@ -151,8 +163,7 @@ impl WorkingMemoryFact {
 
 #[derive(Debug)]
 pub struct WorkingMemory {
-    current_id: u32,
-    capacity: usize,
+    clean_threshold: usize,
     facts_list: VecDeque<WorkingMemoryFact>,
     /// a queue that holds a list of facts to remove/replace
     to_remove: VecDeque<usize>,
@@ -160,26 +171,18 @@ pub struct WorkingMemory {
 
 impl Default for WorkingMemory {
     fn default() -> Self {
-        let capacity = 32;
         WorkingMemory {
-            current_id: 0,
-            capacity,
-            facts_list: VecDeque::with_capacity(capacity),
+            clean_threshold: 26,
+            facts_list: VecDeque::with_capacity(32),
             to_remove: Default::default(),
         }
     }
 }
 
 impl WorkingMemory {
-    fn next_id(&mut self) -> u32 {
-        self.current_id += 1;
-        self.current_id
-    }
-
     pub fn with_capacity(capacity: usize) -> Self {
         WorkingMemory {
-            current_id: 0,
-            capacity,
+            clean_threshold: (capacity as f32 * 0.8) as usize,
             facts_list: VecDeque::with_capacity(capacity),
             to_remove: Default::default(),
         }
@@ -187,14 +190,12 @@ impl WorkingMemory {
 
     pub fn add_working_memory_fact(
         &mut self,
-        f_type: WorkingMemoryFactType,
+        f_type: WMProperty,
         confidence: f32,
         expiration: f64,
     ) {
-        let id = self.next_id();
         let fact = WorkingMemoryFact {
             confidence,
-            id,
             f_type,
             update_time: SystemTime::now(),
             expiration,
@@ -217,7 +218,7 @@ impl WorkingMemory {
         count
     }
 
-    // marks facts as invalid
+    /// marks facts as invalid & cleans the list
     pub fn validate(&mut self) {
         self.to_remove
             .extend(self.facts_list.iter_mut().enumerate().filter_map(|(i, f)| {
@@ -227,6 +228,9 @@ impl WorkingMemory {
                 }
                 None
             }));
+        if self.facts_list.len() >= self.clean_threshold && self.to_remove.len() > 1 {
+            self.clean();
+        }
     }
 
     pub fn clean(&mut self) {
@@ -291,7 +295,7 @@ impl WorkingMemory {
 }
 
 pub enum FactQueryCheck {
-    Match(WorkingMemoryFactType),
+    Match(WMProperty),
     Stimuli(WMStimuliType),
     Node(WMNodeType),
     TaskType(WMTaskType),

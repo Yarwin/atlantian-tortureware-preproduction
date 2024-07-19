@@ -1,4 +1,4 @@
-use crate::ai::working_memory::{FactQuery, FactQueryCheck, Node, WMNodeType, WorkingMemoryFactType};
+use crate::ai::working_memory::{FactQuery, FactQueryCheck, Node, WMNodeType, WMProperty};
 use crate::ai_nodes::ai_node::AINode;
 use crate::ai_nodes::godot_ai_node::AINodeType;
 use crate::sensors::sensor_types::SensorArguments;
@@ -86,7 +86,7 @@ impl SensorPolling for PatrolPointSensor {
         let nearest_node = Self::find_nearest(args);
         if let Some((node, pos)) = nearest_node {
             args.working_memory.add_working_memory_fact(
-                WorkingMemoryFactType::Node(Node::Patrol {
+                WMProperty::Node(Node::Patrol {
                     ainode_id: node,
                     position: pos,
                 }),

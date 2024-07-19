@@ -1,4 +1,6 @@
 use std::cmp::PartialEq;
+use std::fmt;
+use std::fmt::{Debug, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::{Index, IndexMut};
 
@@ -40,7 +42,7 @@ pub enum CoverStatusType {
 
 /// enum representing relative combat distance to given target
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
-pub enum DistanceToTargetType {
+pub enum DistanceToTarget {
     /// melee attack range
     Close,
     Medium,
@@ -49,6 +51,7 @@ pub enum DistanceToTargetType {
     OutsideReach,
 }
 
+
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum WSProperty {
     String(String),
@@ -56,9 +59,10 @@ pub enum WSProperty {
     WorldStateEvent(AIWorldStateEvent),
     Node(NodeTypeEnum),
     CoverStatus(CoverStatusType),
-    DistanceToTarget(DistanceToTargetType),
+    DistanceToTarget(DistanceToTarget),
     Target(TargetType),
 }
+
 
 /// An abstraction that keeps symbolic representation of the world
 /// for planing purposes
@@ -83,10 +87,11 @@ pub enum WorldStateProperty {
     IsTargetLookingAtMe,
     IsWeaponArmed,
     IsWeaponLoaded,
+    IsRecoveringFromAttack,
     ReactedToWorldStateEvent,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct WorldState {
     pub i_am_looking_at_target: Option<WSProperty>,
     pub anim_looped: Option<WSProperty>,
@@ -107,6 +112,7 @@ pub struct WorldState {
     pub is_target_looking_at_me: Option<WSProperty>,
     pub is_weapon_armed: Option<WSProperty>,
     pub is_weapon_loaded: Option<WSProperty>,
+    pub is_recovering_from_attack: Option<WSProperty>,
     pub reacted_to_world_state_event: Option<WSProperty>,
 }
 
@@ -117,6 +123,18 @@ impl<const N: usize> From<[(WorldStateProperty, WSProperty); N]> for WorldState 
             state[key] = Some(value);
         }
         state
+    }
+}
+
+impl Debug for WorldState {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let mut output = String::from("WorldState: ");
+        for key in WorldStateProperty::iter() {
+            if self[key].is_some() {
+                output.push_str(&format!("{:?}: {:?}; ", key, self[key].as_ref().unwrap()))
+            }
+        }
+        write!(f, "{}", output)
     }
 }
 
@@ -142,6 +160,7 @@ impl Index<WorldStateProperty> for WorldState {
             WorldStateProperty::IsTargetLookingAtMe => &self.is_target_aiming_at_me,
             WorldStateProperty::IsTargetDead => &self.is_target_dead,
             WorldStateProperty::AtTargetPosition => &self.at_target_position,
+            WorldStateProperty::IsRecoveringFromAttack => &self.is_recovering_from_attack,
             WorldStateProperty::IsWeaponArmed => &self.is_weapon_armed,
             WorldStateProperty::IsWeaponLoaded => &self.is_weapon_loaded,
             WorldStateProperty::IsNavigationFinished => &self.is_navigation_finished,
@@ -169,6 +188,7 @@ impl IndexMut<WorldStateProperty> for WorldState {
             WorldStateProperty::IsTargetLookingAtMe => &mut self.is_target_aiming_at_me,
             WorldStateProperty::IsTargetDead => &mut self.is_target_dead,
             WorldStateProperty::AtTargetPosition => &mut self.at_target_position,
+            WorldStateProperty::IsRecoveringFromAttack => &mut self.is_recovering_from_attack,
             WorldStateProperty::IsWeaponArmed => &mut self.is_weapon_armed,
             WorldStateProperty::IsWeaponLoaded => &mut self.is_weapon_loaded,
             WorldStateProperty::IsNavigationFinished => &mut self.is_navigation_finished,

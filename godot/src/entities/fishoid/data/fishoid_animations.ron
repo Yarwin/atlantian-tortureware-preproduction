@@ -3,15 +3,44 @@
 #![enable(implicit_some)]
 AnimationsData(
     walk: AnimationProps(
-        name: "walk",
+        tree_name: "Movement/Walk",
+        name: "Walk",
         mode: Cyclic
     ),
     patrol: AnimationProps(
+        tree_name: "Movement/Patrol",
         name: "Patrol",
-        mode: Timed(4.2)
+        mode: Timed(4.20)
     ),
     surprised: AnimationProps(
+        tree_name: "Movement/Alert",
         name: "Alert",
         mode: OneShot
-    )
+    ),
+    attack_prepare: AnimationProps(
+        tree_name: "Attack/AttackPrepare",
+        name: "AttackPrepare",
+        mode: OneShot,
+    ),    
+    attack_release: AnimationProps(
+        tree_name: "Attack/AttackRelease",
+        name: "AttackPrepare",
+        mode: OneShot,
+    ),
+    attack_ready: AnimationProps(
+        tree_name: "Attack/AttackReady",
+        name: "AttackReady",
+        mode: Timed(0.2)
+    ),
+    attack: AnimationProps(
+        tree_name: "Attack/Attack",
+        name: "Attack",
+        mode: OneShot
+    ),
+    attack_exhaustion: AnimationProps(
+        tree_name: "Movement/Idle",
+        name: "Idle",
+        mode: Timed(0.5)
+    ),
+    
 )

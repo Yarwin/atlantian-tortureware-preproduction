@@ -1,24 +1,28 @@
-[gd_scene load_steps=4 format=3 uid="uid://b4tvyguynxs6f"]
+[gd_scene load_steps=3 format=3 uid="uid://b4tvyguynxs6f"]
 
-[ext_resource type="Script" path="res://src/entities/debug_player/debug_player.gd" id="1_irjd4"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_y76je"]
-size = Vector3(0.25, 1.75, 0.25)
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_8f5f6"]
+height = 1.75
+radius = 0.125
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_a88t1"]
 radius = 0.204017
 
-[node name="DebugPlayer" type="CharacterBody3D"]
-script = ExtResource("1_irjd4")
+[node name="DebugPlayer" type="CharacterController3D" node_paths=PackedStringArray("collision_shape")]
+collision_shape = NodePath("CollisionShape3D")
+deceleration = 0.75
+speed = 6.0
+acceleration = 0.75
+gravity_scale = 1.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
-shape = SubResource("BoxShape3D_y76je")
+shape = SubResource("CylinderShape3D_8f5f6")
 
 [node name="Head" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.67233, 0)
 
 [node name="Camera3D" type="Camera3D" parent="Head"]
+current = true
 
 [node name="VisibleArea" type="VisibilityArea3D" parent="." node_paths=PackedStringArray("owner")]
 owner = NodePath("..")

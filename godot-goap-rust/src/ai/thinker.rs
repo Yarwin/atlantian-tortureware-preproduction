@@ -1,9 +1,9 @@
-use crate::actions::action_types::Action;
+use crate::goap_actions::action_types::Action;
 use crate::ai::blackboard::Blackboard;
 use crate::ai::working_memory::WorkingMemory;
 use crate::ai::world_state::WorldState;
 use crate::animations::animation_data::AnimationsData;
-use crate::goals::goal_component::GoalComponent;
+use crate::goap_goals::goal_component::GoalComponent;
 use crate::godot_api::godot_thinker::GodotThinker;
 use crate::sensors::sensor_types::{EventSensor, PollingSensor};
 use crate::targeting::targeting_systems::TargetMask;
@@ -21,11 +21,10 @@ pub struct Thinker {
     pub is_active: bool,
     pub state: Option<Box<dyn ThinkerState>>,
 
-    /// shared mutable
-    // todo – move to one struct and gate behind one Arc<Mutex<T>>
+    /// shared mutable owned by the thinker
     pub shared: Arc<Mutex<ThinkerShared>>,
 
-    /// shared immutable
+    /// shared immutable owned by AIManager
     pub goals: Arc<Vec<GoalComponent>>,
     pub actions: Arc<Vec<Action>>,
     pub animations: Arc<AnimationsData>,

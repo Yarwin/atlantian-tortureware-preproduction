@@ -21,9 +21,49 @@
 		animation: Idle
     ),
     Animate(
+        // Play some animation set by the goal (like for example the stun)
         cost: 1,
         preconditions: WorldState(),
         effects: WorldState(anim_played: Truth(true)),
         animation: Idle
-    )
+    ),
+    AttackRanged(
+        // attack
+        cost: 1,
+        preconditions: WorldState(
+            is_weapon_armed: Truth(true),
+            i_am_looking_at_target: Truth(true),
+            distance_to_target: DistanceToTarget(Medium)
+        ),
+        effects: WorldState(is_target_dead: Truth(true)),
+        animation: Attack
+    ),
+    Aim(
+        // rotate to target
+        cost: 1,
+        preconditions: WorldState(),
+        effects: WorldState(i_am_looking_at_target: Truth(true)),
+        animation: AttackReady
+    ),
+    DeployWeapon(
+        // prepare attack
+        cost: 1,
+        preconditions: WorldState(
+            has_target: Target(Character),
+            distance_to_target: DistanceToTarget(Medium)
+        ),
+        effects: WorldState(
+            is_weapon_armed: Truth(true)
+            ),
+        animation: AttackPrepare
+    ),
+    ReleaseWeapon(
+        // release weapon
+        cost: 1,
+        preconditions: WorldState(
+            is_weapon_armed: Truth(true)
+        ),
+        effects: WorldState(is_weapon_armed: Truth(false)),
+        animation: AttackRelease
+    ),
 ]

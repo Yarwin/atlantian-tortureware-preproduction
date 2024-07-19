@@ -1,6 +1,25 @@
-[gd_scene load_steps=2 format=3 uid="uid://0407y73st0sl"]
+[gd_scene load_steps=5 format=3 uid="uid://0407y73st0sl"]
 
 [ext_resource type="PackedScene" uid="uid://d0bf2uc5t4h08" path="res://src/levels/testing_grounds.tscn" id="1_helgn"]
+[ext_resource type="Script" path="res://testpanel.gd" id="2_g4o3d"]
+[ext_resource type="Shader" path="res://testing_ground_main.gdshader" id="2_uyo3u"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_du05y"]
+shader = ExtResource("2_uyo3u")
+shader_parameter/resolution = Vector2(500, 500)
+shader_parameter/scan_line_amount = 1.0
+shader_parameter/warp_amount = 0.549
+shader_parameter/noise_amount = 0.03
+shader_parameter/interference_amount = 0.2
+shader_parameter/grille_amount = 0.1
+shader_parameter/grille_size = 1.0
+shader_parameter/vignette_amount = 0.6
+shader_parameter/vignette_intensity = 0.4
+shader_parameter/aberation_amount = 0.5
+shader_parameter/roll_line_amount = 0.3
+shader_parameter/roll_speed = 1.0
+shader_parameter/scan_line_strength = -2.933
+shader_parameter/pixel_strength = -2.0
 
 [node name="TestingGroundMain" type="Control"]
 layout_mode = 3
@@ -22,6 +41,7 @@ grow_vertical = 2
 
 [node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
 handle_input_locally = false
+physics_object_picking = true
 size = Vector2i(1920, 1080)
 render_target_update_mode = 4
 
@@ -32,14 +52,44 @@ layout_mode = 1
 anchors_preset = -1
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_top = -250.0
-offset_right = 250.0
+offset_top = -512.0
+offset_right = 512.0
 grow_vertical = 0
+mouse_filter = 2
+stretch = true
 
 [node name="SubViewport" type="SubViewport" parent="SubViewportContainer2"]
 handle_input_locally = false
 render_target_update_mode = 4
 
 [node name="Camera3D" type="Camera3D" parent="SubViewportContainer2/SubViewport"]
-transform = Transform3D(1, 0, 0, 0, 0.270466, 0.96273, 0, -0.96273, 0.270466, -1.18822, 19.0695, 5.98185)
+transform = Transform3D(1, 0, 0, 0, 0.270466, 0.96273, 0, -0.96273, 0.270466, -1.18822, 23.2166, 4.33917)
 current = true
+
+[node name="ColorRect" type="ColorRect" parent="SubViewportContainer2/SubViewport"]
+material = SubResource("ShaderMaterial_du05y")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.75
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 0
+grow_vertical = 2
+script = ExtResource("2_g4o3d")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+bbcode_enabled = true
