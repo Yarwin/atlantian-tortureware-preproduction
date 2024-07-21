@@ -11,7 +11,7 @@ use crate::goap_goals::surprised_by_enemy_goal::BeSurprisedByEnemyGoal;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use crate::goap_goals::chase_enemy_goal::ChaseEnemyGoal;
 
 
@@ -21,7 +21,7 @@ pub struct AgentGoalWorldContext<'a> {
     pub working_memory: &'a mut WorkingMemory,
     pub current_world_state: &'a mut WorldState,
     pub blackboard: &'a mut Blackboard,
-    pub ai_nodes: &'a mut Option<Arc<Mutex<HashMap<u32, AINode>>>>,
+    pub ai_nodes: &'a mut Option<Arc<RwLock<HashMap<u32, AINode>>>>,
 }
 
 

@@ -15,7 +15,7 @@ use godot::prelude::*;
 use rayon::prelude::*;
 use serde::Deserialize;
 use std::collections::{HashMap, VecDeque};
-use std::sync::mpsc;
+use std::sync::{mpsc, RwLock};
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -28,7 +28,7 @@ pub struct GodotAIManager {
     pub goals: HashMap<GString, Arc<Vec<GoalComponent>>>,
     pub animations: HashMap<GString, Arc<AnimationsData>>,
     sensors_blueprint: HashMap<GString, Vec<PollingSensor>>,
-    pub ai_nodes: Arc<Mutex<HashMap<u32, AINode>>>,
+    pub ai_nodes: Arc<RwLock<HashMap<u32, AINode>>>,
     ainode_id_with_dependencies: VecDeque<(u32, Gd<GodotAINode>)>,
 
     pub thinkers: HashMap<u32, Thinker>,
@@ -101,7 +101,7 @@ impl GodotAIManager {
         // update all dependencies
         for (node_id, dependency) in self.ainode_id_with_dependencies.drain(..) {
             let dep_node_id = dependency.bind().ainode_id;
-            let Ok(mut ainodes_guard) = self.ai_nodes.lock() else {
+            let Ok(mut ainodes_guard) = self.ai_nodes.write() else {
                 panic!("Mutex failed!");
             };
             let ainode = ainodes_guard.get_mut(&node_id).expect("no such ainode!");
@@ -147,7 +147,7 @@ impl GodotAIManager {
 
     #[func]
     fn unregister_ainode(&mut self, id: u32) {
-        let Ok(mut ai_nodes) = self.ai_nodes.lock() else {
+        let Ok(mut ai_nodes) = self.ai_nodes.write() else {
             panic!("RwLock Writer failed!");
         };
         ai_nodes.remove(&id);
@@ -211,7 +211,7 @@ impl GodotAIManager {
                 .push_front((id, ai_node.dependency.as_ref().unwrap().clone()));
         }
         let node = AINode::from(&*ai_node);
-        let Ok(mut ai_nodes) = self.ai_nodes.lock() else {
+        let Ok(mut ai_nodes) = self.ai_nodes.write() else {
             panic!("Mutex failed!");
         };
         ai_nodes.insert(id, node);

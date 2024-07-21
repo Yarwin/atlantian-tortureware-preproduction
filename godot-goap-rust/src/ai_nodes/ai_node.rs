@@ -1,5 +1,7 @@
+use std::sync::atomic;
 use crate::ai_nodes::godot_ai_node::{AINodeType, GodotAINode};
 use godot::prelude::*;
+use atomic::{AtomicU32, Ordering};
 
 /// an abstraction that allows level designer to specify various points of interest for an AI
 #[derive(Debug, Default)]
@@ -50,11 +52,8 @@ impl AINode {
     pub fn is_locked_not_by(&self, not_by: u32) -> bool {
         match self {
             AINode::Patrol { base, .. } => {
-                let AINodeStatus::Locked(other_id) = &base.status else {return false};
-                if *other_id == not_by {
-                    return false
-                }
-                true
+                let val = base.status.load(Ordering::Acquire);
+                !((val != not_by) || (val == 0))
                 },
             _ => todo!(),
         }
@@ -62,7 +61,7 @@ impl AINode {
 
     pub fn is_locked(&self) -> bool {
         match self {
-            AINode::Patrol { base, .. } => !matches!(base.status, AINodeStatus::Free),
+            AINode::Patrol { base, .. } => base.is_locked(),
             _ => todo!(),
         }
     }
@@ -83,7 +82,7 @@ impl From<&GodotAINode> for AINode {
             ainode_id: value.ainode_id,
             base_id: value.base().instance_id(),
             position: value.base().get_global_position(),
-            status: Default::default(),
+            status: AtomicU32::new(0),
         };
         match value.node_type {
             AINodeType::Invalid => {
@@ -115,5 +114,12 @@ pub struct AINodeBase {
     pub ainode_id: u32,
     pub base_id: InstanceId,
     pub position: Vector3,
-    pub status: AINodeStatus,
+    /// status: stores 0 when free, agent_id otherwise
+    pub status: AtomicU32,
+}
+
+impl AINodeBase {
+    pub fn is_locked(&self) -> bool {
+        self.status.load(Ordering::Acquire) != 0
+    }
 }

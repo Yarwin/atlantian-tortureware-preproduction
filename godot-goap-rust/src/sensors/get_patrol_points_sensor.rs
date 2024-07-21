@@ -25,8 +25,8 @@ impl PatrolPointSensor {
             if *node_type != AINodeType::Patrol {
                 continue;
             }
-            let Ok(ainodes_guard) = args.ainodes.lock() else {
-                panic!("mutex failed!")
+            let Ok(ainodes_guard) = args.ainodes.read() else {
+                panic!("rwlock failed!")
             };
             let node = ainodes_guard
                 .get(node_id)

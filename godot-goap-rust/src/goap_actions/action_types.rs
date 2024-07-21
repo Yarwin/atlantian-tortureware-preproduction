@@ -10,7 +10,7 @@ use godot::builtin::Rid;
 use serde::{Deserialize, Serialize};
 use static_enum_dispatch::ActionDispatchEnum;
 use std::hash::Hash;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use crate::ai_nodes::ai_node::AINode;
 
 #[derive(Debug)]
@@ -20,7 +20,7 @@ pub struct AgentActionWorldContext<'a> {
     pub blackboard: &'a mut Blackboard,
     pub navigation_map_rid: Option<Rid>,
     pub animations: &'a Arc<AnimationsData>,
-    pub ai_nodes: &'a mut Option<Arc<Mutex<HashMap<u32, AINode>>>>,
+    pub ai_nodes: &'a mut Option<Arc<RwLock<HashMap<u32, AINode>>>>,
 }
 
 #[derive(Debug)]

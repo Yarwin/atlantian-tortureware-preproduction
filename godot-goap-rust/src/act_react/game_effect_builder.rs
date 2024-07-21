@@ -6,6 +6,9 @@ use godot::prelude::*;
 use crate::act_react::game_effect::{GameEffectProcessor};
 
 
+// todo – it can be actually pushed to Godot Singleton, similarly to godot's ClassDB. No need to dabble with unsafe when you can outsource risk and blame someone else for any and all of your mistakes
+
+
 pub type GameEffectInit = fn(Gd<Resource>, &Dictionary, &Dictionary, fn(&dyn GameEffectInitializer, &Dictionary, &Dictionary) -> GameEffectProcessor) -> GameEffectProcessor;
 static mut EFFECTS_REGISTRY: Option<HashMap<StringName, GameEffectInit>> = None;
 

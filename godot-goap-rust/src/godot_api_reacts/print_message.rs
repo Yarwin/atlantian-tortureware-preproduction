@@ -20,6 +20,7 @@ impl IResource for PrintMessageGameEffect {
     }
 }
 
+
 #[godot_api]
 impl PrintMessageGameEffect {
     #[func]

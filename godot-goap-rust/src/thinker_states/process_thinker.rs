@@ -9,7 +9,7 @@ use godot::classes::PhysicsShapeQueryParameters3D;
 use godot::engine::PhysicsServer3D;
 use godot::prelude::*;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use crate::ai::world_state::WorldStateProperty;
 use crate::ai::world_state::WSProperty::{Target, Truth};
 use crate::targeting::targeting_systems::TargetMask;
@@ -161,7 +161,7 @@ impl PollingResult {
 pub fn process_thinker(
     thinker: &mut Thinker,
     delta: f64,
-    ainodes: &Arc<Mutex<HashMap<u32, AINode>>>,
+    ainodes: &Arc<RwLock<HashMap<u32, AINode>>>,
 ) {
     let mut polls = PollingResult::from_godot_thinker(thinker.base.as_ref().unwrap());
     let base = thinker.base.as_mut().unwrap();

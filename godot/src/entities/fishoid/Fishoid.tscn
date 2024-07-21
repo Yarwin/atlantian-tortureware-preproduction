@@ -1,9 +1,9 @@
 [gd_scene load_steps=70 format=4 uid="uid://qaegqhcgvgj"]
 
 [ext_resource type="Script" path="res://src/entities/fishoid/fishoid.gd" id="1_6ui7v"]
-[ext_resource type="Texture2D" uid="uid://d0rphhqyok7ca" path="res://assets/fish7_rybon7_albedo.png" id="1_vhn36"]
-[ext_resource type="Texture2D" uid="uid://iychm8gxpjca" path="res://assets/fish7_rybon7_roughness.png" id="2_0khhm"]
-[ext_resource type="Texture2D" uid="uid://c125gyb7vb4ha" path="res://assets/fish7_rybon7_normalmap.png" id="3_l4jw6"]
+[ext_resource type="Texture2D" uid="uid://d0rphhqyok7ca" path="res://assets/models/fish7_rybon7_albedo.png" id="1_vhn36"]
+[ext_resource type="Texture2D" uid="uid://iychm8gxpjca" path="res://assets/models/fish7_rybon7_roughness.png" id="2_0khhm"]
+[ext_resource type="Texture2D" uid="uid://c125gyb7vb4ha" path="res://assets/models/fish7_rybon7_normalmap.png" id="3_l4jw6"]
 [ext_resource type="Texture2D" uid="uid://dis6capqnfbc8" path="res://assets/icons/pngwing.com.png" id="5_ir511"]
 [ext_resource type="Script" path="res://src/entities/fishoid/animation_resolver.gd" id="5_uw3al"]
 [ext_resource type="PackedScene" uid="uid://ck8ut83caaw2s" path="res://src/entities/projectiles/fishball/fishball.tscn" id="6_6m37m"]
@@ -4266,9 +4266,10 @@ movement_speed = 4.0
 walk_speed_mod = 0.33
 dash_speed_mod = 4.0
 
-[node name="AnimationResolver" type="Node" parent="." node_paths=PackedStringArray("muzzle", "thinker")]
+[node name="AnimationResolver" type="Node" parent="." node_paths=PackedStringArray("body", "muzzle", "thinker")]
 editor_description = "A helper node (base) to execute some animation stuff (like moving actor back and forth due to recoil, setting up some properties for thinker or spawning projectiles)"
 script = ExtResource("5_uw3al")
+body = NodePath("..")
 projectile_scene = ExtResource("6_6m37m")
 muzzle = NodePath("../BoneAttachment3D/Marker3D")
 thinker = NodePath("../thinker")

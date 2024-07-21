@@ -70,7 +70,7 @@ pub struct ActReactArea3D {
     #[export(flags = (Contact = 1, Continuous = 2) )]
     propagation_mode: PropagationMode,
     #[export]
-    pub owner: Option<Gd<Node3D>>,
+    pub target: Option<Gd<Node3D>>,
     #[export]
     pub act_react: Option<Gd<ActReactResource>>,
     base: Base<Area3D>
@@ -80,12 +80,12 @@ pub struct ActReactArea3D {
 impl IArea3D for ActReactArea3D {
 
     fn physics_process(&mut self, _delta: f64) {
-        // if !self.propagation_mode.contains(PropagationMode::Continuous) {
-        //     return;
-        // }
+        if !self.propagation_mode.contains(PropagationMode::Continuous) {
+            return;
+        }
         let colliding_areas = self.base().get_overlapping_areas();
         for area in colliding_areas.iter_shared() {
-            self.react(area.cast());
+            self.on_other_area_act(area.cast());
         }
     }
 
@@ -93,23 +93,38 @@ impl IArea3D for ActReactArea3D {
         self.base_mut().set_monitoring(true);
         self.base_mut().set_collision_mask(FROB_PHYSICS_MASK);
         self.base_mut().set_collision_layer(FROB_PHYSICS_MASK);
-
-        // if self.propagation_mode.contains(PropagationMode::Contact) {
-        //     self.base_mut().set_monitorable(true);
-        //     let callable = self.base().callable("react");
-        //     self.base_mut().connect("area_entered".into(), callable);
-        // }
+        godot_print!("oopsie");
+        if self.propagation_mode.contains(PropagationMode::Contact) {
+            self.base_mut().set_monitorable(true);
+            let callable = self.base().callable("on_other_area_act");
+            self.base_mut().connect("area_entered".into(), callable);
+        }
     }
 }
 
 
 #[godot_api]
 impl ActReactArea3D {
+
+    
     #[func]
-    fn react(&self, _other: Gd<ActReactArea3D>) {
-        let act_react_executor = Engine::singleton()
+    fn on_other_area_act(&self, actor: Gd<ActReactArea3D>) {
+        let Some(react) = self.act_react.clone() else {return;};
+        let Some(act) = actor.bind().act_react.clone() else {return;};
+        let mut act_react_executor = Engine::singleton()
             .get_singleton("ActReactExecutor".into())
             .unwrap()
             .cast::<ActReactExecutor>();
+        act_react_executor.bind_mut().react(act, react, dict!{});
+    }
+
+    #[func]
+    pub fn react(&self, act: Gd<ActReactResource>) {
+        let Some(react) = self.act_react.clone() else {return;};
+        let mut act_react_executor = Engine::singleton()
+            .get_singleton("ActReactExecutor".into())
+            .unwrap()
+            .cast::<ActReactExecutor>();
+        act_react_executor.bind_mut().react(act, react, dict!{});
     }
 }

@@ -1,7 +1,7 @@
+use std::sync::atomic::Ordering;
 use crate::ai::blackboard::{SpeedMod, NavigationTarget};
 use crate::ai::working_memory::{FactQuery, FactQueryCheck, Node, WMNodeType, WMProperty};
-use crate::ai_nodes::ai_node::AINodeStatus::Locked;
-use crate::ai_nodes::ai_node::{AINode, AINodeStatus};
+use crate::ai_nodes::ai_node::{AINode};
 use crate::goap_goals::goal_component::GoalComponent;
 use crate::goap_goals::goal_types::{AgentGoalWorldContext, GoalBehaviour};
 use serde::{Deserialize, Serialize};
@@ -41,8 +41,8 @@ impl GoalBehaviour for PatrolGoal {
             if let WMProperty::Node(Node::Patrol { ainode_id, position }) =
                 &mut fact.f_type
             {
-                let mut ainodes_guard = agent_world_context.ai_nodes.as_mut().unwrap().lock().expect("mutex failed!");
-                let ainode = ainodes_guard.get_mut(ainode_id).expect("no node with given id!");
+                let ainodes_guard = agent_world_context.ai_nodes.as_mut().unwrap().read().expect("rwlock failed!");
+                let ainode = ainodes_guard.get(ainode_id).expect("no node with given id!");
                 if ainode.is_locked() {
                     let fact_query = FactQuery::with_check(FactQueryCheck::Node(
                         WMNodeType::Patrol,
@@ -50,10 +50,10 @@ impl GoalBehaviour for PatrolGoal {
                     agent_world_context.working_memory.mark_as_invalid(fact_query);
                     return false;
                 }
-                let AINode::Patrol { base, .. } = &mut *ainode else {
+                let AINode::Patrol { base, .. } = ainode else {
                     panic!("no such node!")
                 };
-                base.status = Locked(*agent_world_context.id);
+                base.status.store(*agent_world_context.id, Ordering::Release);
                 agent_world_context.blackboard.current_locked_node = Some(*ainode_id);
                 agent_world_context.blackboard.navigation_target =
                     Some(NavigationTarget::PatrolPoint(*ainode_id, *position));
@@ -74,9 +74,9 @@ impl GoalBehaviour for PatrolGoal {
             .working_memory
             .mark_as_invalid(fact_query);
         if let Some(ainode_id) = agent_world_context.blackboard.current_locked_node.take() {
-            let Ok(mut ainodes_guard) = agent_world_context.ai_nodes.as_mut().expect("no ainodes").lock() else {panic!("mutex failed!")};
-            let ainode = ainodes_guard.get_mut(&ainode_id).expect("no ainode with such id!");
-            ainode.base_mut().status = AINodeStatus::Free;
+            let Ok(ainodes_guard) = agent_world_context.ai_nodes.as_mut().expect("no ainodes").read() else {panic!("mutex failed!")};
+            let ainode = ainodes_guard.get(&ainode_id).expect("no ainode with such id!");
+            ainode.base().status.store(0, Ordering::Release)
         }
     }
 }

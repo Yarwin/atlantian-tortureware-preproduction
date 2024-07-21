@@ -36,7 +36,7 @@ impl GameEffectProcessor {
 impl GameEffect for GameEffectProcessor {
     fn execute(&mut self) {
         (self.trait_object_dispatch)(self.base.clone(), |effect: &mut dyn GameEffect| {effect.execute()});
-        // right now we are just freeing given object, but we might store it in the future – for example to revert the command (undo/time travel/whatever)
+        // right now we are just freeing given object, but we might want  to store it in the future – for example to revert the command (undo/time travel/whatever)
         self.base.call_deferred("free".into(), &[]);
     }
 

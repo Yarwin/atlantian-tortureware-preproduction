@@ -23,6 +23,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.67233, 0)
 
 [node name="Camera3D" type="Camera3D" parent="Head"]
 current = true
+fov = 90.0
 
 [node name="VisibleArea" type="VisibilityArea3D" parent="." node_paths=PackedStringArray("owner")]
 owner = NodePath("..")

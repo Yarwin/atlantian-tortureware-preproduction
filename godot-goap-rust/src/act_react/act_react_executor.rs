@@ -39,9 +39,9 @@ impl ActReactExecutor {
         let mut reactor_bind = reactor.bind_mut();
         for mut meta in reactor_bind.metaproperties.iter_shared() {
             let mut meta_bind = meta.bind_mut();
-            self.create_reacts(&mut actor_bind, &mut meta_bind, &context);
+            self.create_effects(&mut actor_bind, &mut meta_bind, &context);
         }
-        self.create_reacts(&mut actor_bind, &mut reactor_bind, &context);
+        self.create_effects(&mut actor_bind, &mut reactor_bind, &context);
     }
 
     #[func]
@@ -57,7 +57,7 @@ impl ActReactExecutor {
         self.effects.push_back(effect);
     }
 
-    pub fn create_reacts(&mut self, actor: &mut GdMut<ActReactResource>, reactor: &mut GdMut<ActReactResource>, context: &Dictionary) {
+    pub fn create_effects(&mut self, actor: &mut GdMut<ActReactResource>, reactor: &mut GdMut<ActReactResource>, context: &Dictionary) {
         for mut act in actor.emits.iter_shared() {
             let stimuli: Stimuli = act.get("stim_type".into()).to::<Stimuli>();
             let act_context = act.call("get_context".into(), &[]).to::<Dictionary>();

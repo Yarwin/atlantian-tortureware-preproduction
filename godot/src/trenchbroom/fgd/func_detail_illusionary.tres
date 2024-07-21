@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="FuncGodotFGDSolidClass" load_steps=3 format=3 uid="uid://csavo4iv77gr2"]
 
-[ext_resource type="Resource" uid="uid://nayxb8n7see2" path="res://addons/func_godot/fgd/phong_base.tres" id="1_jls74"]
+[ext_resource type="Resource" uid="uid://b41gi40o3tcy1" path="res://src/trenchbroom/fgd/fgd_base/phong_base.tres" id="1_43juw"]
 [ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_solid_class.gd" id="2_w0vvc"]
 
 [resource]
@@ -20,7 +20,7 @@ collision_shape_margin = 0.04
 classname = "func_detail_illusionary"
 description = "Static geometry with no collision. Builds a Node3D with a MeshInstance3D. Does not occlude other VisualInstance3D nodes."
 func_godot_internal = false
-base_classes = Array[Resource]([ExtResource("1_jls74")])
+base_classes = Array[Resource]([ExtResource("1_43juw")])
 class_properties = {}
 class_property_descriptions = {}
 meta_properties = {

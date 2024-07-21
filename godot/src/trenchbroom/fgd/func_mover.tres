@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="FuncGodotFGDSolidClass" load_steps=5 format=3 uid="uid://egsodhbmqis7"]
+
+[ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_solid_class.gd" id="1_dpawe"]
+[ext_resource type="Resource" uid="uid://b41gi40o3tcy1" path="res://src/trenchbroom/fgd/fgd_base/phong_base.tres" id="1_fh0yc"]
+[ext_resource type="Resource" uid="uid://c7dcbtv12nats" path="res://src/trenchbroom/fgd/fgd_base/targetname_base.tres" id="2_fxmvr"]
+[ext_resource type="Script" path="res://src/entities/map_entities/func_mover/func_mover.gd" id="4_1bn60"]
+
+[resource]
+script = ExtResource("1_dpawe")
+spawn_type = 2
+origin_type = 0
+build_visuals = true
+use_in_baked_light = true
+shadow_casting_setting = 1
+build_occlusion = false
+render_layers = 1
+collision_shape_type = 1
+collision_layer = 13
+collision_mask = 1
+collision_priority = 1.0
+collision_shape_margin = 0.04
+script_class = ExtResource("4_1bn60")
+classname = "func_mover"
+description = "A entity that moves after receiving a signal (like doors and whatnot)"
+func_godot_internal = false
+base_classes = Array[Resource]([ExtResource("1_fh0yc"), ExtResource("2_fxmvr")])
+class_properties = {}
+class_property_descriptions = {}
+meta_properties = {
+"color": Color(0.8, 0.8, 0.8, 1),
+"size": AABB(-8, -8, -8, 8, 8, 8)
+}
+node_class = "AnimatableBody3D"
+name_property = ""

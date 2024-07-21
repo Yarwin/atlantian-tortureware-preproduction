@@ -15,7 +15,7 @@ use godot::global::godot_print;
 use godot::obj::InstanceId;
 use std::collections::{HashMap, VecDeque};
 use std::sync::mpsc::{Receiver, Sender};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 
 #[derive(Debug)]
 pub enum ThinkerPlanEvent {
@@ -50,7 +50,7 @@ pub struct ThinkerProcess {
     pub goals: Arc<Vec<GoalComponent>>,
     pub animations: Arc<AnimationsData>,
     pub navigation_map_rid: Option<Rid>,
-    pub ai_nodes: Option<Arc<Mutex<HashMap<u32, AINode>>>>,
+    pub ai_nodes: Option<Arc<RwLock<HashMap<u32, AINode>>>>,
 }
 
 pub struct ThinkerPlanView<'a> {
@@ -59,7 +59,7 @@ pub struct ThinkerPlanView<'a> {
     pub actions: &'a Arc<Vec<Action>>,
     pub animations: &'a Arc<AnimationsData>,
     pub navigation_map_rid: &'a Option<Rid>,
-    pub ai_nodes: &'a mut Option<Arc<Mutex<HashMap<u32, AINode>>>>,
+    pub ai_nodes: &'a mut Option<Arc<RwLock<HashMap<u32, AINode>>>>,
     pub blackboard: &'a mut Blackboard,
     pub working_memory: &'a mut WorkingMemory,
     pub world_state: &'a mut WorldState,
@@ -81,7 +81,7 @@ impl From<&Thinker> for ThinkerProcess {
 }
 
 impl ThinkerProcess {
-    pub fn with_ainodes(mut self, ainodes: Arc<Mutex<HashMap<u32, AINode>>>) -> Self {
+    pub fn with_ainodes(mut self, ainodes: Arc<RwLock<HashMap<u32, AINode>>>) -> Self {
         self.ai_nodes = Some(ainodes);
         self
     }

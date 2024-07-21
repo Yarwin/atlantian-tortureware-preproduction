@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="FuncGodotFGDBaseClass" load_steps=2 format=3 uid="uid://c7sk0yo2g3n8r"]
+[gd_resource type="Resource" script_class="FuncGodotFGDBaseClass" load_steps=2 format=3 uid="uid://b41gi40o3tcy1"]
 
-[ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_base_class.gd" id="1_es6oj"]
+[ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_base_class.gd" id="1_xwwph"]
 
 [resource]
-script = ExtResource("1_es6oj")
+script = ExtResource("1_xwwph")
 classname = "Phong"
 description = "Phong shading options for SolidClass geometry."
 func_godot_internal = false

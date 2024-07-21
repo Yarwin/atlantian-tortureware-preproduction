@@ -12,7 +12,7 @@ use enum_dispatch::enum_dispatch;
 use godot::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use crate::sensors::distance_to_target_sensor::DistanceToTargetSensor;
 
 #[allow(unused_attributes, dead_code)]
@@ -28,7 +28,7 @@ pub struct SensorArguments<'a> {
     pub blackboard: &'a mut Blackboard,
     pub polls: &'a mut PollingResult,
     pub target_mask: &'a mut TargetMask,
-    pub ainodes: &'a Arc<Mutex<HashMap<u32, AINode>>>,
+    pub ainodes: &'a Arc<RwLock<HashMap<u32, AINode>>>,
 }
 
 #[allow(clippy::enum_variant_names)]

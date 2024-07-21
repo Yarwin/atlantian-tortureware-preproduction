@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="FuncGodotFGDBaseClass" load_steps=2 format=3 uid="uid://j8rse51f6wvf"]
+
+[ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_base_class.gd" id="1_pn053"]
+
+[resource]
+script = ExtResource("1_pn053")
+classname = "Target"
+description = "Target options for entities with targets"
+func_godot_internal = false
+base_classes = Array[Resource]([])
+class_properties = {
+"_target": "no_target"
+}
+class_property_descriptions = {
+"_target": "target name"
+}
+meta_properties = {
+"color": Color(0.8, 0.8, 0.8, 1),
+"size": AABB(-8, -8, -8, 8, 8, 8)
+}
+node_class = ""
+name_property = ""

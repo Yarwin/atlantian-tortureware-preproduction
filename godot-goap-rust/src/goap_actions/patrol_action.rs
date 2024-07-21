@@ -33,8 +33,8 @@ pub fn execute_action(inner: &ActionComponent, action_arguments: AgentActionWorl
     else {
         return;
     };
-    let Ok(mut ainodes_guard) = action_arguments.ai_nodes.as_mut().unwrap().lock() else {panic!("mutex failed!")};
-    let ainode = ainodes_guard.get_mut(ainode_id).unwrap();
+    let Ok(mut ainodes_guard) = action_arguments.ai_nodes.as_mut().unwrap().read() else {panic!("mutex failed!")};
+    let ainode = ainodes_guard.get(ainode_id).unwrap();
     let AINode::Patrol {
         base: _,
         next: _,

@@ -1,12 +1,16 @@
-[gd_resource type="Resource" script_class="FuncGodotFGDFile" load_steps=8 format=3 uid="uid://pqkx78ajm8cg"]
+[gd_resource type="Resource" script_class="FuncGodotFGDFile" load_steps=12 format=3 uid="uid://pqkx78ajm8cg"]
 
 [ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_file.gd" id="1_030rr"]
 [ext_resource type="Resource" uid="uid://u61puqgn1c40" path="res://src/trenchbroom/fgd/func_detail.tres" id="1_jte5g"]
 [ext_resource type="Resource" uid="uid://csavo4iv77gr2" path="res://src/trenchbroom/fgd/func_detail_illusionary.tres" id="2_m0vc0"]
 [ext_resource type="Resource" uid="uid://be3yrr4ld7w87" path="res://src/trenchbroom/fgd/func_geo.tres" id="3_qy6xs"]
 [ext_resource type="Resource" uid="uid://coola4t476rb" path="res://src/trenchbroom/fgd/func_illusionary.tres" id="4_ovvam"]
-[ext_resource type="Resource" uid="uid://c7sk0yo2g3n8r" path="res://src/trenchbroom/fgd/phong_base.tres" id="5_q4bkm"]
+[ext_resource type="Resource" uid="uid://b41gi40o3tcy1" path="res://src/trenchbroom/fgd/fgd_base/phong_base.tres" id="5_dbb88"]
 [ext_resource type="Resource" uid="uid://dj45unjy13x0l" path="res://src/trenchbroom/fgd/worldspawn.tres" id="6_b0abf"]
+[ext_resource type="Resource" uid="uid://hce63bf8cm85" path="res://src/trenchbroom/fgd/func_button.tres" id="7_4ahce"]
+[ext_resource type="Resource" uid="uid://egsodhbmqis7" path="res://src/trenchbroom/fgd/func_mover.tres" id="8_0nue6"]
+[ext_resource type="Resource" uid="uid://j8rse51f6wvf" path="res://src/trenchbroom/fgd/fgd_base/target_base.tres" id="9_i4buh"]
+[ext_resource type="Resource" uid="uid://c7dcbtv12nats" path="res://src/trenchbroom/fgd/fgd_base/targetname_base.tres" id="10_ujftw"]
 
 [resource]
 script = ExtResource("1_030rr")
@@ -14,4 +18,4 @@ export_file = false
 model_key_word_supported = true
 fgd_name = "FuncGodot"
 base_fgd_files = Array[Resource]([])
-entity_definitions = Array[Resource]([ExtResource("1_jte5g"), ExtResource("2_m0vc0"), ExtResource("3_qy6xs"), ExtResource("4_ovvam"), ExtResource("5_q4bkm"), ExtResource("6_b0abf")])
+entity_definitions = Array[Resource]([ExtResource("1_jte5g"), ExtResource("2_m0vc0"), ExtResource("3_qy6xs"), ExtResource("4_ovvam"), ExtResource("5_dbb88"), ExtResource("6_b0abf"), ExtResource("7_4ahce"), ExtResource("8_0nue6"), ExtResource("9_i4buh"), ExtResource("10_ujftw")])
