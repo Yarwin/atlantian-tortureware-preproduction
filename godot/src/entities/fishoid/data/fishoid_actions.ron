@@ -41,7 +41,7 @@
     Aim(
         // rotate to target
         cost: 1,
-        preconditions: WorldState(),
+        preconditions: WorldState(has_target: Target(Character)),
         effects: WorldState(i_am_looking_at_target: Truth(true)),
         animation: AttackReady
     ),

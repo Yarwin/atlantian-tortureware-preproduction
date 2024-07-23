@@ -4,7 +4,7 @@ use godot::classes::{KinematicCollision3D};
 
 #[derive(Default, Debug)]
 pub struct MovementData {
-    pub velocity: Vector3,
+    pub(crate) velocity: Vector3,
     pub(crate) initial_lateral_translation: Vector3,
     pub(crate) lateral_translation: Vector3,
     pub(crate) initial_vertical_translation: Vector3,

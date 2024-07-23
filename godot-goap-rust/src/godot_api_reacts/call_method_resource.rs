@@ -32,7 +32,7 @@ impl CallMethodGameEffect {
 
 impl GameEffectInitializer for CallMethodGameEffect {
     fn build(&self, _act: &Dictionary, context: &Dictionary) -> GameEffectProcessor {
-        let Some(target) = context.get("target_react").map(|v| v.to::<Gd<Object>>()) else {panic!("tried to instantiate command without proper context!")};
+        let Some(target) = context.get("reactor").map(|v| v.to::<Gd<Object>>()) else {panic!("tried to instantiate command without proper context!")};
         let effect = CallMethod {
             target,
             args: self.args.clone(),

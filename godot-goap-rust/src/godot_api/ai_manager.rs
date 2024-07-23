@@ -115,6 +115,7 @@ impl GodotAIManager {
         let thinker = self.thinkers.get(&thinker_id).unwrap();
         let shared = thinker.shared.lock().unwrap();
         let Some(target) = shared.blackboard.target.as_ref().map(|t| t.get_target_pos().map(|pos| pos.to_variant())) else {return Variant::nil()};
+        godot_print!("target: {:?}", target);
         target.unwrap_or(Variant::nil())
     }
 

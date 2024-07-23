@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="FuncGodotFGDBaseClass" load_steps=2 format=3 uid="uid://7vgslvl8p41g"]
+
+[ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_base_class.gd" id="1_k3inq"]
+
+[resource]
+script = ExtResource("1_k3inq")
+classname = "Mover"
+description = "Mover options for brush entities."
+func_godot_internal = false
+base_classes = Array[Resource]([])
+class_properties = {
+"_amount": 0.0,
+"axis": Vector3(0, 0, 0)
+}
+class_property_descriptions = {
+"_amount": "length of the movement",
+"axis": "axis of the movement (relative to the body)"
+}
+meta_properties = {
+"color": Color(0.8, 0.8, 0.8, 1),
+"size": AABB(-8, -8, -8, 8, 8, 8)
+}
+node_class = ""
+name_property = ""

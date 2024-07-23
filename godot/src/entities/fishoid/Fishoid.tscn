@@ -1,9 +1,9 @@
 [gd_scene load_steps=70 format=4 uid="uid://qaegqhcgvgj"]
 
 [ext_resource type="Script" path="res://src/entities/fishoid/fishoid.gd" id="1_6ui7v"]
-[ext_resource type="Texture2D" uid="uid://d0rphhqyok7ca" path="res://assets/models/fish7_rybon7_albedo.png" id="1_vhn36"]
-[ext_resource type="Texture2D" uid="uid://iychm8gxpjca" path="res://assets/models/fish7_rybon7_roughness.png" id="2_0khhm"]
-[ext_resource type="Texture2D" uid="uid://c125gyb7vb4ha" path="res://assets/models/fish7_rybon7_normalmap.png" id="3_l4jw6"]
+[ext_resource type="Texture2D" uid="uid://d0rphhqyok7ca" path="res://assets/3D/models/fishoid/fish7_rybon7_albedo.png" id="1_vhn36"]
+[ext_resource type="Texture2D" uid="uid://iychm8gxpjca" path="res://assets/3D/models/fishoid/fish7_rybon7_roughness.png" id="2_0khhm"]
+[ext_resource type="Texture2D" uid="uid://c125gyb7vb4ha" path="res://assets/3D/models/fishoid/fish7_rybon7_normalmap.png" id="3_l4jw6"]
 [ext_resource type="Texture2D" uid="uid://dis6capqnfbc8" path="res://assets/icons/pngwing.com.png" id="5_ir511"]
 [ext_resource type="Script" path="res://src/entities/fishoid/animation_resolver.gd" id="5_uw3al"]
 [ext_resource type="PackedScene" uid="uid://ck8ut83caaw2s" path="res://src/entities/projectiles/fishball/fishball.tscn" id="6_6m37m"]
@@ -3868,7 +3868,12 @@ material = SubResource("StandardMaterial3D_bghrh")
 radius = 0.05
 height = 0.1
 
-[node name="Fishoid" type="CharacterBody3D"]
+[node name="Fishoid" type="CharacterController3D" node_paths=PackedStringArray("collision_shape")]
+collision_shape = NodePath("CollisionShape3D")
+deceleration = 0.5
+speed = 4.5
+acceleration = 5.0
+gravity_scale = 1.0
 collision_layer = 13
 script = ExtResource("1_6ui7v")
 
@@ -4409,6 +4414,7 @@ external_skeleton = NodePath("../fish7/Armature/Skeleton3D")
 transform = Transform3D(1, 2.18898e-14, -2.38419e-07, 1.01439e-14, 1, 1.34359e-07, 2.38419e-07, -1.34359e-07, 1, -1.31555e-07, 0.155063, 0.551781)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="BoneAttachment3D/Marker3D"]
+visible = false
 mesh = SubResource("SphereMesh_bbn30")
 
 [connection signal="animation_finished" from="AnimationTree" to="thinker" method="on_animation_finished"]

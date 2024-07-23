@@ -1241,6 +1241,8 @@
 {
 "classname" "func_mover"
 "_target_name" "Joe"
+"axis" "-1 0 0"
+"_amount" "4"
 // brush 0
 {
 ( -176 -448 16 ) ( -176 -447 16 ) ( -176 -448 17 ) __TB_empty [ 0 -1 0 0 ] [ 0 0 -1 0 ] 0 1 1
@@ -1250,4 +1252,25 @@
 ( 112 -432 32 ) ( 113 -432 32 ) ( 112 -432 33 ) __TB_empty [ -1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
 ( 160 -432 32 ) ( 160 -432 33 ) ( 160 -431 32 ) __TB_empty [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
 }
+}
+// entity 11
+{
+"classname" "func_group"
+"_tb_type" "_tb_layer"
+"_tb_name" "Enemies"
+"_tb_id" "1"
+"_tb_layer_sort_index" "0"
+}
+// entity 12
+{
+"classname" "Fishoid"
+"origin" "-80 -160 38"
+"_tb_layer" "1"
+}
+// entity 13
+{
+"classname" "Fishoid"
+"origin" "-272 304 38"
+"angle" "135"
+"_tb_layer" "1"
 }

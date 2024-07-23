@@ -1,8 +1,14 @@
-[gd_scene load_steps=5 format=3 uid="uid://0407y73st0sl"]
+[gd_scene load_steps=8 format=3 uid="uid://0407y73st0sl"]
 
+[ext_resource type="Script" path="res://game_viewport_container.gd" id="1_828rd"]
+[ext_resource type="PackedScene" uid="uid://t0ys0mdppkhu" path="res://src/interface/hud/player_hud.tscn" id="1_a0rkr"]
 [ext_resource type="PackedScene" uid="uid://d0bf2uc5t4h08" path="res://src/levels/testing_grounds.tscn" id="1_helgn"]
 [ext_resource type="Script" path="res://testpanel.gd" id="2_g4o3d"]
 [ext_resource type="Shader" path="res://testing_ground_main.gdshader" id="2_uyo3u"]
+
+[sub_resource type="GDScript" id="GDScript_byf4j"]
+script/source = "extends Control
+"
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_du05y"]
 shader = ExtResource("2_uyo3u")
@@ -30,6 +36,7 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+script = SubResource("GDScript_byf4j")
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="."]
 layout_mode = 1
@@ -38,6 +45,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+focus_mode = 2
+script = ExtResource("1_828rd")
 
 [node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
 handle_input_locally = false
@@ -54,7 +63,9 @@ anchor_top = 1.0
 anchor_bottom = 1.0
 offset_top = -512.0
 offset_right = 512.0
-grow_vertical = 0
+grow_horizontal = 2
+grow_vertical = 2
+focus_mode = 0
 mouse_filter = 2
 stretch = true
 
@@ -73,6 +84,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="PlayerHud" parent="." instance=ExtResource("1_a0rkr")]
+layout_mode = 1
+focus_mode = 1
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 1

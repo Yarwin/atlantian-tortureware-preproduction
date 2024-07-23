@@ -135,6 +135,8 @@ impl SensorPolling for VisionCharacterSensor {
                         FactQueryCheck::Match(WMProperty::Knowledge(Knowledge::Character(character_id.unwrap(), None))));
                 if let Some(fact) = args.working_memory.find_fact_mut(fact_query) {
                     // update
+                    let WMProperty::Knowledge(Knowledge::Character(_i, pos)) = &mut fact.f_type else { return false };
+                    *pos = see_point;
                     fact.confidence = distance_to_target;
                     fact.update_time = SystemTime::now();
                 } else {

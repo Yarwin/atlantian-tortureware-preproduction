@@ -1,0 +1,55 @@
+[gd_scene load_steps=3 format=3 uid="uid://t0ys0mdppkhu"]
+
+[ext_resource type="Texture2D" uid="uid://d0j3333cmbnwh" path="res://assets/sprites/ui/inventory/frame.png" id="1_hls88"]
+[ext_resource type="Script" path="res://src/interface/hud/player_hud.gd" id="1_nfd7g"]
+
+[node name="PlayerHud" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_nfd7g")
+
+[node name="PlayerStuff" type="CanvasLayer" parent="."]
+
+[node name="NinePatchRect" type="NinePatchRect" parent="PlayerStuff"]
+anchors_preset = -1
+anchor_left = 0.25
+anchor_top = 0.8
+anchor_right = 0.75
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 20.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 1
+texture = ExtResource("1_hls88")
+region_rect = Rect2(0, 0, 128, 128)
+patch_margin_left = 32
+patch_margin_top = 32
+patch_margin_right = 32
+patch_margin_bottom = 32
+axis_stretch_horizontal = 2
+axis_stretch_vertical = 2
+
+[node name="Cooldown" type="Timer" parent="."]
+wait_time = 0.2
+one_shot = true
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+layer = 2
+
+[node name="ItemHolder" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 1

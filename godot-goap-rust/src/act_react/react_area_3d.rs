@@ -64,6 +64,7 @@ impl FromGodot for PropagationMode {
     }
 }
 
+
 #[derive(GodotClass)]
 #[class(init, base=Area3D)]
 pub struct ActReactArea3D {
@@ -75,6 +76,7 @@ pub struct ActReactArea3D {
     pub act_react: Option<Gd<ActReactResource>>,
     base: Base<Area3D>
 }
+
 
 #[godot_api]
 impl IArea3D for ActReactArea3D {
@@ -93,11 +95,13 @@ impl IArea3D for ActReactArea3D {
         self.base_mut().set_monitoring(true);
         self.base_mut().set_collision_mask(FROB_PHYSICS_MASK);
         self.base_mut().set_collision_layer(FROB_PHYSICS_MASK);
-        godot_print!("oopsie");
         if self.propagation_mode.contains(PropagationMode::Contact) {
             self.base_mut().set_monitorable(true);
             let callable = self.base().callable("on_other_area_act");
             self.base_mut().connect("area_entered".into(), callable);
+        }
+        if self.base().has_method("_post_ready".into()) {
+            self.base_mut().call_deferred("_post_ready".into(), &[]);
         }
     }
 }
@@ -105,8 +109,11 @@ impl IArea3D for ActReactArea3D {
 
 #[godot_api]
 impl ActReactArea3D {
+    #[func(gd_self, virtual)]
+    fn post_ready(s: Gd<Self>) {
+        godot_print!("virtual function????");
+    }
 
-    
     #[func]
     fn on_other_area_act(&self, actor: Gd<ActReactArea3D>) {
         let Some(react) = self.act_react.clone() else {return;};
@@ -115,7 +122,11 @@ impl ActReactArea3D {
             .get_singleton("ActReactExecutor".into())
             .unwrap()
             .cast::<ActReactExecutor>();
-        act_react_executor.bind_mut().react(act, react, dict!{});
+        let reactor = self.target.clone().unwrap_or(self.base().clone().upcast::<Node3D>());
+        let context = dict! {
+            "reactor": reactor
+        };
+        act_react_executor.bind_mut().react(act, react, context);
     }
 
     #[func]
