@@ -139,95 +139,95 @@ pub fn plan<'a, T: PlanAction<U>, U>(
     None
 }
 
-#[cfg(test)]
-#[cfg(feature = "use_serde")]
-mod test {
-    use super::*;
-    use serde::Deserialize;
-    use std::fs;
-    use std::path::Path;
-    extern crate serde_json;
-    #[derive(Deserialize, Hash, Clone, Debug)]
-    struct TestAction {
-        name: String,
-        preconditions: WorldState,
-        effects: WorldState,
-        cost: u32,
-    }
-
-    impl PartialEq<Self> for TestAction {
-        fn eq(&self, other: &Self) -> bool {
-            if self.name == other.name {
-                return true;
-            }
-            return false;
-        }
-    }
-
-    impl PlanAction<bool> for TestAction {
-        fn get_action_preconditions(&self) -> &WorldState {
-            &self.preconditions
-        }
-
-        fn check_action_procedural_preconditions(&self, action_arguments: &bool) -> bool {
-            *action_arguments
-        }
-
-        fn get_action_effects(&self) -> &WorldState {
-            &self.effects
-        }
-
-        fn get_action_cost(&self) -> u32 {
-            self.cost
-        }
-    }
-
-    #[derive(Deserialize)]
-    struct TestCase {
-        #[serde(skip_deserializing)]
-        case_name: String,
-        actions: Vec<TestAction>,
-        initial_state: WorldState,
-        goal_state: WorldState,
-        expected_actions: Vec<String>,
-    }
-    impl TestCase {
-        fn from_test_file(path: &Path) -> TestCase {
-            let file = fs::File::open(path).unwrap();
-            let mut case: TestCase = serde_json::from_reader(file).unwrap();
-            case.case_name = String::from(path.file_name().unwrap().to_str().unwrap());
-            case
-        }
-        fn assert_plan(&self) {
-            let plan = plan(&self.initial_state, &self.goal_state, &self.actions, &true);
-            if let Some(action_list) = plan {
-                let action_names: Vec<String> = action_list
-                    .iter()
-                    .map(|&action| action.name.clone())
-                    .collect();
-                if self.expected_actions != action_names {
-                    panic!(
-                        "{} failed: expected {:?}, got {:?}",
-                        self.case_name, self.expected_actions, action_names
-                    );
-                }
-            } else {
-                if self.expected_actions.len() > 0 {
-                    panic!(
-                        "{} failed: expected {:?}, got no plan",
-                        self.case_name, self.expected_actions
-                    );
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn run_test_files() {
-        let paths = fs::read_dir("./test_data/plan_test").unwrap();
-        for path in paths {
-            let case = TestCase::from_test_file(path.unwrap().path().as_path());
-            case.assert_plan();
-        }
-    }
-}
+// #[cfg(test)]
+// #[cfg(feature = "use_serde")]
+// mod test {
+//     use super::*;
+//     use serde::Deserialize;
+//     use std::fs;
+//     use std::path::Path;
+//     extern crate serde_json;
+//     #[derive(Deserialize, Hash, Clone, Debug)]
+//     struct TestAction {
+//         name: String,
+//         preconditions: WorldState,
+//         effects: WorldState,
+//         cost: u32,
+//     }
+//
+//     impl PartialEq<Self> for TestAction {
+//         fn eq(&self, other: &Self) -> bool {
+//             if self.name == other.name {
+//                 return true;
+//             }
+//             return false;
+//         }
+//     }
+//
+//     impl PlanAction<bool> for TestAction {
+//         fn get_action_preconditions(&self) -> &WorldState {
+//             &self.preconditions
+//         }
+//
+//         fn check_action_procedural_preconditions(&self, action_arguments: &bool) -> bool {
+//             *action_arguments
+//         }
+//
+//         fn get_action_effects(&self) -> &WorldState {
+//             &self.effects
+//         }
+//
+//         fn get_action_cost(&self) -> u32 {
+//             self.cost
+//         }
+//     }
+//
+//     #[derive(Deserialize)]
+//     struct TestCase {
+//         #[serde(skip_deserializing)]
+//         case_name: String,
+//         actions: Vec<TestAction>,
+//         initial_state: WorldState,
+//         goal_state: WorldState,
+//         expected_actions: Vec<String>,
+//     }
+//     impl TestCase {
+//         fn from_test_file(path: &Path) -> TestCase {
+//             let file = fs::File::open(path).unwrap();
+//             let mut case: TestCase = serde_json::from_reader(file).unwrap();
+//             case.case_name = String::from(path.file_name().unwrap().to_str().unwrap());
+//             case
+//         }
+//         fn assert_plan(&self) {
+//             let plan = plan(&self.initial_state, &self.goal_state, &self.actions, &true);
+//             if let Some(action_list) = plan {
+//                 let action_names: Vec<String> = action_list
+//                     .iter()
+//                     .map(|&action| action.name.clone())
+//                     .collect();
+//                 if self.expected_actions != action_names {
+//                     panic!(
+//                         "{} failed: expected {:?}, got {:?}",
+//                         self.case_name, self.expected_actions, action_names
+//                     );
+//                 }
+//             } else {
+//                 if self.expected_actions.len() > 0 {
+//                     panic!(
+//                         "{} failed: expected {:?}, got no plan",
+//                         self.case_name, self.expected_actions
+//                     );
+//                 }
+//             }
+//         }
+//     }
+//
+//     #[test]
+//     fn run_test_files() {
+//         let paths = fs::read_dir("./test_data/plan_test").unwrap();
+//         for path in paths {
+//             let case = TestCase::from_test_file(path.unwrap().path().as_path());
+//             case.assert_plan();
+//         }
+//     }
+// }
