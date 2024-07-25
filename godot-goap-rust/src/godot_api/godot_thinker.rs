@@ -1,10 +1,11 @@
 use crate::godot_api::ai_manager::GodotAIManager;
 use godot::classes::{
-    AnimationTree, CharacterBody3D, Engine, Marker3D, NavigationAgent3D, Shape3D,
+    AnimationTree, Engine, Marker3D, NavigationAgent3D, Shape3D,
 };
 use godot::prelude::*;
 use crate::ai::working_memory::Event::AnimationCompleted;
 use crate::ai::working_memory::WMProperty;
+use crate::character_controler::character_controller_3d::CharacterController3D;
 
 /// an interface to speak with AI manager
 #[derive(GodotClass, Debug)]
@@ -35,7 +36,7 @@ pub struct GodotThinker {
     #[export]
     pub navigation_agent: Option<Gd<NavigationAgent3D>>,
     #[export]
-    pub character_body: Option<Gd<CharacterBody3D>>,
+    pub character_body: Option<Gd<CharacterController3D>>,
     #[export]
     pub animation_tree: Option<Gd<AnimationTree>>,
     #[export]
@@ -64,9 +65,7 @@ pub struct GodotThinker {
     #[var(usage_flags = [GROUP, EDITOR, READ_ONLY])]
     movement: u32,
     #[export]
-    pub acceleration: f32,
-    #[export]
-    pub movement_speed: f32,
+    pub movement_speed_multiplier: f32,
     #[export]
     pub walk_speed_mod: f32,
     #[export]

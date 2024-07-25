@@ -1,11 +1,10 @@
 use crate::ai::blackboard::{Blackboard, SpeedMod};
 use crate::godot_api::godot_thinker::GodotThinker;
-use godot::classes::{
-    CharacterBody3D, MeshInstance3D, PhysicsRayQueryParameters3D, PhysicsServer3D,
-};
+use godot::classes::{MeshInstance3D, PhysicsRayQueryParameters3D, PhysicsServer3D};
 use godot::prelude::*;
 use std::mem;
 use std::mem::MaybeUninit;
+use crate::character_controler::character_controller_3d::CharacterController3D;
 
 const AVOIDANCE_COLLISION_MASK: u32 = 8;
 const UP_OFFSET: Vector3 = Vector3::new(0.0, 0.1, 0.0);
@@ -82,7 +81,7 @@ fn avoid(
     interest_table: &SteeringTable,
     old_danger_table: &SteeringTable,
     avoidance_radius: f32,
-    caster: &mut Gd<CharacterBody3D>,
+    caster: &mut Gd<CharacterController3D>,
     base_vec: Vector3,
     agent_radius: f32,
 ) -> SteeringTable {
@@ -143,7 +142,7 @@ fn avoid(
 }
 
 pub fn rotate(
-    character: &mut Gd<CharacterBody3D>,
+    character: &mut Gd<CharacterController3D>,
     rotation_target: &RotationTarget,
     rotation_speed: f32,
     delta: f64,
@@ -216,7 +215,7 @@ pub fn navigate(mut navigation_arguments: NavigationArguments, delta: f64) {
             desired_velocity *= 5.0;
         }
     }
-    character.set_velocity(desired_velocity);
-    character.move_and_slide();
+    character.bind_mut().set_direction(desired_velocity);
+    character.bind_mut().process_movement(delta);
     navigation_arguments.blackboard.thinker_position = character.get_global_position();
 }

@@ -59,7 +59,6 @@ impl PartialEq for Node {
             (Node::Patrol{ainode_id, ..}, Node::Patrol{ainode_id: other_ainode_id, ..}) => {
                 ainode_id == other_ainode_id
             },
-            _ => false
         }
     }
 }

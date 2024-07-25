@@ -34,7 +34,7 @@ impl GameEffectInitializer for CallMethodGameEffect {
     fn build(&self, _act: &Dictionary, context: &Dictionary) -> GameEffectProcessor {
         let Some(target) = context.get("reactor").map(|v| v.to::<Gd<Object>>()) else {panic!("tried to instantiate command without proper context!")};
         let effect = CallMethod {
-            target,
+            target: Some(target),
             args: self.args.clone(),
             method: self.method_name.clone()
         };
@@ -44,9 +44,10 @@ impl GameEffectInitializer for CallMethodGameEffect {
 }
 
 #[derive(GodotClass, Debug)]
-#[class(no_init, base=Object)]
+#[class(init, base=Object)]
 pub struct CallMethod {
-    target: Gd<Object>,
+    // wrapped in Option for init
+    target: Option<Gd<Object>>,
     args: Array<Variant>,
     method: StringName,
 }
@@ -54,6 +55,6 @@ pub struct CallMethod {
 
 impl GameEffect for CallMethod {
     fn execute(&mut self) {
-        self.target.callv(self.method.clone(), self.args.clone());
+        self.target.as_mut().unwrap().callv(self.method.clone(), self.args.clone());
     }
 }

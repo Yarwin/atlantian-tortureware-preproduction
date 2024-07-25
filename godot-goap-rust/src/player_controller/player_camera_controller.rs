@@ -44,7 +44,7 @@ pub struct PlayerCameraController3D {
 
 impl PlayerCameraController3D {
     fn perform_mouse_rotation(&mut self, delta: f32) {
-        self.camera_data.rotation_origins.x = (self.camera_data.rotation_origins.x - (self.camera_data.mouse_movement.y * self.mouse_sensitivity * delta)).max(-FRAC_PI_2).min(FRAC_PI_2);
+        self.camera_data.rotation_origins.x = (self.camera_data.rotation_origins.x - (self.camera_data.mouse_movement.y * self.mouse_sensitivity * delta)).clamp(-FRAC_PI_2, FRAC_PI_2);
         self.camera_data.target_rotation_change_y += -self.camera_data.mouse_movement.x * delta * self.mouse_sensitivity;
         let Some(char) = self.character_controller.as_mut() else {return;};
 

@@ -35,11 +35,6 @@ pub struct MovementParameters {
 
 
 pub fn process_movement(delta: f32, args: MovementParameters, previous_movement: Option<MovementData>) -> Option<MovementData> {
-    // let direction = args.basis.col_a() * args.desired_direction.x * args.basis.col_c() * args.desired_direction.y;
-    // let direction = player_state.orientation_node.as_ref().map(|on|
-    //     on.get_global_transform().basis.col_a() * args.desired_direction.x
-    //         - on.get_global_transform().basis.col_c() * args.desired_direction.y
-    // ).unwrap_or(Vector3::ZERO);
     let previous_horizontal_speed = previous_movement.as_ref().map(|pm| (pm.velocity * Vector3::new(1.0, 0.0, 1.0)).length()).unwrap_or(0.0);
     let current_speed: f32;
     let mut desired_motion: Vector3;

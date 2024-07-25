@@ -82,7 +82,7 @@ impl ThinkerState for GotoState {
         anim_node_state_machine.travel(self.animation_name.clone().into());
     }
 
-    fn physics_process(&mut self, delta: f64, mut args: StateArguments) {
+    fn physics_process(&mut self, _delta: f64, mut args: StateArguments) {
         let mut bind = args.base.bind_mut();
         let Some(character) = bind.character_body.clone() else {
             return;
@@ -97,13 +97,10 @@ impl ThinkerState for GotoState {
         }
 
         let velocity = character.get_velocity();
-        let (speed, acceleration) = match args.blackboard.walk_speed {
-            SpeedMod::Slow => (
-                bind.movement_speed * bind.walk_speed_mod,
-                bind.acceleration * bind.walk_speed_mod,
-            ),
-            SpeedMod::Normal => (bind.movement_speed, bind.acceleration),
-            SpeedMod::Fast => (bind.movement_speed * 2.0, bind.acceleration * 2.0),
+        let speed = match args.blackboard.walk_speed {
+            SpeedMod::Slow => bind.movement_speed_multiplier * bind.walk_speed_mod,
+            SpeedMod::Normal => bind.movement_speed_multiplier,
+            SpeedMod::Fast => bind.movement_speed_multiplier * bind.dash_speed_mod,
         };
 
         // bail if navigation finished
@@ -143,14 +140,7 @@ impl ThinkerState for GotoState {
             args.blackboard.rotation_target = Some(RotationTarget::Position(look_target));
         }
 
-        let dot_product: f32 = 1.0;
-        // let mut dot_product: f32 = character.get_transform().basis.col_c().dot(direction).max(0.0);
-        // if dot_product > 0.9 {
-        //     dot_product = 1.0;
-        // }
-        let movspeed =
-            velocity.move_toward(direction * speed * dot_product, acceleration * delta as f32);
-        args.blackboard.desired_velocity = Some(movspeed);
+        args.blackboard.desired_velocity = Some(direction * speed);
         args.blackboard.thinker_position = character.get_global_position();
     }
 

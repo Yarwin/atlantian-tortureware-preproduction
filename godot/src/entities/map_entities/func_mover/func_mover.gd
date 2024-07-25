@@ -24,7 +24,7 @@ func move():
 
 func _physics_process(delta: float) -> void:
 	if not moving: return
-	self.global_position += axis * 0.1
+	self.global_position += axis * delta
 	self.moved += (axis * 0.1).length()
 	if self.moved > self.amount:
 		moving = false

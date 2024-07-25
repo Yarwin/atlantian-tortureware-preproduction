@@ -18,6 +18,7 @@ pub struct CharacterController3D {
     /// default gravity multiplier
     #[export]
     gravity_scale: f32,
+    /// a direction with a desired speed multiplier
     #[var]
     direction: Vector3,
     pub(crate) movement_data: Option<MovementData>,

@@ -88,6 +88,7 @@ grow_vertical = 2
 [node name="PlayerHud" parent="." instance=ExtResource("1_a0rkr")]
 layout_mode = 1
 focus_mode = 1
+script = null
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 1
