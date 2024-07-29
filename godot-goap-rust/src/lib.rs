@@ -15,6 +15,7 @@ pub mod godot_api_reacts;
 pub mod act_react;
 mod godot_entities;
 mod inventory;
+mod utils;
 
 use godot::prelude::*;
 

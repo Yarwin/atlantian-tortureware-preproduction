@@ -74,3 +74,6 @@ shape = SubResource("SphereShape3D_rcxbj")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05661, 0)
 mesh = SubResource("SphereMesh_637gy")
+
+[node name="InventoryAgent" type="InventoryAgent" parent="."]
+size = Vector2i(3, 3)

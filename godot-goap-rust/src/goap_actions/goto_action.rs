@@ -6,7 +6,7 @@ use crate::ai::world_state::{WSProperty, WorldState, WorldStateProperty};
 use crate::targeting::target::AITarget;
 use crate::thinker_states::goto::{Destination, GotoState};
 use godot::classes::NavigationServer3D;
-use godot::engine::CharacterBody3D;
+use godot::classes::CharacterBody3D;
 use godot::prelude::*;
 use crate::ai::blackboard::NavigationTarget;
 use crate::animations::animation_data::AnimationType;

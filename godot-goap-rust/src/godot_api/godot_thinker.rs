@@ -79,30 +79,22 @@ impl GodotThinker {}
 impl GodotThinker {
     #[func]
     fn register_self(&mut self) {
-        let mut ai_manager = Engine::singleton()
-            .get_singleton("AIManager".into())
-            .unwrap()
-            .cast::<GodotAIManager>();
+        let mut ai_manager = GodotAIManager::singleton();
         self.thinker_id = ai_manager.bind_mut().register_thinker(self);
     }
+
     #[func]
     fn on_animation_finished(&self, animation_name: StringName) {
         if self.thinker_id == 0 {return;}
         let fact = WMProperty::Event(AnimationCompleted(animation_name.into()));
-        let mut ai_manager = Engine::singleton()
-            .get_singleton("AIManager".into())
-            .unwrap()
-            .cast::<GodotAIManager>();
+        let mut ai_manager = GodotAIManager::singleton();
         ai_manager.bind_mut().add_new_wm_fact(self.thinker_id, fact, 1.0, 3.0);
     }
 
     #[func]
     fn get_target(&self) -> Variant {
         if self.thinker_id == 0 {return Variant::nil();}
-        let ai_manager = Engine::singleton()
-            .get_singleton("AIManager".into())
-            .unwrap()
-            .cast::<GodotAIManager>();
+        let ai_manager = GodotAIManager::singleton();
         let t = ai_manager.bind().get_thinker_target(self.thinker_id);
         t
     }
@@ -110,7 +102,6 @@ impl GodotThinker {
 
 #[godot_api]
 impl INode3D for GodotThinker {
-
     fn ready(&mut self) {
         self.base_mut().call_deferred("register_self".into(), &[]);
     }

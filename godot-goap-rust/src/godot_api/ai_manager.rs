@@ -10,7 +10,7 @@ use crate::godot_api::CONNECT_ONE_SHOT;
 use crate::sensors::sensor_types::PollingSensor;
 use crate::thinker_states::process_thinker::process_thinker;
 use godot::classes::{Engine, FileAccess};
-use godot::engine::file_access::ModeFlags;
+use godot::classes::file_access::ModeFlags;
 use godot::prelude::*;
 use rayon::prelude::*;
 use serde::Deserialize;
@@ -20,6 +20,7 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use crate::ai::working_memory::WMProperty;
+use crate::utils::generate_id::assign_id;
 
 #[derive(GodotClass)]
 #[class(init, base=Node, rename=AIManager)]
@@ -67,11 +68,11 @@ impl INode for GodotAIManager {
 
     fn enter_tree(&mut self) {
         Engine::singleton()
-            .register_singleton("AIManager".into(), self.base().clone().upcast::<Object>());
+            .register_singleton(GodotAIManager::name(), self.base().clone().upcast::<Object>());
     }
 
     fn exit_tree(&mut self) {
-        Engine::singleton().unregister_singleton("AIManager".into());
+        Engine::singleton().unregister_singleton(GodotAIManager::name());
         if let Some(sender) = self.sender.take() {
             let _ = sender.send(ThinkerPlanEvent::Terminate);
         }
@@ -115,7 +116,6 @@ impl GodotAIManager {
         let thinker = self.thinkers.get(&thinker_id).unwrap();
         let shared = thinker.shared.lock().unwrap();
         let Some(target) = shared.blackboard.target.as_ref().map(|t| t.get_target_pos().map(|pos| pos.to_variant())) else {return Variant::nil()};
-        godot_print!("target: {:?}", target);
         target.unwrap_or(Variant::nil())
     }
 
@@ -157,6 +157,17 @@ impl GodotAIManager {
 
 impl GodotAIManager {
 
+    fn name() -> StringName {
+        StringName::from("AIManager")
+    }
+
+    pub fn singleton() -> Gd<Self> {
+        Engine::singleton()
+            .get_singleton(GodotAIManager::name())
+            .unwrap()
+            .cast::<GodotAIManager>()
+    }
+
     pub fn add_new_wm_fact(&mut self, thinker_id: u32, fact: WMProperty, confidence: f32, expiration: f64) {
         let Ok(mut guard) = self.thinkers[&thinker_id].shared.lock() else {panic!("mutex failed!")};
         guard.working_memory.add_working_memory_fact(fact, confidence, expiration);
@@ -190,14 +201,7 @@ impl GodotAIManager {
     }
 
     pub fn register_ainode(&mut self, ai_node: &mut GodotAINode) -> u32 {
-        let id: u32;
-        if ai_node.ainode_id == 0 {
-            id = self.get_ainode_id();
-            ai_node.ainode_id = id;
-        } else {
-            id = ai_node.ainode_id;
-            self.ainode_id_to_max(ai_node.ainode_id);
-        }
+        let id: u32 = assign_id(ai_node.ainode_id, &mut self.current_node_id);
         // unregister on exit
         let callable = Callable::from_object_method(&self.base().clone(), "unregister_ainode")
             .bindv(array![id.to_variant()]);
@@ -220,13 +224,7 @@ impl GodotAIManager {
     }
 
     pub fn register_thinker(&mut self, godot_thinker: &mut GodotThinker) -> u32 {
-        let id: u32;
-        if godot_thinker.thinker_id == 0 {
-            id = self.get_thinker_id();
-        } else {
-            id = godot_thinker.thinker_id;
-            self.thinker_id_to_max(godot_thinker.thinker_id)
-        }
+        let id = assign_id(godot_thinker.thinker_id, &mut self.current_thinker_id);
 
         // unregister on exit
         let callable = Callable::from_object_method(&self.base().clone(), "unregister_thinker")

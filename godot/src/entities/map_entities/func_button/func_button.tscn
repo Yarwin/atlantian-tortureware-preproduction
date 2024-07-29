@@ -1,8 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://nhqvrijixuvm"]
-
-[ext_resource type="Script" path="res://src/entities/map_entities/func_button/func_button.gd" id="1_epao4"]
-
-[node name="FuncButton" type="ActReactArea3D"]
-script = ExtResource("1_epao4")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]

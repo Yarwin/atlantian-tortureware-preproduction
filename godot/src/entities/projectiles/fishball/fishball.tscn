@@ -1,15 +1,11 @@
-[gd_scene load_steps=35 format=4 uid="uid://ck8ut83caaw2s"]
+[gd_scene load_steps=34 format=4 uid="uid://ck8ut83caaw2s"]
 
 [ext_resource type="Shader" path="res://src/entities/projectiles/fishball/fishball.gdshader" id="1_8cuq5"]
 [ext_resource type="Script" path="res://src/entities/projectiles/fishball/fishball.gd" id="1_elt6f"]
 [ext_resource type="Shader" path="res://src/entities/projectiles/fishball/fishball_head.gdshader" id="2_j3wrq"]
 [ext_resource type="Shader" path="res://src/entities/projectiles/fishball/fishball_trail.gdshader" id="3_q1ywl"]
 
-[sub_resource type="ActDamageBash" id="ActDamageBash_5fkfq"]
-strength = 22.0
-
-[sub_resource type="ActReactResource" id="ActReactResource_dd5at"]
-emits = Array[Resource]([SubResource("ActDamageBash_5fkfq")])
+[sub_resource type="Resource" id="ActReactResource_dd5at"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_emgdw"]
 radius = 0.24

@@ -1,6 +1,6 @@
 use godot::classes::Resource;
 use godot::prelude::*;
-use crate::act_react::game_effect::{GameEffect, GameEffectProcessor};
+use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
 use crate::act_react::game_effect_builder::{GameEffectInitializer, register_effect_builder};
 
 
@@ -54,7 +54,11 @@ pub struct CallMethod {
 
 
 impl GameEffect for CallMethod {
-    fn execute(&mut self) {
+    fn execute(&mut self) -> EffectResult {
         self.target.as_mut().unwrap().callv(self.method.clone(), self.args.clone());
+        EffectResult::Free
+    }
+    fn revert(&mut self) -> EffectResult {
+        panic!("call method can't be reversed!")
     }
 }

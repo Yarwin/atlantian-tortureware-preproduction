@@ -162,7 +162,7 @@ pub fn rotate(
             .looking_at(lateral_plane.project(target), Vector3::UP, true);
     let new_transform = character
         .get_transform()
-        .interpolate_with(look_at_transform, rotation_speed * delta as f32);
+        .interpolate_with(&look_at_transform, rotation_speed * delta as f32);
     character.set_transform(new_transform);
 }
 

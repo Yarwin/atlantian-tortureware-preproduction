@@ -1,5 +1,5 @@
 use godot::prelude::*;
-use crate::act_react::game_effect::{GameEffect, GameEffectProcessor};
+use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
 use crate::act_react::game_effect_builder::{GameEffectInitializer, register_effect_builder};
 
 
@@ -49,7 +49,8 @@ pub struct PrintMessage {
 
 
 impl GameEffect for PrintMessage {
-    fn execute(&mut self) {
+    fn execute(&mut self) -> EffectResult {
         godot_print!("{}", self.message);
+        EffectResult::Free
     }
 }

@@ -23,7 +23,7 @@ impl fmt::Display for ItemSize {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let (width, height) = self.total_rectangular_space_taken();
         let mut fmt_grid = Grid::new(width, height);
-        let r = fmt_grid.insert_item_at(1, (0, 0), &self);
+        fmt_grid.insert_item_at(1, (0, 0), self);
         fmt_grid.fmt(f)
     }
 }
@@ -39,14 +39,14 @@ impl ItemSize {
         (max_col, max_row)
     }
     /// creates new rectangular item size
-    pub fn new_rectangular(x: usize, y: usize) -> Self {
-        let mut taken_space = Vec::with_capacity(x);
-        for row_i in 0..y {
+    pub fn new_rectangular(width: usize, height: usize) -> Self {
+        let mut taken_space = Vec::with_capacity(width);
+        for row_i in 0..height {
             taken_space.push(
               RowSpace {
                   col_offset: 0,
                   row_offset: row_i,
-                  growth: x
+                  growth: width
               });
         }
         ItemSize {
@@ -106,11 +106,11 @@ impl Grid {
         }
     }
 
-    pub fn get_first_free_space(&self, size: ItemSize) -> InventoryResult {
-        let (max_width, max_height) = size.total_rectangular_space_taken();
-        for row in 0..(self.height + 1 - max_width) {
-            for column in 0..(self.width + 1 - max_height) {
-                match self.check_at((column, row), &size, None) {
+    pub fn get_first_free_space(&self, size: &ItemSize) -> InventoryResult {
+        let (rec_height, rec_width) = size.total_rectangular_space_taken();
+        for row in 0..(self.height + 1 - rec_height) {
+            for column in 0..(self.width + 1 - rec_width) {
+                match self.check_at((row, column), &size, None) {
                     InventoryResult::Free(free) => {
                         return InventoryResult::Free(free);
                     }
@@ -121,7 +121,7 @@ impl Grid {
         InventoryResult::OutsideRange
     }
 
-    pub fn force_insert(&mut self, ids: &[usize], item_id: u32) {
+    pub fn force_insert(&mut self, item_id: u32, ids: &[usize]) {
         for id in ids.iter() {
             self.array[*id] = Some(item_id);
         }
@@ -136,7 +136,7 @@ impl Grid {
         let result = self.check_at(at, size, Some(item_id));
         match result {
             InventoryResult::Free(ids) => {
-                self.force_insert(&ids, item_id);
+                self.force_insert(item_id, &ids);
                 InventoryResult::Inserted(ids)
             }
             _ => result,
@@ -145,9 +145,9 @@ impl Grid {
 
     pub fn check_row_at(
         &self,
+        item_id: Option<u32>,
         at: (usize, usize),
         row_size: &RowSpace,
-        item_id: Option<u32>,
     ) -> InventoryResult {
         let (row, col_start) = (at.1 + row_size.row_offset, at.0 + row_size.col_offset);
         if row > self.height || col_start + row_size.growth > self.width {
@@ -184,7 +184,7 @@ impl Grid {
         let mut free = Vec::new();
         let mut taken = HashSet::new();
         for row_space in size.space.iter() {
-            match self.check_row_at(at, row_space, item_id) {
+            match self.check_row_at(item_id, at, row_space) {
                 InventoryResult::Free(f) => {free.extend(f)}
                 InventoryResult::OutsideRange => {
                     return InventoryResult::OutsideRange
@@ -206,8 +206,7 @@ mod test {
     #[test]
     fn test_creating_item_sizes() {
         // two rows taking 2 spaces each
-        let excepted_item_sizes = vec![
-            ItemSize {
+        let excepted_item_sizes = [ItemSize {
                 space: vec![
                     RowSpace {row_offset: 0, col_offset: 0, growth: 2 }, RowSpace {row_offset: 1, col_offset: 0, growth: 2 }
                 ],
@@ -221,13 +220,10 @@ mod test {
                 space: vec![
                     RowSpace {row_offset: 0, col_offset: 0, growth: 2 }, RowSpace {row_offset: 1, col_offset: 0, growth: 2 }, RowSpace {row_offset: 2, col_offset: 0, growth: 2 }
                 ],
-            },
-        ];
-        let created_item_sizes = vec![
-            ItemSize::new_rectangular(2, 2),
+            }];
+        let created_item_sizes = [ItemSize::new_rectangular(2, 2),
             ItemSize::new_rectangular(3, 2),
-            ItemSize::new_rectangular(2, 3)
-        ];
+            ItemSize::new_rectangular(2, 3)];
         for i in 0..excepted_item_sizes.len() {
             if excepted_item_sizes[i] != created_item_sizes[i] {
                 panic!("failed creating rectangular item. Excepted: {:?}, given: {:?}", excepted_item_sizes[i], created_item_sizes[i])
@@ -268,13 +264,36 @@ mod test {
     }
 
     #[test]
+    fn test_inserting_first_free_space() {
+        let mut grid = Grid::new(3, 3);
+        let item_a = ItemSize::new_rectangular(2, 3);
+        let _ = grid.insert_item_at(1, (0, 0), &item_a);
+        let item_b = ItemSize::new_rectangular(1, 2);
+        let InventoryResult::Free(first_free_space) = grid.get_first_free_space(&item_b) else {panic!("no free space found!")};
+        if first_free_space != vec![2, 5] {
+            panic!("wrong free space!");
+        }
+        grid.force_insert(2, &first_free_space);
+        // excepted grid result:
+        // 1  1  2
+        // 1  1  2
+        // 1  1  0
+
+        let item_c = ItemSize::new_rectangular(1, 1);
+        let InventoryResult::Free(first_free_space) = grid.get_first_free_space(&item_c) else {panic!("no free space found!")};
+        if first_free_space != vec![8] {
+            panic!("wrong free space!");
+        }
+    }
+
+    #[test]
     fn test_inserting_space_taken() {
         let mut grid = Grid::new(3, 3);
         let item_a = ItemSize::new_rectangular(2, 2);
         let _ = grid.insert_item_at(1, (0, 0), &item_a);
         let insert_result = grid.insert_item_at(2, (1, 1), &item_a);
         if !matches!(insert_result, InventoryResult::Taken(_)) {
-            panic!("given space should be taken!")
+            panic!("Wrong result! Excepted: InventoryResult::Taken, actual: {:?}", insert_result)
         }
     }
 
@@ -293,11 +312,13 @@ mod test {
         let mut grid = Grid::new(3, 3);
         let item_a = ItemSize::new_rectangular(2, 2);
         let _ = grid.insert_item_at(1, (0, 0), &item_a);
+        assert!(grid.array[0].is_some());
         grid.free(1);
         let insert_result = grid.insert_item_at(2, (1, 1), &item_a);
         if !matches!(insert_result, InventoryResult::Inserted(_)) {
             panic!("given space should be free! Excepted: InventoryResult::Inserted, actual: {:?}", insert_result)
         }
+        assert!(grid.array[0].is_none());
+        assert!(grid.array[5].is_some());
     }
-
 }

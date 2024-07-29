@@ -4,7 +4,16 @@ use godot::obj::bounds::DeclUser;
 use godot::prelude::*;
 
 
-pub type GameEffectDispatch = fn(Gd<Object>, fn(&mut dyn GameEffect));
+pub enum EffectResult {
+    /// effect has been executed and command object can be freed
+    Free,
+    /// effect should be reverted after `n` seconds
+    Revert(f64),
+    /// Failed to execute given command
+    Failed,
+}
+
+pub type GameEffectDispatch = fn(Gd<Object>, fn(&mut dyn GameEffect) -> EffectResult) -> EffectResult;
 
 #[derive(Debug)]
 pub struct GameEffectProcessor {
@@ -18,6 +27,14 @@ pub struct GameEffectProcessor {
 }
 
 impl GameEffectProcessor {
+    /// removes the command object at the end of the physics frame
+    pub fn free(&mut self) {
+        self.base.call_deferred("free".into(), &[]);
+    }
+
+    pub fn instance_id(&self) -> InstanceId {
+        self.base.instance_id()
+    }
 
     pub fn new<T>(base: Gd<T>) -> Self
     where T: Inherits<Object> + GodotClass + Bounds<Declarer = DeclUser> + GameEffect
@@ -27,17 +44,18 @@ impl GameEffectProcessor {
             trait_object_dispatch: |base, closure| {
                 let mut effect_obj: Gd<T> = base.cast::<T>();
                 let mut guard: GdMut<T> = effect_obj.bind_mut();
-                closure(&mut *guard);
+                closure(&mut *guard)
             },
         }
     }
 }
 
 impl GameEffect for GameEffectProcessor {
-    fn execute(&mut self) {
-        (self.trait_object_dispatch)(self.base.clone(), |effect: &mut dyn GameEffect| {effect.execute()});
-        // right now we are just freeing given object, but we might want  to store it in the future – for example to revert the command (undo/time travel/whatever)
-        self.base.call_deferred("free".into(), &[]);
+    fn execute(&mut self) -> EffectResult {
+        (self.trait_object_dispatch)(self.base.clone(), |effect: &mut dyn GameEffect| {effect.execute()})
+    }
+    fn revert(&mut self) -> EffectResult {
+        (self.trait_object_dispatch)(self.base.clone(), |effect: &mut dyn GameEffect| {effect.revert()})
     }
 
 }
@@ -56,5 +74,6 @@ impl GameEffect for GameEffectProcessor {
 
 
 pub trait GameEffect: Debug {
-    fn execute(&mut self);
+    fn execute(&mut self) -> EffectResult;
+    fn revert(&mut self) -> EffectResult {EffectResult::Free}
 }

@@ -36,10 +36,7 @@ pub struct GodotAINode {
 #[godot_api]
 impl IArea3D for GodotAINode {
     fn ready(&mut self) {
-        let mut ai_manager = Engine::singleton()
-            .get_singleton("AIManager".into())
-            .unwrap()
-            .cast::<GodotAIManager>();
+        let mut ai_manager = GodotAIManager::singleton();
         self.ainode_id = ai_manager.bind_mut().register_ainode(self);
     }
 }

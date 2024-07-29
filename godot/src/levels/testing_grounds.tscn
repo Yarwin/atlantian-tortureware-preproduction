@@ -520,4 +520,6 @@ transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -5, 1.
 transform = Transform3D(0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 9.5, 1.1875, -8.5)
 
 [node name="DebugPlayer" parent="." instance=ExtResource("10_75pgr")]
+speed = 4.5
+acceleration = 0.25
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.3636, 0.6875, 0.519017)
