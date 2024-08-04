@@ -1,28 +1,28 @@
 use godot::prelude::*;
-use crate::act_react::act_react_resource::ActReactResource;
 use crate::inventory::inventory_item_data::InventoryItemData;
 
 
+#[derive(Debug)]
 pub enum StackResult {
+    WrongType,
     NoChange,
     Depleted,
     Updated,
 }
 
+#[derive(Debug, Clone)]
 pub struct InventoryItem {
     pub current_inventory_id: Option<u32>,
     pub inventory_data: Gd<InventoryItemData>,
     pub stack: u32,
     pub location: Vector2i,
-    // how item interact with everything else while in inventory
-    pub act_react: Option<Gd<ActReactResource>>
 }
 
 impl InventoryItem {
     pub fn stack(&mut self, other: &mut InventoryItem) -> StackResult {
         // bail if items have different type
         if other.inventory_data != self.inventory_data {
-            return StackResult::NoChange;
+            return StackResult::WrongType;
         }
         let max_stack = self.inventory_data.bind().max_stack;
         let other_stack = other.stack;
@@ -41,4 +41,15 @@ impl InventoryItem {
         StackResult::Updated
     }
 
+}
+
+impl From<Gd<InventoryItemData>> for InventoryItem {
+    fn from(value: Gd<InventoryItemData>) -> Self {
+        InventoryItem {
+            current_inventory_id: None,
+            inventory_data: value,
+            stack: 1,
+            location: Default::default(),
+        }
+    }
 }

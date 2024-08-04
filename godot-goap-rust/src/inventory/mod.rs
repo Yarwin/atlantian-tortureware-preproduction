@@ -1,4 +1,5 @@
 mod grid;
 pub(crate) mod inventory_entity;
-mod inventory_item;
-mod inventory_item_data;
+pub(crate) mod inventory_item;
+pub(crate) mod inventory_item_data;
+pub mod item_builder;

@@ -110,8 +110,8 @@ impl IArea3D for ActReactArea3D {
 #[godot_api]
 impl ActReactArea3D {
     #[func(gd_self, virtual)]
-    fn post_ready(s: Gd<Self>) {
-        godot_print!("virtual function????");
+    fn post_ready(_s: Gd<Self>) {
+        godot_print!("running virtual function…");
     }
 
     #[func]
@@ -132,10 +132,7 @@ impl ActReactArea3D {
     #[func]
     pub fn react(&self, act: Gd<ActReactResource>) {
         let Some(react) = self.act_react.clone() else {return;};
-        let mut act_react_executor = Engine::singleton()
-            .get_singleton("ActReactExecutor".into())
-            .unwrap()
-            .cast::<ActReactExecutor>();
+        let mut act_react_executor = ActReactExecutor::singleton();
         act_react_executor.bind_mut().react(act, react, dict!{});
     }
 }

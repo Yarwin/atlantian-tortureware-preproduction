@@ -1,13 +1,11 @@
 use std::f32::consts::FRAC_PI_2;
 use std::f64::consts::PI;
 use godot::classes::{InputEvent, InputEventMouseMotion};
-// use godot::engine::input::MouseMode;
 use godot::prelude::*;
 use crate::character_controler::character_controller_3d::CharacterController3D;
 use godot::classes::input::MouseMode;
 use godot::global::{fmod, lerpf, sin};
 
-const BOB_FREQUENCY: f32 = 6.66;
 
 #[derive(Debug, Default)]
 pub struct CameraData {
@@ -58,7 +56,18 @@ impl PlayerCameraController3D {
     fn tilt_camera(&mut self, delta: f32) {
         let Some(char) = self.character_controller.as_mut() else {return;};
         let char_x_axis: Vector3 = -char.get_global_transform().basis.col_a();
-        let rot_dot = char.bind().movement_data.as_ref().map(|m| m.velocity.normalized()).unwrap_or(Vector3::ZERO).dot(char_x_axis);
+        let rot_dot = char
+            .bind()
+            .movement_data
+            .as_ref()
+            .map(|m|
+                if m.velocity.is_zero_approx() {
+                    Vector3::ZERO
+                } else {
+                    m.velocity.normalized()
+                })
+            .unwrap_or(Vector3::ZERO)
+            .dot(char_x_axis);
         if rot_dot.abs() > self.roll_speed {
             self.camera_data.target_rotation_head.z = self.camera_data.target_rotation_head.z.lerp(self.max_roll * rot_dot.sign(), 2.0 * delta);
         } else {

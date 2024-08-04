@@ -1,7 +1,8 @@
-[gd_scene load_steps=9 format=3 uid="uid://b4tvyguynxs6f"]
+[gd_scene load_steps=13 format=3 uid="uid://b4tvyguynxs6f"]
 
 [ext_resource type="Script" path="res://src/entities/debug_player/debug_player.gd" id="1_evmxd"]
 [ext_resource type="ActFrob" uid="uid://be1sdts8lk5mf" path="res://src/entities/debug_player/actreact/act_debug_player_frob.tres" id="1_lgqr6"]
+[ext_resource type="ItemResource" uid="uid://oyv8e11fd1bm" path="res://src/items/debug/debug_item_1_resource.tres" id="3_vgf5h"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_8f5f6"]
 height = 1.75
@@ -23,6 +24,23 @@ albedo_color = Color(1, 0.15, 0.15, 1)
 material = SubResource("StandardMaterial3D_bqdy5")
 radius = 0.25
 height = 0.5
+
+[sub_resource type="ItemToSpawn" id="ItemToSpawn_a113f"]
+amount = 1
+assign_position = true
+position = Vector2i(2, 1)
+item_data = ExtResource("3_vgf5h")
+
+[sub_resource type="ItemToSpawn" id="ItemToSpawn_41gmd"]
+amount = 3
+position = Vector2i(3, 2)
+item_data = ExtResource("3_vgf5h")
+
+[sub_resource type="ItemToSpawn" id="ItemToSpawn_qcmf3"]
+amount = 2
+assign_position = true
+position = Vector2i(1, 1)
+item_data = ExtResource("3_vgf5h")
 
 [node name="DebugPlayer" type="CharacterController3D" node_paths=PackedStringArray("collision_shape")]
 collision_shape = NodePath("CollisionShape3D")
@@ -75,5 +93,12 @@ shape = SubResource("SphereShape3D_rcxbj")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05661, 0)
 mesh = SubResource("SphereMesh_637gy")
 
-[node name="InventoryAgent" type="InventoryAgent" parent="."]
-size = Vector2i(3, 3)
+[node name="InventoryAgent" type="InventoryAgent" parent="." groups=["player_inventory", "player_inventory_left"]]
+size = Vector2i(2, 3)
+
+[node name="InventoryAgent2" type="InventoryAgent" parent="." groups=["player_inventory", "player_inventory_center"]]
+size = Vector2i(6, 4)
+items_to_spawn = Array[ItemToSpawn]([SubResource("ItemToSpawn_a113f"), SubResource("ItemToSpawn_41gmd"), SubResource("ItemToSpawn_qcmf3")])
+
+[node name="InventoryAgent3" type="InventoryAgent" parent="." groups=["player_inventory", "player_inventory_right"]]
+size = Vector2i(2, 3)

@@ -1,6 +1,6 @@
 use crate::godot_api::ai_manager::GodotAIManager;
 use godot::classes::{
-    AnimationTree, Engine, Marker3D, NavigationAgent3D, Shape3D,
+    AnimationTree, Marker3D, NavigationAgent3D, Shape3D,
 };
 use godot::prelude::*;
 use crate::ai::working_memory::Event::AnimationCompleted;

@@ -174,32 +174,6 @@ impl GodotAIManager {
         drop(guard)
     }
 
-    fn get_ainode_id(&mut self) -> u32 {
-        self.current_node_id += 1;
-        self.current_node_id
-    }
-
-    /// increases current_node_id to prevent overwriting already set ainodes
-    fn ainode_id_to_max(&mut self, other: u32) {
-        if self.current_node_id > other {
-            return;
-        }
-        self.current_node_id = other;
-    }
-
-    fn get_thinker_id(&mut self) -> u32 {
-        self.current_thinker_id += 1;
-        self.current_thinker_id
-    }
-
-    /// increases current_thinker_id to prevent overwriting already set thinkers
-    fn thinker_id_to_max(&mut self, other: u32) {
-        if self.current_thinker_id > other {
-            return;
-        }
-        self.current_thinker_id = other;
-    }
-
     pub fn register_ainode(&mut self, ai_node: &mut GodotAINode) -> u32 {
         let id: u32 = assign_id(ai_node.ainode_id, &mut self.current_node_id);
         // unregister on exit

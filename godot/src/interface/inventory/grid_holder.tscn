@@ -1,0 +1,36 @@
+[gd_scene load_steps=3 format=3 uid="uid://dpxjflejy405l"]
+
+[ext_resource type="PackedScene" uid="uid://brrp5juv1uxp8" path="res://src/interface/inventory/grid_cell.tscn" id="1_sh3v5"]
+[ext_resource type="PackedScene" uid="uid://hr5mu6w8d5qd" path="res://src/interface/inventory/inventory_item.tscn" id="2_lgo54"]
+
+[node name="GridHolder" type="InventoryUIGrid" node_paths=PackedStringArray("margin_container", "grid") groups=["InventoryGridUI"]]
+margin_container = NodePath("MarginContainer")
+grid = NodePath("MarginContainer/GridContainer")
+inventory_group = &"player_inventory_left"
+grid_cell_scene = ExtResource("1_sh3v5")
+item_scene = ExtResource("2_lgo54")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 1.0
+offset_top = 1.0
+offset_right = 1.0
+offset_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GridContainer" type="GridContainer" parent="MarginContainer"]
+layout_mode = 2

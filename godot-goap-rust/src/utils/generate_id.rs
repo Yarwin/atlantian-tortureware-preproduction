@@ -8,5 +8,5 @@ pub fn assign_id(initial_id: u32, current_max: &mut u32) -> u32 {
         return initial_id
     }
     *current_max += 1;
-    return *current_max
+    *current_max
 }

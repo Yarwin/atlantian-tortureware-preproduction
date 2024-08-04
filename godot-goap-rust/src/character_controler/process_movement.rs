@@ -40,7 +40,13 @@ pub fn process_movement(delta: f32, args: MovementParameters, previous_movement:
     let mut desired_motion: Vector3;
     if args.direction.is_zero_approx() && previous_movement.is_some() {
         current_speed = previous_horizontal_speed.lerp(0.0, args.deceleration);
-        desired_motion = previous_movement.as_ref().unwrap().velocity.normalized() * current_speed;
+        let previous_velocity = previous_movement.as_ref().unwrap().velocity;
+        let previous_direction = if previous_velocity.is_zero_approx() {
+            Vector3::ZERO
+        } else {
+            previous_velocity.normalized()
+        };
+        desired_motion = previous_direction * current_speed;
     }  else {
         current_speed = previous_horizontal_speed.lerp(args.speed, args.acceleration);
         desired_motion = args.direction * current_speed;
@@ -56,9 +62,6 @@ pub fn process_movement(delta: f32, args: MovementParameters, previous_movement:
 
 
 fn execute_movement(desired_motion: Vector3, mut args: MovementParameters, delta: f32) -> Option<MovementData> {
-    // let start_position = player_state.player_character_body.as_ref().map(|body| body.get_position()).unwrap_or(
-    //     Vector3::ZERO
-    // );
     let start_position = args.body.get_transform().origin;
     let mut movement_data = MovementData::new(desired_motion * delta);
 
@@ -84,10 +87,8 @@ fn execute_movement(desired_motion: Vector3, mut args: MovementParameters, delta
     movement_data.velocity = {
         (start_position - args.body.get_position() + movement_data.total_stepped_height.unwrap_or(Vector3::ZERO)) / delta
     };
-    // args.body.call("set_constant_linear_velocity".into(), &[movement_data.velocity.to_variant()]);
 
     if movement_data.grounded {
-        // player_state.camera.as_mut().map(|c| c.call("damp".into(), &[]));
         let mut snap_iterations: u32 = 0;
         movement_data.ground_snap_translation = Vector3::DOWN * SNAP_TO_GROUND_DISTANCE;
         movement_data.initial_ground_snap_translation = Vector3::DOWN;
@@ -95,8 +96,6 @@ fn execute_movement(desired_motion: Vector3, mut args: MovementParameters, delta
             move_iteration(MovementType::Snap, &mut args, &mut movement_data);
             snap_iterations += 1;
         }
-    } else {
-        // player_state.camera.as_mut().map(|c| c.call("donmp".into(), &[]));
     }
 
     Some(movement_data)
@@ -177,7 +176,7 @@ fn move_iteration(movement_type: MovementType, args: &mut MovementParameters, mo
         let collision_point = collision.get_position();
 
         let shape_height = args.collision_shape.get_shape().unwrap().cast::<CylinderShape3D>().get_height();
-        let distance_to_bottom = (args.collision_shape.get_global_position() - args.body.get_global_basis().col_b() * shape_height / 2.0).y;
+        let distance_to_bottom = (args.collision_shape.get_global_position() - args.body.get_global_basis().col_b() * shape_height * 0.5).y;
         if movement_type == MovementType::Lateral && collision_point.y > distance_to_bottom + 0.005 {
             projection_normal = args.collision_shape.get_global_position() - collision_point;
             projection_normal.y = 0.0;
@@ -189,7 +188,6 @@ fn move_iteration(movement_type: MovementType, args: &mut MovementParameters, mo
                 movement_data.vertical_translation = Vector3::ZERO;
                 return;
             }
-
             projection_normal = (projection_normal * Vector3::new(1.0, 0.0, 1.0)).normalized();
             if movement_data.grounded && surface_angle < std::f32::consts::FRAC_PI_2 {
                 if movement_data.steep_slope_normals.is_none()
@@ -331,6 +329,10 @@ fn move_and_step(movement_data: &mut MovementData, args: &mut MovementParameters
 }
 
 fn relative_slope_normal(slope_normal: Vector3, translation: &Vector3) -> Option<Vector3> {
+    // FUCK GODOT PHYSICS
+    if slope_normal.x.is_nan() || slope_normal.y.is_nan() || slope_normal.z.is_nan() {
+        return None
+    }
     let slope_normal_lateral = slope_normal * Vector3::new(1.0, 0.0, 1.0);
     let angle_straight = slope_normal_lateral.angle_to(-*translation);
     let angle_up = slope_normal.angle_to(Vector3::UP);
@@ -345,6 +347,10 @@ fn relative_slope_normal(slope_normal: Vector3, translation: &Vector3) -> Option
     let vector_up_slope = Vector3::new(translation.x, height, translation.z);
     let rotation_axis = vector_up_slope.cross(Vector3::UP).normalized();
     if rotation_axis.is_zero_approx() {
+        return None;
+    }
+    if !rotation_axis.is_normalized() {
+        godot_print!("godot physics pls: {rotation_axis}");
         return None;
     }
     let emulated_normal = vector_up_slope.rotated(rotation_axis, FRAC_PI_2);

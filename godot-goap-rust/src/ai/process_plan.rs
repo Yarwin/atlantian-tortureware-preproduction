@@ -23,8 +23,6 @@ pub enum ThinkerPlanEvent {
     Terminate,
 }
 
-#[derive(Debug)]
-pub enum PlanMessage {}
 
 impl ThinkerPlanEvent {
     fn terminate(&self) -> bool {

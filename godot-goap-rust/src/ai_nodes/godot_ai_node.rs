@@ -1,6 +1,6 @@
 use crate::ai_nodes::ai_node::AINodeStatus;
 use crate::godot_api::ai_manager::GodotAIManager;
-use godot::classes::{Area3D, Engine, IArea3D, Marker3D};
+use godot::classes::{Area3D, IArea3D, Marker3D};
 use godot::prelude::*;
 
 #[derive(GodotConvert, Var, Export, Clone, Debug, Copy, Default, PartialEq, Eq)]

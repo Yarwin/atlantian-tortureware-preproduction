@@ -1,14 +1,24 @@
 use godot::classes::notify::ObjectNotification;
 use godot::prelude::*;
-use crate::inventory::inventory_entity::InventoryEntity;
+use crate::inventory::inventory_item::InventoryItem;
+use crate::inventory::inventory_item_data::InventoryItemData;
+
+#[derive(GodotClass)]
+#[class(init, base=Resource)]
+pub struct ItemResource {
+    #[export]
+    pub name: StringName,
+    #[export]
+    pub inventory: Option<Gd<InventoryItemData>>
+}
 
 #[derive(GodotClass)]
 #[class(init, base=Object)]
 pub struct Item {
     pub id: u32,
-    pub inventory: Option<InventoryEntity>,
+    pub inventory: Option<InventoryItem>,
     #[base]
-    base: Base<Object>
+    pub(crate) base: Base<Object>
 }
 
 
@@ -24,9 +34,11 @@ impl Item {
     /// emitted when item has been updated
     fn updated();
     #[signal]
-    /// emitted when item stack reaches 0
-    fn depleted();
-
+    /// emitted when item stopped moving by UI
+    fn moved();
+    #[signal]
+    /// emitted when item is being deleted (for any reason)
+    fn item_deleted();
 }
 
 

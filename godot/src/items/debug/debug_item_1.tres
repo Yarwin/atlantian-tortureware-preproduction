@@ -1,0 +1,8 @@
+[gd_resource type="InventoryItemData" load_steps=2 format=3 uid="uid://c8iqqkqnhnyp4"]
+
+[ext_resource type="Texture2D" uid="uid://ctnwk7h2qbkqr" path="res://icon.svg" id="1_57ylc"]
+
+[resource]
+max_stack = 6
+rectangular_grid_size = Vector2i(1, 1)
+texture = ExtResource("1_57ylc")

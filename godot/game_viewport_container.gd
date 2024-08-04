@@ -4,4 +4,3 @@ extends SubViewportContainer
 
 func _input(event: InputEvent) -> void:
 	viewport.push_input(event)
-	pass

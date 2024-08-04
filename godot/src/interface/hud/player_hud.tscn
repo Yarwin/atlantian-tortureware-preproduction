@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://t0ys0mdppkhu"]
+[gd_scene load_steps=4 format=3 uid="uid://t0ys0mdppkhu"]
 
 [ext_resource type="Texture2D" uid="uid://d0j3333cmbnwh" path="res://assets/sprites/ui/inventory/frame.png" id="1_hls88"]
 [ext_resource type="Script" path="res://src/interface/hud/player_hud.gd" id="1_nfd7g"]
+[ext_resource type="PackedScene" uid="uid://dpxjflejy405l" path="res://src/interface/inventory/grid_holder.tscn" id="3_hla68"]
 
 [node name="PlayerHud" type="Control"]
 layout_mode = 3
@@ -10,22 +11,31 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+mouse_filter = 1
 script = ExtResource("1_nfd7g")
 
 [node name="PlayerStuff" type="CanvasLayer" parent="."]
 
-[node name="NinePatchRect" type="NinePatchRect" parent="PlayerStuff"]
+[node name="InventoryUIItemsManager" type="InventoryUIManager" parent="PlayerStuff" node_paths=PackedStringArray("inventories")]
+inventories = [NodePath("NinePatchRect/MarginContainer/HBoxContainer/GridHolder"), NodePath("NinePatchRect/MarginContainer/HBoxContainer/GridHolder2"), NodePath("NinePatchRect/MarginContainer/HBoxContainer/GridHolder3")]
+cooldown_time = 0.2
 anchors_preset = -1
 anchor_left = 0.25
-anchor_top = 0.8
+anchor_top = 0.7
 anchor_right = 0.75
 anchor_bottom = 1.0
-offset_left = -20.0
-offset_top = -40.0
-offset_right = 20.0
+grow_horizontal = 0
+size_flags_horizontal = 4
+size_flags_vertical = 8
+mouse_filter = 1
+
+[node name="NinePatchRect" type="NinePatchRect" parent="PlayerStuff/InventoryUIItemsManager"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
-grow_vertical = 0
+grow_vertical = 2
 mouse_filter = 1
 texture = ExtResource("1_hls88")
 region_rect = Rect2(0, 0, 128, 128)
@@ -35,6 +45,39 @@ patch_margin_right = 32
 patch_margin_bottom = 32
 axis_stretch_horizontal = 2
 axis_stretch_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStuff/InventoryUIItemsManager/NinePatchRect"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 15
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 15
+theme_override_constants/margin_bottom = 15
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PlayerStuff/InventoryUIItemsManager/NinePatchRect/MarginContainer"]
+layout_mode = 2
+
+[node name="GridHolder" parent="PlayerStuff/InventoryUIItemsManager/NinePatchRect/MarginContainer/HBoxContainer" node_paths=PackedStringArray("inventory_ui_items_manager", "item_holder") instance=ExtResource("3_hla68")]
+inventory_ui_items_manager = NodePath("../../../..")
+item_holder = NodePath("../../../../../../CanvasLayer/ItemHolder")
+layout_mode = 2
+
+[node name="GridHolder2" parent="PlayerStuff/InventoryUIItemsManager/NinePatchRect/MarginContainer/HBoxContainer" node_paths=PackedStringArray("inventory_ui_items_manager", "item_holder") instance=ExtResource("3_hla68")]
+inventory_ui_items_manager = NodePath("../../../..")
+inventory_group = &"player_inventory_center"
+item_holder = NodePath("../../../../../../CanvasLayer/ItemHolder")
+layout_mode = 2
+size_flags_stretch_ratio = 3.0
+
+[node name="GridHolder3" parent="PlayerStuff/InventoryUIItemsManager/NinePatchRect/MarginContainer/HBoxContainer" node_paths=PackedStringArray("inventory_ui_items_manager", "item_holder") instance=ExtResource("3_hla68")]
+inventory_ui_items_manager = NodePath("../../../..")
+inventory_group = &"player_inventory_right"
+item_holder = NodePath("../../../../../../CanvasLayer/ItemHolder")
+layout_mode = 2
 
 [node name="Cooldown" type="Timer" parent="."]
 wait_time = 0.2

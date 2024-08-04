@@ -5,7 +5,6 @@ use crate::act_react::act_react_resource::ActReactResource;
 use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
 use crate::act_react::game_effect_builder::effects_registry;
 use crate::act_react::stimulis::Stimuli;
-use crate::godot_api::ai_manager::GodotAIManager;
 use crate::godot_api::{CONNECT_DEFERRED, CONNECT_ONE_SHOT};
 
 
@@ -40,11 +39,11 @@ impl INode for ActReactExecutor {
 
     fn enter_tree(&mut self) {
         Engine::singleton()
-            .register_singleton(ActReactExecutor::name(), self.base().clone().upcast::<Object>());
+            .register_singleton(ActReactExecutor::singleton_name(), self.base().clone().upcast::<Object>());
     }
 
     fn exit_tree(&mut self) {
-        Engine::singleton().unregister_singleton(ActReactExecutor::name());
+        Engine::singleton().unregister_singleton(ActReactExecutor::singleton_name());
     }
 }
 
@@ -94,19 +93,19 @@ impl ActReactExecutor {
 }
 
 impl ActReactExecutor {
-    fn name() -> StringName {
+    fn singleton_name() -> StringName {
         StringName::from("ActReactExecutor")
     }
 
     pub fn singleton() -> Gd<Self> {
         Engine::singleton()
-            .get_singleton(ActReactExecutor::name())
+            .get_singleton(ActReactExecutor::singleton_name())
             .unwrap()
             .cast::<ActReactExecutor>()
     }
 
     fn add_effect(&mut self, effect: GameEffectProcessor) {
-        let mut to_execute = self.to_execute.as_mut().unwrap();
+        let to_execute = self.to_execute.as_mut().unwrap();
         to_execute.push_back(effect);
     }
 

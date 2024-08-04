@@ -1,12 +1,29 @@
 use godot::prelude::*;
 use crate::godot_api::inventory_manager::{InventoryManager, InventoryToCreate};
+use crate::godot_api::item_object::{Item, ItemResource};
+use crate::inventory::item_builder::ItemBuilder;
 
 
 #[derive(GodotClass)]
 #[class(init, base=Resource)]
 pub struct ItemToSpawn {
     #[export]
-    amount: u32
+    pub amount: u32,
+    #[export]
+    pub assign_position: bool,
+    #[export]
+    pub position: Vector2i,
+    #[export]
+    pub item_data: Option<Gd<ItemResource>>,
+    base: Base<Resource>
+}
+
+
+impl ItemToSpawn {
+    pub fn builder(&self) -> ItemBuilder {
+        let item_builder = ItemBuilder::from(self.item_data.as_ref().unwrap()).amount(self.amount).spawn_context(self.to_gd());
+        item_builder
+    }
 }
 
 
@@ -29,15 +46,9 @@ pub struct InventoryAgent {
 
 impl InventoryAgent {
     fn register_inventory(&mut self) {
-        let to_create = InventoryToCreate::from_agent(self.to_gd());
+        let to_create = InventoryToCreate::from_agent(self);
         let mut singleton = InventoryManager::singleton();
         singleton.bind_mut().register_inventory(to_create);
-        // singleton.bind_mut().inventories_to_create.push((
-        //     self.size.x.try_into().unwrap(),
-        //     self.size.y.try_into().unwrap(),
-        //     self.id,
-        //     self.base().clone().cast::<InventoryAgent>(),
-        // ));
     }
 }
 
@@ -45,5 +56,14 @@ impl InventoryAgent {
 impl INode for InventoryAgent {
     fn ready(&mut self) {
         self.register_inventory();
+    }
+
+}
+
+#[godot_api]
+impl InventoryAgent {
+    #[func]
+    pub fn get_items(&self) -> Array<Gd<Item>> {
+        InventoryManager::singleton().bind().get_items(self.id)
     }
 }
