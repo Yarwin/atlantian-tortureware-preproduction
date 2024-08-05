@@ -10,7 +10,7 @@ func highlight():
 		tween.kill()
 	tween = create_tween()
 	self.color_rect.color = Color(Color.WHITE, 0.0)
-	tween.tween_property(self.color_rect, "color", Color(Color.WHITE, 0.6), 0.52)
+	tween.tween_property(self.color_rect, "color", Color(Color.WHITE, 0.6), 0.25)
 	self.color_rect.visible = true
 
 
@@ -20,7 +20,7 @@ func highlight_red():
 	tween = create_tween()
 	self.color_rect.color = Color(Color.RED, 0.0)
 	self.color_rect.visible = true
-	tween.tween_property(self.color_rect, "color", Color(Color.RED, 0.6), 0.52)
+	tween.tween_property(self.color_rect, "color", Color(Color.RED, 0.6), 0.25)
 
 func unhighlight():
 	if tween:

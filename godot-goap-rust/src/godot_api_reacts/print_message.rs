@@ -44,7 +44,7 @@ impl GameEffectInitializer for PrintMessageGameEffect {
 #[derive(GodotClass, Debug)]
 #[class(init, base=Object)]
 pub struct PrintMessage {
-    message: GString
+    pub message: GString
 }
 
 

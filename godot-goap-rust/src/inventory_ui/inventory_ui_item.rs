@@ -43,17 +43,6 @@ pub struct InventoryUIItem {
 
 #[godot_api]
 impl IControl for InventoryUIItem {
-    fn ready(&mut self) {
-        // let on_frob_finished = self.base().callable("on_frobbing_finished");
-        let ui_items_manager = self.inventory_ui_items_manager.as_mut().unwrap();
-
-        // ui_items_manager.connect("frobbing_finished".into(), on_frob_finished);
-        let press_callable = ui_items_manager.callable("on_item_pressed");
-        let frob_callable = ui_items_manager.callable("on_item_frobbed");
-        self.base_mut().connect("item_pressed".into(), press_callable);
-        self.base_mut().connect("item_frobbed".into(), frob_callable);
-    }
-
     fn gui_input(&mut self, event: Gd<InputEvent>) {
         // bail if no item or if item is being held
         if self.item.is_none() || self.is_held {
@@ -68,6 +57,7 @@ impl IControl for InventoryUIItem {
 
         // frob on doubleclick
         if mouse_button_event.is_double_click() {
+            godot_print!("frob frob?");
             self.hold_item_timer.stop();
             let base_variant = self.base().to_variant();
             // avoid re-entrant by using call deferred and postponing signal emission
@@ -76,6 +66,18 @@ impl IControl for InventoryUIItem {
         }
         self.hold_item_timer.start();
     }
+
+    fn ready(&mut self) {
+        // let on_frob_finished = self.base().callable("on_frobbing_finished");
+        let ui_items_manager = self.inventory_ui_items_manager.as_mut().unwrap();
+
+        // ui_items_manager.connect("frobbing_finished".into(), on_frob_finished);
+        let press_callable = ui_items_manager.callable("on_item_pressed");
+        let frob_callable = ui_items_manager.callable("on_item_frobbed");
+        self.base_mut().connect("item_pressed".into(), press_callable);
+        self.base_mut().connect("item_frobbed".into(), frob_callable);
+    }
+
 }
 
 
@@ -103,11 +105,6 @@ impl InventoryUIItem {
         item.connect_ex("inventory_switched".into(), inventory_switched).flags(CONNECT_DEFERRED).done();
         let on_item_deleted = this.callable("on_item_deleted");
         item.connect_ex("item_deleted".into(), on_item_deleted).flags(CONNECT_DEFERRED).done();
-        // let highlight = this.callable("highlight_item");
-        // item.connect("highlight_item".into(), highlight);
-        //
-        // let on_deleted = this.callable("on_item_deleted");
-        // item.connect("deleted".into(), on_deleted);
 
         let texture = item.bind().inventory.as_ref().expect("no inventory data!").inventory_data.bind().texture.clone().unwrap();
         this.bind_mut().texture_rect.set_texture(texture);
@@ -115,7 +112,6 @@ impl InventoryUIItem {
 
     #[func(gd_self)]
     pub fn on_item_deleted(mut this: Gd<Self>) {
-        godot_print!("item deleted.");
         this.queue_free();
     }
 

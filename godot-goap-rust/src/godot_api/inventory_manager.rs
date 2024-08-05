@@ -2,8 +2,8 @@ use std::cmp::Ordering;
 use std::collections::{HashMap};
 use godot::classes::Engine;
 use godot::prelude::*;
-use crate::godot_api::godot_inventory::{InventoryAgent};
-use crate::godot_api::item_object::Item;
+use crate::godot_api::godot_inventory::{InventoryAgent, ItemToSpawn};
+use crate::godot_api::item_object::{Item, ItemResource};
 use crate::inventory::inventory_entity::{InventoryEntity, InventoryEntityResult};
 use crate::inventory::inventory_item::StackResult;
 use crate::utils::generate_id::assign_id;
@@ -136,6 +136,50 @@ impl InventoryManager {
         item.free();
     }
 
+    pub fn reduce_stack(&mut self, mut item: Gd<Item>, by: u32) {
+        // bail if no inventory
+        let mut item_bind = item.bind_mut();
+        let Some(mut inventory_component) = item_bind.inventory.as_mut() else {return; };
+        let result = inventory_component.reduce_stack(by);
+        drop(item_bind);
+        match result {
+            StackResult::Depleted => {self.remove_item(item);}
+            StackResult::Updated => {item.emit_signal("updated".into(), &[]);}
+            StackResult::NoChange | StackResult::WrongType => unreachable!()
+        };
+    }
+
+    fn create_items_in_inventory(&mut self, item_to_spawn: Gd<ItemToSpawn>, inventory: Option<&mut InventoryEntity>, inventory_id: u32) {
+        // inventory might already be owned or not yet initialized. In latter case we are sending a reference to InventoryEntity.
+        let mut inventory = inventory.unwrap_or_else(|| self.inventories.get_mut(&inventory_id).expect("no such inventory!"));
+
+        let bind = item_to_spawn.bind();
+        let builder = bind.builder().id(&mut self.current_item_id);
+
+        for mut item in builder {
+            item.bind_mut().inventory.as_mut().unwrap().current_inventory_id = Some(inventory_id);
+            let id = item.bind().id;
+
+            let item_to_insert = if item_to_spawn.bind().assign_position {
+                let pos = item_to_spawn.bind().position;
+                let size = inventory.get_size();
+                let at_index = pos.y as usize * size.0 + pos.x as usize;
+                // panics if user tries to spawn multiple items
+                let Ok(item) = inventory.try_insert_item_at(item, at_index) else { panic!("couldn't initialize inventory!") };
+                item
+            } else {
+                // panics if there isn't space for given item in the inventory
+                let Ok(item) = inventory.insert_at_first_free_space(item) else { panic!("couldn't initialize inventory!") };
+                item
+            };
+            self.items.insert(id, item_to_insert);
+        }
+    }
+
+    pub fn create_item(&mut self, item_to_spawn: Gd<ItemToSpawn>, inventory_id: u32) {
+        self.create_items_in_inventory(item_to_spawn, None, inventory_id);
+    }
+
     pub fn check_grid_cells(&self, item: Gd<Item>, inventory_id: u32, position_idx: usize) -> InventoryEntityResult {
         let Some(inventory) = self.inventories.get(&inventory_id) else {return InventoryEntityResult::WrongItemType(item);};
         inventory.check_at(item, position_idx)
@@ -203,27 +247,28 @@ impl InventoryManager {
             let inventory_id = assign_id(to_create.agent.bind().id, &mut self.current_inventory_id);
 
             for item_to_spawn in to_create.agent.bind().items_to_spawn.iter_shared() {
-                let bind = item_to_spawn.bind();
-                let builder = bind.builder().id(&mut self.current_item_id);
-
-                for mut item in builder {
-                    item.bind_mut().inventory.as_mut().unwrap().current_inventory_id = Some(inventory_id);
-                    let id = item.bind().id;
-
-                    let item_to_insert = if item_to_spawn.bind().assign_position {
-                        let pos = item_to_spawn.bind().position;
-                        let size = inventory.get_size();
-                        let at_index = pos.y as usize * size.0 + pos.x as usize;
-                        // panics if user tries to spawn multiple items
-                        let Ok(item) = inventory.try_insert_item_at(item, at_index) else {panic!("couldn't initialize inventory!")};
-                        item
-                    } else {
-                        // panics if there isn't space for given item in the inventory
-                        let Ok(item) = inventory.insert_at_first_free_space(item) else {panic!("couldn't initialize inventory!")};
-                        item
-                    };
-                    self.items.insert(id, item_to_insert);
-                }
+                self.create_items_in_inventory(item_to_spawn, Some(&mut inventory), inventory_id);
+                // let bind = item_to_spawn.bind();
+                // let builder = bind.builder().id(&mut self.current_item_id);
+                //
+                // for mut item in builder {
+                //     item.bind_mut().inventory.as_mut().unwrap().current_inventory_id = Some(inventory_id);
+                //     let id = item.bind().id;
+                //
+                //     let item_to_insert = if item_to_spawn.bind().assign_position {
+                //         let pos = item_to_spawn.bind().position;
+                //         let size = inventory.get_size();
+                //         let at_index = pos.y as usize * size.0 + pos.x as usize;
+                //         // panics if user tries to spawn multiple items
+                //         let Ok(item) = inventory.try_insert_item_at(item, at_index) else {panic!("couldn't initialize inventory!")};
+                //         item
+                //     } else {
+                //         // panics if there isn't space for given item in the inventory
+                //         let Ok(item) = inventory.insert_at_first_free_space(item) else {panic!("couldn't initialize inventory!")};
+                //         item
+                //     };
+                //     self.items.insert(id, item_to_insert);
+                // }
             }
 
             to_create.agent.bind_mut().id = inventory_id;

@@ -3,5 +3,5 @@
 [ext_resource type="InventoryItemData" uid="uid://c8iqqkqnhnyp4" path="res://src/items/debug/debug_item_1.tres" id="1_7cqo4"]
 
 [resource]
-name = &"debug item"
+name = &"godot icon"
 inventory = ExtResource("1_7cqo4")

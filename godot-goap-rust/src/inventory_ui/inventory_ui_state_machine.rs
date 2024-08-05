@@ -46,14 +46,26 @@ impl InventoryUIManagerState for InventoryUIDefaultState {
                 item_held: presser
             }
         )
-        // return Box::new()
     }
 
     fn frob_event(self: Box<Self>, frobber: Gd<InventoryUIItem>, inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
-        todo!()
+        // todo – try https://rust-lang.github.io/rfcs/2497-if-let-chains.html
+        // if let Some(item) = frobber.bind().item.as_ref()
+        //     && let Some(inventory_component) = item.bind().inventory.as_ref()
+        // {
+        //
+        // }
+        let frobber_bind = frobber.bind();
+        let Some(item) = frobber_bind.item.as_ref() else { return self };
+        let item_bind = item.bind();
+        let Some(inventory_component) = item_bind.inventory.as_ref() else {return self};
+        let inventory_data_resource_bind = inventory_component.inventory_data.bind();
+        let Some(act_react) = inventory_data_resource_bind.act_react.as_ref() else { return self };
+        godot_print!("actions: {}", act_react.bind().emits);
+        self
     }
 
-    fn hide_event(self: Box<Self>, inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+    fn hide_event(self: Box<Self>, _inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
         self
     }
 }
@@ -152,7 +164,7 @@ impl InventoryUIManagerState for InventoryUIMoveItemState {
         self
     }
 
-    fn press_event(mut self: Box<Self>, presser: Gd<InventoryUIItem>, mut inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+    fn press_event(mut self: Box<Self>, _presser: Gd<InventoryUIItem>, mut inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
         if inventory_ui_manager.cooldown.elapsed().unwrap().as_secs_f64() > inventory_ui_manager.cooldown_time {
             if let Ok(state) = self.release_item(inventory_ui_manager.base.get_global_mouse_position(), &mut inventory_ui_manager) {
                 return state;
@@ -162,6 +174,7 @@ impl InventoryUIManagerState for InventoryUIMoveItemState {
     }
 
     fn frob_event(self: Box<Self>, _frobber: Gd<InventoryUIItem>, _inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+        // ignores frob events
         self
     }
 
@@ -171,6 +184,7 @@ impl InventoryUIManagerState for InventoryUIMoveItemState {
         item.emit_signal("moved".into(), &[]);
         drop(ui_item_bind);
         self.stop_highlighting_all(&mut inventory_ui_manager);
-        Box::new(InventoryUIDefaultState)
+        let mut new_state = Box::new(InventoryUIDefaultState);
+        new_state.hide_event(inventory_ui_manager)
     }
 }

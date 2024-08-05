@@ -37,6 +37,13 @@ pub struct InventoryUIGrid {
 
 impl InventoryUIGrid {
 
+    fn stop_highlighting_given_cells<'a>(cells: impl Iterator<Item=&'a usize>, grid: &mut Gd<GridContainer>) {
+        for cell in cells {
+            let mut child = grid.get_child(*cell as i32).unwrap().cast::<Control>();
+            child.call("unhighlight".into(), &[]);
+        }
+    }
+
     pub fn highlight_cells_red(&mut self, cells: Vec<(usize, u32)>) {
         if self.current_danger_cells == cells {
             return;
@@ -49,22 +56,22 @@ impl InventoryUIGrid {
                 (!cells.contains(&(*c, *id))).then_some(c)
             })
             .chain(self.currently_highlighted_cells.iter());
+        Self::stop_highlighting_given_cells(iterator, grid);
 
-        for cell in iterator {
-            let mut child = grid.get_child(*cell as i32).unwrap().cast::<Control>();
-            child.call("unhighlight".into(), &[]);
-        }
         for (cell, _id) in cells.iter() {
             let mut child = grid.get_child(*cell as i32).unwrap().cast::<Control>();
             child.call("highlight_red".into(), &[]);
         }
         self.current_danger_cells = cells;
+        self.currently_highlighted_cells.clear();
     }
 
     pub fn highlight_cells(&mut self, cells: Vec<usize>) {
         if self.currently_highlighted_cells == cells {
             return;
         }
+        let Some(grid) = self.grid.as_mut() else { return; };
+
         let iterator = self.currently_highlighted_cells
             .iter()
             .filter(|c| !cells.contains(c))
@@ -73,16 +80,14 @@ impl InventoryUIGrid {
                     .iter()
                     .map(|(c, _id)| c)
             );
-        let Some(grid) = self.grid.as_mut() else { return; };
-        for cell in iterator {
-            let mut child = grid.get_child(*cell as i32).unwrap().cast::<Control>();
-            child.call("unhighlight".into(), &[]);
-        }
+        Self::stop_highlighting_given_cells(iterator, grid);
+
         for cell in cells.iter() {
             let mut child = grid.get_child(*cell as i32).unwrap().cast::<Control>();
             child.call("highlight".into(), &[]);
         }
         self.currently_highlighted_cells = cells;
+        self.current_danger_cells.clear();
     }
 
     pub fn stop_highlighting_all(&mut self) {

@@ -19,6 +19,14 @@ pub struct InventoryItem {
 }
 
 impl InventoryItem {
+    pub fn reduce_stack(&mut self, by: u32) -> StackResult {
+        if self.stack <= by {
+            return StackResult::Depleted
+        }
+        self.stack -= by;
+        StackResult::Updated
+    }
+
     pub fn stack(&mut self, other: &mut InventoryItem) -> StackResult {
         // bail if items have different type
         if other.inventory_data != self.inventory_data {

@@ -78,6 +78,7 @@ impl InventoryUIManager {
 
     #[func]
     fn on_item_frobbed(&mut self, item: Gd<InventoryUIItem>) {
+        godot_print!("frob frob");
         if let Some(state) = self.state.take() {
             self.state = Some(state.frob_event(item, self.as_view()));
         }

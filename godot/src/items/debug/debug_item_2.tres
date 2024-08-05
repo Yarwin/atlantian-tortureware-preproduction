@@ -1,8 +1,10 @@
-[gd_resource type="InventoryItemData" load_steps=2 format=3 uid="uid://dws0xc3vhmiu7"]
+[gd_resource type="InventoryItemData" load_steps=3 format=3 uid="uid://dws0xc3vhmiu7"]
 
-[ext_resource type="Texture2D" uid="uid://ctnwk7h2qbkqr" path="res://icon.svg" id="1_51vdf"]
+[ext_resource type="Texture2D" uid="uid://utfyuvs3i7r8" path="res://quake_logo.svg" id="1_c2b4m"]
+
+[sub_resource type="ActReactResource" id="ActReactResource_yreqc"]
 
 [resource]
-max_stack = 4
 rectangular_grid_size = Vector2i(1, 1)
-texture = ExtResource("1_51vdf")
+texture = ExtResource("1_c2b4m")
+act_react = SubResource("ActReactResource_yreqc")

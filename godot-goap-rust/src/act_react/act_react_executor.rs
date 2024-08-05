@@ -116,6 +116,7 @@ impl ActReactExecutor {
 
             for mut react in reactor[stimuli].iter_shared() {
                 let command_init_fn = effects_registry()[&react.call("builder_name".into(), &[]).to::<StringName>()];
+
                 let effect = (command_init_fn)(react.clone(), &act_context, context, |effect, a_context, world_context |
                     {
                         effect.build(a_context, world_context)
