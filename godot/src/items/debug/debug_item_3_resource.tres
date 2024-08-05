@@ -1,0 +1,7 @@
+[gd_resource type="ItemResource" load_steps=2 format=3 uid="uid://dt7y65wxofofy"]
+
+[ext_resource type="InventoryItemData" uid="uid://cf2w7k6njyjj5" path="res://src/items/debug/debug_item_3.tres" id="1_bumfj"]
+
+[resource]
+name = &"debug item 3"
+inventory = ExtResource("1_bumfj")
