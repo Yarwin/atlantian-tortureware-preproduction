@@ -20,6 +20,3 @@ serde = { version = "^1.0", features = ["derive"] }
 static_enum_dispatch = { path= "static_enum_dispatch"}
 strum = "0.26.2"
 strum_macros = "0.26.4"
-
-[dev-dependencies]
-serde_json = "^1.0"

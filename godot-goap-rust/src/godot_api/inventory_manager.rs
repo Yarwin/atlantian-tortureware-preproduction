@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use godot::classes::Engine;
 use godot::prelude::*;
 use crate::godot_api::godot_inventory::{InventoryAgent};
@@ -92,6 +92,7 @@ impl INode for InventoryManager {
 impl InventoryManager {
     #[signal]
     fn post_init();
+
     #[func]
     fn create_inventories(&mut self) {
         self.initialize_inventories();
@@ -135,12 +136,15 @@ impl InventoryManager {
         item.free();
     }
 
-    pub fn move_item(&mut self, mut item: Gd<Item>, to: u32, new_pos_index: usize) -> Result<Gd<Item>, InventoryEntityResult> {
-        godot_print!("moving item to inventory {to} at index: {new_pos_index}");
-        let Some(inventory) = self.inventories.get_mut(&to) else {return Err(InventoryEntityResult::WrongItemType(item));};
+    pub fn check_grid_cells(&self, item: Gd<Item>, inventory_id: u32, position_idx: usize) -> InventoryEntityResult {
+        let Some(inventory) = self.inventories.get(&inventory_id) else {return InventoryEntityResult::WrongItemType(item);};
+        inventory.check_at(item, position_idx)
+    }
 
-        if let Some(other_item_id) = inventory.get_item_id_at(new_pos_index) {
-            godot_print!("found other item: {other_item_id}");
+    pub fn move_item(&mut self, mut item: Gd<Item>, inventory_id: u32, position_idx: usize) -> Result<Gd<Item>, InventoryEntityResult> {
+        let Some(inventory) = self.inventories.get_mut(&inventory_id) else {return Err(InventoryEntityResult::WrongItemType(item));};
+
+        if let Some(other_item_id) = inventory.get_item_id_at(position_idx) {
             if other_item_id != item.bind().id {
                 // try to stack item
                 let mut other_item = self.items.get_mut(&other_item_id).unwrap().bind_mut();
@@ -153,7 +157,7 @@ impl InventoryManager {
                 };
 
                 return match result {
-                    StackResult::WrongType => { Err(InventoryEntityResult::SpaceTaken(HashSet::from([other_item_id]), item)) }
+                    StackResult::WrongType => { Err(InventoryEntityResult::SpaceTaken(vec![(position_idx, other_item_id)], item)) }
                     StackResult::Updated => {
                         other_item.base_mut().emit_signal("updated".into(), &[]);
                         Ok(item)
@@ -173,20 +177,20 @@ impl InventoryManager {
             return Ok(item);
         }
 
-        let result = { inventory.try_insert_item_at(item, new_pos_index)};
+        let result = { inventory.try_insert_item_at(item, position_idx)};
 
 
         match result {
             Ok(mut item) => {
                 let previous_inventory = item.bind().inventory.as_ref().unwrap().current_inventory_id;
-                let inventory_changed = previous_inventory.map(|p_id| p_id != to).unwrap_or(false);
+                let inventory_changed = previous_inventory.map(|p_id| p_id != inventory_id).unwrap_or(false);
                 if inventory_changed {
                     if let Some(inv) = self.inventories.get_mut(previous_inventory.as_ref().unwrap()) {
                         inv.remove_item(item.bind().id);
                     }
-                    item.emit_signal("inventory_switched".into(), &[to.to_variant()]);
+                    item.emit_signal("inventory_switched".into(), &[inventory_id.to_variant()]);
                 }
-                item.bind_mut().inventory.as_mut().unwrap().current_inventory_id = Some(to);
+                item.bind_mut().inventory.as_mut().unwrap().current_inventory_id = Some(inventory_id);
                 Ok(item)
             },
             Err(e) => {Err(e)}

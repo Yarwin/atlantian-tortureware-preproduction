@@ -1,3 +1,4 @@
+use std::io::Read;
 use godot::prelude::*;
 use godot::classes::{Control, GridContainer, IControl, MarginContainer};
 use crate::godot_api::{CONNECT_DEFERRED, CONNECT_ONE_SHOT};
@@ -29,10 +30,68 @@ pub struct InventoryUIGrid {
     #[var]
     pub inventory_agent: Option<Gd<InventoryAgent>>,
     offset: f32,
+    currently_highlighted_cells: Vec<usize>,
+    current_danger_cells: Vec<(usize, u32)>,
     base: Base<Control>
 }
 
 impl InventoryUIGrid {
+
+    pub fn highlight_cells_red(&mut self, cells: Vec<(usize, u32)>) {
+        if self.current_danger_cells == cells {
+            return;
+        }
+        let Some(grid) = self.grid.as_mut() else { return; };
+
+        let iterator = self.current_danger_cells
+            .iter()
+            .filter_map(|(c, id)| {
+                (!cells.contains(&(*c, *id))).then_some(c)
+            })
+            .chain(self.currently_highlighted_cells.iter());
+
+        for cell in iterator {
+            let mut child = grid.get_child(*cell as i32).unwrap().cast::<Control>();
+            child.call("unhighlight".into(), &[]);
+        }
+        for (cell, _id) in cells.iter() {
+            let mut child = grid.get_child(*cell as i32).unwrap().cast::<Control>();
+            child.call("highlight_red".into(), &[]);
+        }
+        self.current_danger_cells = cells;
+    }
+
+    pub fn highlight_cells(&mut self, cells: Vec<usize>) {
+        if self.currently_highlighted_cells == cells {
+            return;
+        }
+        let iterator = self.currently_highlighted_cells
+            .iter()
+            .filter(|c| !cells.contains(c))
+            .chain(
+                self.current_danger_cells
+                    .iter()
+                    .map(|(c, _id)| c)
+            );
+        let Some(grid) = self.grid.as_mut() else { return; };
+        for cell in iterator {
+            let mut child = grid.get_child(*cell as i32).unwrap().cast::<Control>();
+            child.call("unhighlight".into(), &[]);
+        }
+        for cell in cells.iter() {
+            let mut child = grid.get_child(*cell as i32).unwrap().cast::<Control>();
+            child.call("highlight".into(), &[]);
+        }
+        self.currently_highlighted_cells = cells;
+    }
+
+    pub fn stop_highlighting_all(&mut self) {
+        let Some(grid) = self.grid.as_mut() else { return; };
+        for cell in self.currently_highlighted_cells.drain(..).chain(self.current_danger_cells.drain(..).map(|(c, id)| c)) {
+            let mut child = grid.get_child(cell as i32).unwrap().cast::<Control>();
+            child.call("unhighlight".into(), &[]);
+        }
+    }
 
     /// performs binary search to find child idx that has given coords.
     /// todo – this is stupid. Since we know that all the grid elements are rectangles of the same size, we can calculate index directly
@@ -115,6 +174,11 @@ impl IControl for InventoryUIGrid {
 impl InventoryUIGrid {
     #[signal]
     fn offset_set();
+
+    #[func]
+    fn on_mouse_exited(&mut self) {
+        self.stop_highlighting_all();
+    }
 
     #[func(gd_self)]
     fn on_init(mut this: Gd<Self>) {

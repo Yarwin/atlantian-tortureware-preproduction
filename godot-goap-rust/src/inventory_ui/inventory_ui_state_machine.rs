@@ -71,10 +71,11 @@ impl InventoryUIMoveItemState {
         let mut item = ui_item_bind.item.as_mut().unwrap().clone();
         let mut inventory_manager = InventoryManager::singleton();
 
-        for inventory_grid in inventory_ui_manager.inventories.iter_shared() {
+        for mut inventory_grid in inventory_ui_manager.inventories.iter_shared() {
             let area_rect = inventory_grid.get_global_rect();
             // bail if item outside given inventory space
             if !area_rect.has_point(mouse_position) {
+                inventory_grid.bind_mut().stop_highlighting_all();
                 continue
             }
 
@@ -85,7 +86,7 @@ impl InventoryUIMoveItemState {
                 // bail if item no longer exists
                 Err(InventoryEntityResult::ItemDepleted) => {
                     std::mem::drop(ui_item_bind);
-                    self.unhighlight_grid();
+                    self.stop_highlighting_all(inventory_ui_manager);
                     return Ok(Box::new(InventoryUIDefaultState));
                 }
                 _ => {
@@ -95,19 +96,40 @@ impl InventoryUIMoveItemState {
             }
         }
 
-        std::mem::drop(ui_item_bind);
+        drop(ui_item_bind);
         // move item to its current position (one before or after movement)
         item.emit_signal("moved".into(), &[]);
-        self.unhighlight_grid();
+        self.stop_highlighting_all(inventory_ui_manager);
         Ok(Box::new(InventoryUIDefaultState))
     }
 
-    fn highlight_grid(&mut self, event: Gd<InputEventMouseMotion>, inventory_ui_manager: InventoryUIManagerView) {
+    fn highlight_grid(&mut self, mouse_position: Vector2, inventory_ui_manager: InventoryUIManagerView) {
+        for mut inventory_grid in inventory_ui_manager.inventories.iter_shared() {
+            let area_rect = inventory_grid.get_global_rect();
+            // bail if item outside given inventory space
+            if !area_rect.has_point(mouse_position) {
+                inventory_grid.bind_mut().stop_highlighting_all();
+                continue
+            }
+            let inventory_id = inventory_grid.bind().inventory_agent.as_ref().unwrap().bind().id;
+            let Some(index) = inventory_grid.bind().global_coords_to_index(mouse_position) else {continue};
+            let item_held_bind = self.item_held.bind();
+            let Some(item) = item_held_bind.item.as_ref() else { return; };
+            // todo - remove this clone
+            let result = InventoryManager::singleton().bind().check_grid_cells(item.clone(), inventory_id, index);
+            if let InventoryEntityResult::FreeSpace(cells, _item) = result {
+                inventory_grid.bind_mut().highlight_cells(cells);
+            } else if let InventoryEntityResult::SpaceTaken(cells, _item) = result {
+                inventory_grid.bind_mut().highlight_cells_red(cells);
+            }
+        }
 
     }
 
-    fn unhighlight_grid(&mut self) {
-
+    fn stop_highlighting_all(&mut self, inventory_ui_manager: &mut InventoryUIManagerView) {
+        for mut inventory_grid in inventory_ui_manager.inventories.iter_shared() {
+            inventory_grid.bind_mut().stop_highlighting_all();
+        }
     }
 }
 
@@ -126,7 +148,7 @@ impl InventoryUIManagerState for InventoryUIMoveItemState {
         let Ok(mouse_motion) = event_cast.err().unwrap().try_cast::<InputEventMouseMotion>() else {return self};
         let item_global_pos = self.item_held.get_global_position();
         self.item_held.set_global_position(item_global_pos.lerp(mouse_motion.get_global_position(), 0.9));
-        self.highlight_grid(mouse_motion, inventory_ui_manager);
+        self.highlight_grid(mouse_motion.get_global_position(), inventory_ui_manager);
         self
     }
 
@@ -143,7 +165,12 @@ impl InventoryUIManagerState for InventoryUIMoveItemState {
         self
     }
 
-    fn hide_event(self: Box<Self>, inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
-        todo!()
+    fn hide_event(mut self: Box<Self>, mut inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+        let mut ui_item_bind = self.item_held.bind_mut();
+        let item = ui_item_bind.item.as_mut().unwrap();
+        item.emit_signal("moved".into(), &[]);
+        drop(ui_item_bind);
+        self.stop_highlighting_all(&mut inventory_ui_manager);
+        Box::new(InventoryUIDefaultState)
     }
 }

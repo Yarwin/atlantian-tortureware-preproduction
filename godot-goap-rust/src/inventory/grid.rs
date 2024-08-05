@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::fmt;
 use std::fmt::Formatter;
 
@@ -63,7 +62,7 @@ pub enum InventoryResult {
     Inserted(Vec<usize>),
     Free(Vec<usize>),
     OutsideRange,
-    Taken(HashSet<u32>),
+    Taken(Vec<(usize, u32)>),
 }
 
 /// A rectangular grid filled with items ids
@@ -164,7 +163,7 @@ impl Grid {
             return InventoryResult::OutsideRange;
         }
         let mut free: Vec<usize> = Vec::with_capacity(row_size.growth);
-        let mut taken: HashSet<u32> = HashSet::with_capacity(row_size.growth);
+        let mut taken: Vec<(usize, u32)> = Vec::with_capacity(row_size.growth);
         for x in col_start..(col_start + row_size.growth) {
             let coord = x + (row * self.width);
             if let Some(id) = self.array[coord] {
@@ -174,7 +173,7 @@ impl Grid {
                         continue;
                     }
                 }
-                taken.insert(id);
+                taken.push((coord, id));
             } else {
                 free.push(coord);
             }
@@ -192,7 +191,7 @@ impl Grid {
         item_id: Option<u32>
     ) -> InventoryResult {
         let mut free = Vec::new();
-        let mut taken = HashSet::new();
+        let mut taken = Vec::new();
         for row_space in size.space.iter() {
             match self.check_row_at(item_id, at, row_space) {
                 InventoryResult::Free(f) => {free.extend(f)}

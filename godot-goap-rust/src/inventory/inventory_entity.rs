@@ -7,7 +7,7 @@ use godot::prelude::*;
 
 pub enum InventoryEntityResult {
     FreeSpace(Vec<usize>, Gd<Item>),
-    SpaceTaken(HashSet<u32>, Gd<Item>),
+    SpaceTaken(Vec<(usize, u32)>, Gd<Item>),
     NoSpaceForItem(Gd<Item>),
     WrongItemType(Gd<Item>),
     ItemDepleted,
@@ -69,6 +69,16 @@ impl InventoryEntity {
     /// returns (width, height)
     pub fn get_size(&self) -> (usize, usize) {
         (self.grid.width, self.grid.height)
+    }
+
+    pub fn check_at(&self, item: Gd<Item>, position_idx: usize) -> InventoryEntityResult {
+        let result = self.grid.check_at(position_idx, item.bind().inventory.as_ref().unwrap().inventory_data.bind().get_size_force(), Some(item.bind().id));
+        match result {
+            InventoryResult::Free(free) => {InventoryEntityResult::FreeSpace(free, item)}
+            InventoryResult::OutsideRange => {InventoryEntityResult::NoSpaceForItem(item)}
+            InventoryResult::Taken(by) => {InventoryEntityResult::SpaceTaken(by, item)}
+            _ => !unreachable!(),
+        }
     }
 
     pub fn insert_at_first_free_space(&mut self, mut item: Gd<Item>) -> Result<Gd<Item>, InventoryEntityResult> {

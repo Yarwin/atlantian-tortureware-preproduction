@@ -1,4 +1,6 @@
-[gd_scene format=3 uid="uid://brrp5juv1uxp8"]
+[gd_scene load_steps=2 format=3 uid="uid://brrp5juv1uxp8"]
+
+[ext_resource type="Script" path="res://src/interface/inventory/grid_cell.gd" id="1_1nbbm"]
 
 [node name="GridCell" type="Control"]
 layout_mode = 3
@@ -10,6 +12,7 @@ grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 mouse_filter = 1
+script = ExtResource("1_1nbbm")
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 1
@@ -22,6 +25,7 @@ mouse_filter = 1
 
 [node name="ColorRect" type="ColorRect" parent="Panel"]
 visible = false
+z_index = 3
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
