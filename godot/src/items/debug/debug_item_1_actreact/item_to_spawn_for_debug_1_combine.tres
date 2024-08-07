@@ -1,0 +1,7 @@
+[gd_resource type="ItemToSpawn" load_steps=2 format=3 uid="uid://2pue7f67dx2o"]
+
+[ext_resource type="ItemResource" uid="uid://dt7y65wxofofy" path="res://src/items/debug/debug_item_3_resource.tres" id="1_ybpda"]
+
+[resource]
+amount = 1
+item_data = ExtResource("1_ybpda")

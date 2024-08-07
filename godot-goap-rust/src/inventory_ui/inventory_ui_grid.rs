@@ -1,13 +1,13 @@
-use std::io::Read;
 use godot::prelude::*;
 use godot::classes::{Control, GridContainer, IControl, MarginContainer};
 use crate::godot_api::{CONNECT_DEFERRED, CONNECT_ONE_SHOT};
+use crate::godot_api::gamesys::GameSys;
 use crate::godot_api::godot_inventory::InventoryAgent;
 use crate::godot_api::inventory_manager::InventoryManager;
 use crate::godot_api::item_object::Item;
 use crate::inventory_ui::inventory_ui_item::InventoryUIItem;
 use crate::inventory_ui::inventory_ui_controller::InventoryUIManager;
-
+use crate::godot_api::gamesys::GameSystem;
 
 /// responsible for displaying grid on a screen
 #[derive(GodotClass)]
@@ -92,7 +92,7 @@ impl InventoryUIGrid {
 
     pub fn stop_highlighting_all(&mut self) {
         let Some(grid) = self.grid.as_mut() else { return; };
-        for cell in self.currently_highlighted_cells.drain(..).chain(self.current_danger_cells.drain(..).map(|(c, id)| c)) {
+        for cell in self.currently_highlighted_cells.drain(..).chain(self.current_danger_cells.drain(..).map(|(c, _id)| c)) {
             let mut child = grid.get_child(cell as i32).unwrap().cast::<Control>();
             child.call("unhighlight".into(), &[]);
         }
@@ -164,14 +164,12 @@ impl InventoryUIGrid {
 #[godot_api]
 impl IControl for InventoryUIGrid {
     fn ready(&mut self) {
-        if !self.init_inventory_agent() {
-            return;
+        if GameSys::singleton().bind().is_initialized {
+            self.initialize_inventory();
+        } else {
+            let callable = self.base().callable("initialize_inventory");
+            GameSys::singleton().connect_ex("initialization_completed".into(), callable).flags(CONNECT_ONE_SHOT + CONNECT_DEFERRED).done();
         }
-        let on_cell_size_calculated = self.base_mut().callable("on_cell_size_calculated");
-        let on_init = self.base_mut().callable("on_init");
-        let Some(inventory_ui_controller) = self.inventory_ui_items_manager.as_mut() else {return;};
-        inventory_ui_controller.connect("cell_size_calculated".into(), on_cell_size_calculated);
-        InventoryManager::singleton().connect_ex("post_init".into(), on_init).flags(CONNECT_ONE_SHOT).done();
     }
 }
 
@@ -181,8 +179,34 @@ impl InventoryUIGrid {
     fn offset_set();
 
     #[func]
+    fn initialize_inventory(&mut self) {
+        if !self.init_inventory_agent() {
+            return;
+        }
+        let on_new_item_created = self.base().callable("on_new_item_created");
+        self.inventory_agent.as_mut().unwrap().connect_ex("new_item_created".into(), on_new_item_created).flags(CONNECT_DEFERRED).done();
+        let callable = self.base().callable("on_mouse_exited");
+        self.base_mut().connect("mouse_exited".into(), callable);
+        let on_cell_size_calculated = self.base_mut().callable("on_cell_size_calculated");
+        let on_init = self.base_mut().callable("on_init");
+        let Some(inventory_ui_controller) = self.inventory_ui_items_manager.as_mut() else {return;};
+        inventory_ui_controller.connect("cell_size_calculated".into(), on_cell_size_calculated);
+        InventoryManager::singleton().connect_ex("post_init".into(), on_init).flags(CONNECT_ONE_SHOT).done();
+    }
+
+    #[func(gd_self)]
+    fn on_new_item_created(this: Gd<Self>, mut item: Gd<Item>) {
+        Self::init_item(this, item.clone());
+        item.emit_signal("moved".into(), &[]);
+    }
+
+    #[func]
     fn on_mouse_exited(&mut self) {
-        self.stop_highlighting_all();
+        // handle the cases in which mouse hovers over the control from another layer
+        // but still haven't leaved the control's area
+        if !self.base().get_global_rect().has_point(self.base().get_global_mouse_position()) {
+            self.stop_highlighting_all();
+        }
     }
 
     #[func(gd_self)]
@@ -196,7 +220,6 @@ impl InventoryUIGrid {
     fn init_item(mut this: Gd<Self>, item: Gd<Item>) {
         let mut inventory_item = this.bind().item_scene.as_ref().unwrap().instantiate().unwrap().cast::<InventoryUIItem>();
         inventory_item.bind_mut().inventory_ui_items_manager.clone_from(&this.bind().inventory_ui_items_manager);
-        // inventory_item.bind_mut().inventory_ui_items_manager = this.bind().inventory_ui_items_manager.clone();
         this.bind_mut().item_holder.as_mut().unwrap().add_child(inventory_item.clone());
         InventoryUIItem::add_item(inventory_item.clone(), item);
         InventoryUIGrid::append_item(this, inventory_item);

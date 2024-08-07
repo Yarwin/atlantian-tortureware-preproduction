@@ -41,6 +41,16 @@ pub struct PlayerCameraController3D {
 }
 
 impl PlayerCameraController3D {
+    fn engage_mouselook(&mut self) {
+        if Input::singleton().get_mouse_mode() == MouseMode::CAPTURED {
+            // event_bus.emit_signal("hud_enabled".into(), &[]);
+            Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
+        } else if Input::singleton().get_mouse_mode() == MouseMode::VISIBLE {
+            // event_bus.emit_signal("hud_disabled".into(), &[]);
+            Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
+        }
+    }
+
     fn perform_mouse_rotation(&mut self, delta: f32) {
         self.camera_data.rotation_origins.x = (self.camera_data.rotation_origins.x - (self.camera_data.mouse_movement.y * self.mouse_sensitivity * delta)).clamp(-FRAC_PI_2, FRAC_PI_2);
         self.camera_data.target_rotation_change_y += -self.camera_data.mouse_movement.x * delta * self.mouse_sensitivity;
@@ -106,6 +116,9 @@ impl PlayerCameraController3D {
 impl INode for PlayerCameraController3D {
 
     fn physics_process(&mut self, delta: f64) {
+        if Input::singleton().is_action_just_pressed("mouselook".into()) {
+            self.engage_mouselook();
+        }
         self.perform_mouse_rotation(delta as f32);
         self.tilt_camera(delta as f32);
         let bob = self.calculate_bob(delta as f32);
@@ -124,22 +137,6 @@ impl INode for PlayerCameraController3D {
 
 
     fn input(&mut self, event: Gd<InputEvent>) {
-        if event.is_action("mouselook".into()) && !event.is_echo() && event.is_action_pressed("mouselook".into()) {
-            // let mut event_bus = player_state_view.base
-            //     .get_node("/root/EventBusManager".into())
-            //     .expect("failed to find event bus manager!")
-            //     .cast::<GlobalEventBus>();
-
-            if Input::singleton().get_mouse_mode() == MouseMode::CAPTURED {
-                // event_bus.emit_signal("hud_enabled".into(), &[]);
-                Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
-            } else if Input::singleton().get_mouse_mode() == MouseMode::VISIBLE {
-                // event_bus.emit_signal("hud_disabled".into(), &[]);
-                Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
-            }
-            return
-        }
-
         if Input::singleton().get_mouse_mode() == MouseMode::CAPTURED {
             let Ok(mouse_motion) = event.try_cast::<InputEventMouseMotion>() else {return;};
             self.camera_data.mouse_movement += mouse_motion.get_relative();

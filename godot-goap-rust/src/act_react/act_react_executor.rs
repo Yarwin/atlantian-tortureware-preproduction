@@ -1,51 +1,34 @@
 use std::collections::{HashMap, VecDeque};
-use godot::classes::Engine;
 use godot::prelude::*;
 use crate::act_react::act_react_resource::ActReactResource;
 use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
 use crate::act_react::game_effect_builder::effects_registry;
 use crate::act_react::stimulis::Stimuli;
 use crate::godot_api::{CONNECT_DEFERRED, CONNECT_ONE_SHOT};
+use crate::godot_api::gamesys::{GameSys, GameSystem};
 
 
 /// An entity responsible for creating, managing and executing commands
 /// Effects are being processed & executed at the end of every physics frame.
-///
-/// Exported (for now on) both as autoload and engine singleton
-/// for easy access both from Gdscript and Gdextension library.
-///
-/// In the future it might be moved to some kind of GameManager autoload.
 #[derive(GodotClass)]
-#[class(base=Node)]
+#[class(init, base=Object)]
 pub struct ActReactExecutor {
+    #[init(default = Some(VecDeque::new()))]
     to_execute: Option<VecDeque<GameEffectProcessor>>,
     to_revert: HashMap<InstanceId, GameEffectProcessor>,
-    pub base: Base<Node>,
+    pub base: Base<Object>,
 }
 
-#[godot_api]
-impl INode for ActReactExecutor {
-    fn init(base: Base<Self::Base>) -> Self {
-        ActReactExecutor {
-            to_execute: Some(VecDeque::new()),
-            to_revert: Default::default(),
-            base,
-        }
-    }
-    fn physics_process(&mut self, _delta: f64) {
-        // process&apply all the effects at the end of the current frame
-        self.base_mut().call_deferred("process_effects".into(), &[]);
-    }
-
-    fn enter_tree(&mut self) {
-        Engine::singleton()
-            .register_singleton(ActReactExecutor::singleton_name(), self.base().clone().upcast::<Object>());
-    }
-
-    fn exit_tree(&mut self) {
-        Engine::singleton().unregister_singleton(ActReactExecutor::singleton_name());
-    }
-}
+// #[godot_api]
+// impl IObject for ActReactExecutor {
+//     // fn init(base: Base<Self::Base>) -> Self {
+//     //     ActReactExecutor {
+//     //         to_execute: Some(VecDeque::new()),
+//     //         to_revert: Default::default(),
+//     //         base,
+//     //     }
+//     // }
+// }
 
 #[godot_api]
 impl ActReactExecutor {
@@ -72,7 +55,7 @@ impl ActReactExecutor {
                 }
                 EffectResult::Revert(after) => {
                     self.to_revert.insert(effect.instance_id(), effect);
-                    let mut timer = self.base().get_tree().unwrap().create_timer(after).unwrap();
+                    let mut timer = GameSys::singleton().get_tree().unwrap().create_timer(after).unwrap();
                     let callable = Callable::from_object_method(&(self.base().clone()), "revert");
                     timer.connect_ex("timeout".into(), callable).flags(CONNECT_ONE_SHOT + CONNECT_DEFERRED).done();
                 }
@@ -93,16 +76,28 @@ impl ActReactExecutor {
 }
 
 impl ActReactExecutor {
-    fn singleton_name() -> StringName {
-        StringName::from("ActReactExecutor")
-    }
+    // fn singleton_name() -> StringName {
+    //     StringName::from("ActReactExecutor")
+    // }
+    //
+    // pub fn singleton() -> Gd<Self> {
+    //     Engine::singleton()
+    //         .get_singleton(ActReactExecutor::singleton_name())
+    //         .unwrap()
+    //         .cast::<ActReactExecutor>()
+    // }
+    //
+    // pub fn initialize() -> Gd<Self> {
+    //     let mut act_react_executor = Gd::from_init_fn(|base| Self::init(base));
+    //     Engine::singleton()
+    //         .register_singleton(ActReactExecutor::singleton_name(), act_react_executor.clone());
+    //     act_react_executor
+    // }
+    //
+    // pub fn exit(&mut self) {
+    //     Engine::singleton().unregister_singleton(Self::singleton_name());
+    // }
 
-    pub fn singleton() -> Gd<Self> {
-        Engine::singleton()
-            .get_singleton(ActReactExecutor::singleton_name())
-            .unwrap()
-            .cast::<ActReactExecutor>()
-    }
 
     fn add_effect(&mut self, effect: GameEffectProcessor) {
         let to_execute = self.to_execute.as_mut().unwrap();
@@ -125,5 +120,16 @@ impl ActReactExecutor {
                 self.add_effect(effect);
             }
         }
+    }
+}
+
+impl GameSystem for ActReactExecutor {
+    fn singleton_name() -> StringName {
+        StringName::from("ActReactExecutor")
+    }
+
+    fn physics_process(&mut self, _delta: f64) {
+        // process&apply all the effects at the end of the current frame
+        self.base_mut().call_deferred("process_effects".into(), &[]);
     }
 }

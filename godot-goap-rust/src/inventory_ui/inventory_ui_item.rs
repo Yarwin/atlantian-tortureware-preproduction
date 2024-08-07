@@ -1,7 +1,9 @@
 use std::time::SystemTime;
-use godot::classes::{Control, IControl, InputEvent, InputEventMouseButton, Label, TextureRect, Timer};
+use godot::classes::{Control, IControl, InputEvent, InputEventMouseButton, Label, ShaderMaterial, TextureRect, Timer};
+use godot::classes::control::MouseFilter;
 use godot::global::MouseButton;
 use godot::prelude::*;
+use crate::act_react::act_react_resource::ActReactResource;
 use crate::godot_api::{CONNECT_DEFERRED};
 use crate::godot_api::item_object::Item;
 use crate::inventory_ui::inventory_ui_controller::InventoryUIManager;
@@ -30,9 +32,11 @@ pub struct InventoryUIItem {
     #[init(node = "Timer")]
     hold_item_timer: OnReady<Gd<Timer>>,
     #[export]
-    cooldown: f64,
+    default_shine_color: Color,
     #[export]
-    move_item_delay: f64,
+    frob_shine_color: Color,
+    #[export]
+    cooldown: f64,
     #[init(default = SystemTime::now() )]
     last_cooldown: SystemTime,
     pub is_held: bool,
@@ -52,30 +56,33 @@ impl IControl for InventoryUIItem {
         // bail if no mouse input event
         if !mouse_button_event.is_pressed() || mouse_button_event.get_button_index() != MouseButton::LEFT {return;}
         // bail if cooldown is still active
-        if self.last_cooldown.elapsed().unwrap().as_secs_f64() < self.cooldown {return;}
-        self.base().get_viewport().unwrap().set_input_as_handled();
 
         // frob on doubleclick
         if mouse_button_event.is_double_click() {
-            godot_print!("frob frob?");
             self.hold_item_timer.stop();
             let base_variant = self.base().to_variant();
             // avoid re-entrant by using call deferred and postponing signal emission
             self.base_mut().call_deferred("emit_signal".into(), &[StringName::from("item_frobbed").to_variant(), base_variant]);
+            self.base().get_viewport().unwrap().set_input_as_handled();
+            self.last_cooldown = SystemTime::now();
             return;
         }
+        if self.last_cooldown.elapsed().unwrap().as_secs_f64() < self.cooldown {return;}
+        self.base().get_viewport().unwrap().set_input_as_handled();
         self.hold_item_timer.start();
     }
 
     fn ready(&mut self) {
-        // let on_frob_finished = self.base().callable("on_frobbing_finished");
-        let ui_items_manager = self.inventory_ui_items_manager.as_mut().unwrap();
-
-        // ui_items_manager.connect("frobbing_finished".into(), on_frob_finished);
+        let mut ui_items_manager = self.inventory_ui_items_manager.clone().unwrap();
         let press_callable = ui_items_manager.callable("on_item_pressed");
         let frob_callable = ui_items_manager.callable("on_item_frobbed");
         self.base_mut().connect("item_pressed".into(), press_callable);
         self.base_mut().connect("item_frobbed".into(), frob_callable);
+
+        let on_frob_started = self.base().callable("on_frob_started");
+        ui_items_manager.connect("inventory_frob_started".into(), on_frob_started);
+        let on_frob_finished = self.base().callable("on_frob_finished");
+        ui_items_manager.connect("inventory_frob_finished".into(), on_frob_finished);
     }
 
 }
@@ -87,6 +94,24 @@ impl InventoryUIItem {
     fn item_frobbed(inventory_item: Gd<InventoryUIItem>);
     #[signal]
     fn item_pressed(inventory_item: Gd<InventoryUIItem>);
+
+    #[func]
+    fn on_frob_started(&mut self, other_act_react: Gd<ActReactResource>) {
+        let Some(item) = self.item.as_ref() else { return; };
+        let item_bind = item.bind();
+        let Some(inventory_component) = item_bind.inventory.as_ref() else { return; };
+        let inventory_data_bind = inventory_component.inventory_data.bind();
+        let Some(act_react) = inventory_data_bind.act_react.as_ref() else { return; };
+        if act_react.bind().is_reacting(other_act_react) {
+            self.texture_rect.get_material().unwrap().cast::<ShaderMaterial>().set_shader_parameter("shine".into(), 0.6.to_variant());
+        }
+    }
+
+    #[func]
+    fn on_frob_finished(&mut self) {
+        self.texture_rect.get_material().unwrap().cast::<ShaderMaterial>().set_shader_parameter("shine".into(), 0.0.to_variant());
+        self.texture_rect.get_material().unwrap().cast::<ShaderMaterial>().set_shader_parameter("shin_color".into(), self.default_shine_color.to_variant());
+    }
 
     #[func]
     fn held_item(&mut self) {
@@ -117,6 +142,7 @@ impl InventoryUIItem {
 
     #[func]
     fn process_resize_and_put(&mut self) {
+        self.base_mut().set_mouse_filter(MouseFilter::PASS);
         self.base_mut().set_z_index(0);
         self.last_cooldown = SystemTime::now();
         self.is_held = false;
@@ -130,7 +156,7 @@ impl InventoryUIItem {
         if inventory_item.inventory_data.bind().max_stack > 1 {
             self.amount_label.set_text(GString::from(inventory_item.stack.to_string()));
         }
-        std::mem::drop(item);
+        drop(item);
         self.base_mut().set_global_position(grid_cell.get_global_position());
         self.base_mut().set_size(size);
         self.texture_rect.set_size(size);
@@ -143,9 +169,6 @@ impl InventoryUIItem {
         }
         self.is_waiting_for_resize = true;
         self.base_mut().call_deferred("process_resize_and_put".into(), &[]);
-        // let mut tree = self.base().get_tree().unwrap();
-        // let callable = self.base().callable("process_resize_and_put");
-        // tree.connect_ex("process_frame".into(), callable).flags(CONNECT_ONE_SHOT).done();
     }
 
     #[func(gd_self)]
@@ -153,16 +176,6 @@ impl InventoryUIItem {
         this.bind_mut().last_cooldown = SystemTime::now();
         let variant = this.clone().to_variant();
         this.emit_signal("item_pressed".into(), &[variant]);
-    }
-
-    #[func(gd_self)]
-    fn highlight_item(this: Gd<Self>) {
-        godot_print!("highlight this: {this}");
-    }
-
-    #[func(gd_self)]
-    fn on_frobbing_finished(this: Gd<Self>) {
-        godot_print!("unfrob this: {this}");
     }
 
     #[func(gd_self)]

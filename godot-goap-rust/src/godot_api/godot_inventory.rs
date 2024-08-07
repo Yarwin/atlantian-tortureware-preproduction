@@ -1,8 +1,10 @@
 use godot::prelude::*;
+use crate::godot_api::CONNECT_ONE_SHOT;
+use crate::godot_api::gamesys::GameSys;
 use crate::godot_api::inventory_manager::{InventoryManager, InventoryToCreate};
 use crate::godot_api::item_object::{Item, ItemResource};
 use crate::inventory::item_builder::ItemBuilder;
-
+use crate::godot_api::gamesys::GameSystem;
 
 #[derive(GodotClass)]
 #[class(init, base=Resource)]
@@ -45,25 +47,34 @@ pub struct InventoryAgent {
 }
 
 impl InventoryAgent {
-    fn register_inventory(&mut self) {
-        let to_create = InventoryToCreate::from_agent(self);
-        let mut singleton = InventoryManager::singleton();
-        singleton.bind_mut().register_inventory(to_create);
-    }
 }
 
 #[godot_api]
 impl INode for InventoryAgent {
     fn ready(&mut self) {
-        self.register_inventory();
+        if GameSys::singleton().bind().is_initialized {
+            self.register_inventory();
+        } else {
+            let callable = self.base().callable("register_inventory");
+            GameSys::singleton().connect_ex("initialization_completed".into(), callable).flags(CONNECT_ONE_SHOT).done();
+        }
     }
-
 }
 
 #[godot_api]
 impl InventoryAgent {
+    #[signal]
+    fn new_item_created(item: Gd<Item>);
+
     #[func]
     pub fn get_items(&self) -> Array<Gd<Item>> {
         InventoryManager::singleton().bind().get_items(self.id)
+    }
+
+    #[func]
+    fn register_inventory(&mut self) {
+        let to_create = InventoryToCreate::from_agent(self);
+        let mut singleton = InventoryManager::singleton();
+        singleton.bind_mut().register_inventory(to_create);
     }
 }

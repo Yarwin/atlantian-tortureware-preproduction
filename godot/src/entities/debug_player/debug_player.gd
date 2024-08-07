@@ -7,5 +7,6 @@ func _physics_process(delta: float) -> void:
 		"move_left", "move_right", "move_back", "move_forward"
 	)
 	direction += (basis.x * move_input.x - basis.z * move_input.y)
-	direction = direction.normalized()
+	if !direction.is_zero_approx():
+		direction = direction.normalized()
 	process_movement(delta)

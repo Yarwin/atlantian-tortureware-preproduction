@@ -38,7 +38,7 @@ position = Vector2i(3, 2)
 item_data = ExtResource("3_vgf5h")
 
 [sub_resource type="ItemToSpawn" id="ItemToSpawn_qcmf3"]
-amount = 1
+amount = 2
 item_data = ExtResource("4_dvjdx")
 
 [node name="DebugPlayer" type="CharacterController3D" node_paths=PackedStringArray("collision_shape")]
@@ -97,7 +97,7 @@ size = Vector2i(2, 3)
 
 [node name="InventoryAgent2" type="InventoryAgent" parent="." groups=["player_inventory", "player_inventory_center"]]
 size = Vector2i(6, 4)
-items_to_spawn = Array[ItemToSpawn]([SubResource("ItemToSpawn_a113f"), SubResource("ItemToSpawn_41gmd"), SubResource("ItemToSpawn_qcmf3")])
+items_to_spawn = Array[ItemToSpawn]([SubResource("ItemToSpawn_a113f"), SubResource("ItemToSpawn_41gmd"), SubResource("ItemToSpawn_qcmf3"), SubResource("ItemToSpawn_qcmf3")])
 
 [node name="InventoryAgent3" type="InventoryAgent" parent="." groups=["player_inventory", "player_inventory_right"]]
 size = Vector2i(2, 3)

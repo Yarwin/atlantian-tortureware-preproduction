@@ -32,6 +32,7 @@ impl CharacterController3D {
             direction: self.direction,
             body: self.base().clone().upcast::<PhysicsBody3D>(),
             collision_shape: self.collision_shape.as_ref().unwrap().clone(),
+            // check if caching an array and cloning it wouldn't be better choice than creating new array every single time
             excluded_bodies: Some(array![self.base().get_rid()]),
             deceleration: self.deceleration,
             speed: self.speed,

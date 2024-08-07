@@ -1,9 +1,13 @@
 use godot::prelude::*;
 use godot::classes::{InputEvent, InputEventMouseButton, InputEventMouseMotion};
+use godot::classes::control::MouseFilter;
+use crate::act_react::act_react_executor::ActReactExecutor;
+use crate::act_react::act_react_resource::ActReactResource;
 use crate::godot_api::inventory_manager::InventoryManager;
 use crate::inventory::inventory_entity::InventoryEntityResult;
 use crate::inventory_ui::inventory_ui_item::InventoryUIItem;
 use crate::inventory_ui::inventory_ui_controller::InventoryUIManagerView;
+use crate::godot_api::gamesys::GameSystem;
 
 pub trait InventoryUIManagerState {
     fn input(
@@ -40,6 +44,7 @@ impl InventoryUIManagerState for InventoryUIDefaultState {
         if inventory_ui_manager.cooldown.elapsed().unwrap().as_secs_f64() < inventory_ui_manager.cooldown_time {
             return self;
         }
+        presser.set_mouse_filter(MouseFilter::IGNORE);
         presser.set_z_index(2);
         Box::new(
             InventoryUIMoveItemState {
@@ -55,14 +60,28 @@ impl InventoryUIManagerState for InventoryUIDefaultState {
         // {
         //
         // }
+        // bail if item is not fit to be a frobber
         let frobber_bind = frobber.bind();
         let Some(item) = frobber_bind.item.as_ref() else { return self };
         let item_bind = item.bind();
         let Some(inventory_component) = item_bind.inventory.as_ref() else {return self};
         let inventory_data_resource_bind = inventory_component.inventory_data.bind();
-        let Some(act_react) = inventory_data_resource_bind.act_react.as_ref() else { return self };
-        godot_print!("actions: {}", act_react.bind().emits);
-        self
+        let Some(act_react) = inventory_data_resource_bind.act_react.clone() else { return self };
+        // bail if can't frob
+        if act_react.bind().emits.is_empty() {
+            return self
+        }
+
+        drop(inventory_data_resource_bind);
+        drop(item_bind);
+        drop(frobber_bind);
+
+        let frob_state = Box::new(InventoryFrobState {
+            frobber,
+            frob_act_react: act_react.clone(),
+        });
+        frob_state.enter(inventory_ui_manager);
+        frob_state
     }
 
     fn hide_event(self: Box<Self>, _inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
@@ -71,41 +90,32 @@ impl InventoryUIManagerState for InventoryUIDefaultState {
 }
 
 pub struct InventoryUIMoveItemState {
-    pub item_held: Gd<InventoryUIItem>,
+    item_held: Gd<InventoryUIItem>,
 }
 
 
 impl InventoryUIMoveItemState {
     fn release_item(&mut self, mouse_position: Vector2, inventory_ui_manager: &mut InventoryUIManagerView) -> Result<Box<dyn InventoryUIManagerState>, ()> {
 
-        let mut ui_item_bind = self.item_held.bind_mut();
-        // UGLY: clone Gd<Item> smart pointer to avoid re-entrant (requires bind on ui_item_bind)
-        let mut item = ui_item_bind.item.as_mut().unwrap().clone();
+        let ui_item_bind = self.item_held.bind_mut();
+        let mut item = ui_item_bind.item.as_ref().unwrap().clone();
         let mut inventory_manager = InventoryManager::singleton();
+        let Some(inventory_grid) = inventory_ui_manager.current_focused_grid.as_mut() else {return Err(());};
+        let inventory_id = inventory_grid.bind().inventory_agent.as_ref().unwrap().bind().id;
+        let Some(index) = inventory_grid.bind().global_coords_to_index(mouse_position) else {return Err(());};
 
-        for mut inventory_grid in inventory_ui_manager.inventories.iter_shared() {
-            let area_rect = inventory_grid.get_global_rect();
-            // bail if item outside given inventory space
-            if !area_rect.has_point(mouse_position) {
-                inventory_grid.bind_mut().stop_highlighting_all();
-                continue
+        let result = inventory_manager.bind_mut().move_item(item, inventory_id, index);
+        match result {
+            // bail if item no longer exists
+            Err(InventoryEntityResult::ItemDepleted) => {
+                std::mem::drop(ui_item_bind);
+                self.stop_highlighting_all(inventory_ui_manager);
+                return Ok(Box::new(InventoryUIDefaultState));
+            }
+            _ => {
+                item = result.unwrap_or_else(|e| e.item());
             }
 
-            let inventory_id = inventory_grid.bind().inventory_agent.as_ref().unwrap().bind().id;
-            let Some(index) = inventory_grid.bind().global_coords_to_index(mouse_position) else {continue};
-            let result = inventory_manager.bind_mut().move_item(item, inventory_id, index);
-            match result {
-                // bail if item no longer exists
-                Err(InventoryEntityResult::ItemDepleted) => {
-                    std::mem::drop(ui_item_bind);
-                    self.stop_highlighting_all(inventory_ui_manager);
-                    return Ok(Box::new(InventoryUIDefaultState));
-                }
-                _ => {
-                    item = result.unwrap_or_else(|e| e.item());
-                    break
-                }
-            }
         }
 
         drop(ui_item_bind);
@@ -116,26 +126,17 @@ impl InventoryUIMoveItemState {
     }
 
     fn highlight_grid(&mut self, mouse_position: Vector2, inventory_ui_manager: InventoryUIManagerView) {
-        for mut inventory_grid in inventory_ui_manager.inventories.iter_shared() {
-            let area_rect = inventory_grid.get_global_rect();
-            // bail if item outside given inventory space
-            if !area_rect.has_point(mouse_position) {
-                inventory_grid.bind_mut().stop_highlighting_all();
-                continue
-            }
-            let inventory_id = inventory_grid.bind().inventory_agent.as_ref().unwrap().bind().id;
-            let Some(index) = inventory_grid.bind().global_coords_to_index(mouse_position) else {continue};
-            let item_held_bind = self.item_held.bind();
-            let Some(item) = item_held_bind.item.as_ref() else { return; };
-            // todo - remove this clone
-            let result = InventoryManager::singleton().bind().check_grid_cells(item.clone(), inventory_id, index);
-            if let InventoryEntityResult::FreeSpace(cells, _item) = result {
-                inventory_grid.bind_mut().highlight_cells(cells);
-            } else if let InventoryEntityResult::SpaceTaken(cells, _item) = result {
-                inventory_grid.bind_mut().highlight_cells_red(cells);
-            }
+        let Some(inventory_grid) = inventory_ui_manager.current_focused_grid.as_mut() else {return;};
+        let inventory_id = inventory_grid.bind().inventory_agent.as_ref().unwrap().bind().id;
+        let Some(index) = inventory_grid.bind().global_coords_to_index(mouse_position) else {return;};
+        let item_held_bind = self.item_held.bind();
+        let Some(item) = item_held_bind.item.as_ref() else { return; };
+        let result = InventoryManager::singleton().bind().check_grid_cells(item.clone(), inventory_id, index);
+        if let InventoryEntityResult::FreeSpace(cells, _item) = result {
+            inventory_grid.bind_mut().highlight_cells(cells);
+        } else if let InventoryEntityResult::SpaceTaken(cells, _item) = result {
+            inventory_grid.bind_mut().highlight_cells_red(cells);
         }
-
     }
 
     fn stop_highlighting_all(&mut self, inventory_ui_manager: &mut InventoryUIManagerView) {
@@ -184,7 +185,58 @@ impl InventoryUIManagerState for InventoryUIMoveItemState {
         item.emit_signal("moved".into(), &[]);
         drop(ui_item_bind);
         self.stop_highlighting_all(&mut inventory_ui_manager);
-        let mut new_state = Box::new(InventoryUIDefaultState);
+        let new_state = Box::new(InventoryUIDefaultState);
         new_state.hide_event(inventory_ui_manager)
+    }
+}
+
+pub struct InventoryFrobState {
+    frobber: Gd<InventoryUIItem>,
+    frob_act_react: Gd<ActReactResource>,
+}
+
+impl InventoryFrobState {
+    fn enter(&self, mut inventory_ui_manager: InventoryUIManagerView) {
+        inventory_ui_manager.base.emit_signal("inventory_frob_started".into(), &[self.frob_act_react.to_variant()]);
+    }
+    fn exit(&self, mut inventory_ui_manager: InventoryUIManagerView) {
+        inventory_ui_manager.base.emit_signal("inventory_frob_finished".into(), &[]);
+    }
+}
+
+impl InventoryUIManagerState for InventoryFrobState {
+    fn input(self: Box<Self>, _event: Gd<InputEvent>, _inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+        self
+    }
+
+    fn press_event(self: Box<Self>, presser: Gd<InventoryUIItem>, inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+        if inventory_ui_manager.cooldown.elapsed().unwrap().as_secs_f64() < inventory_ui_manager.cooldown_time {return self}
+        if presser == self.frobber {
+            self.exit(inventory_ui_manager);
+            return Box::new(InventoryUIDefaultState {})
+        }
+        let presser_bind = presser.bind();
+        let Some(reactor) = presser_bind.item.clone() else { return self };
+        let item_bind = reactor.bind();
+        let Some(Some(act_react)) = item_bind.inventory.as_ref().map(|i| i.inventory_data.bind().act_react.clone()) else {return self};
+        let Some(actor) = self.frobber.bind().item.clone() else {return self};
+        drop(item_bind);
+        drop(presser_bind);
+        let context = dict! {
+            "actor": actor,
+            "reactor": reactor,
+            "inventories": inventory_ui_manager.player_inventory_ids.clone()
+        };
+        ActReactExecutor::singleton().bind_mut().react(self.frob_act_react.clone(), act_react, context);
+        self.exit(inventory_ui_manager);
+        Box::new(InventoryUIDefaultState {})
+    }
+
+    fn frob_event(self: Box<Self>, _frobber: Gd<InventoryUIItem>, _inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+        self
+    }
+
+    fn hide_event(self: Box<Self>, _inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+        self
     }
 }

@@ -77,6 +77,7 @@ impl InventoryEntity {
             InventoryResult::Free(free) => {InventoryEntityResult::FreeSpace(free, item)}
             InventoryResult::OutsideRange => {InventoryEntityResult::NoSpaceForItem(item)}
             InventoryResult::Taken(by) => {InventoryEntityResult::SpaceTaken(by, item)}
+            #[allow(unreachable_code)]
             _ => !unreachable!(),
         }
     }

@@ -1,7 +1,7 @@
 use godot::prelude::*;
 
 #[derive(
-    Default, Export, Var, GodotConvert, Debug, Clone, Eq, PartialEq,
+    Default, Export, Var, GodotConvert, Debug, Clone, Eq, PartialEq, Copy
 )]
 #[godot(via = i32)]
 pub enum Stimuli {

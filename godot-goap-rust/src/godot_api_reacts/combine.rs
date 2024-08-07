@@ -4,10 +4,9 @@ use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcesso
 use crate::act_react::game_effect_builder::{GameEffectInitializer, register_effect_builder};
 use crate::godot_api::godot_inventory::ItemToSpawn;
 use crate::godot_api::inventory_manager::InventoryManager;
-use crate::godot_api::item_object::{Item, ItemResource};
-use crate::godot_api_reacts::call_method::CallMethodGameEffect;
+use crate::godot_api::item_object::{Item};
 use crate::godot_api_reacts::print_message::PrintMessage;
-
+use crate::godot_api::gamesys::GameSystem;
 
 #[derive(GodotClass, Debug)]
 #[class(base=Resource)]
@@ -44,6 +43,15 @@ impl IResource for CombineInventoryItemGameEffect {
 
 #[godot_api]
 impl CombineInventoryItemGameEffect {
+    #[func]
+    fn can_react(&self, act_context: Dictionary) -> bool {
+        let Some(combine_name) = act_context.get("combinator").map(|v| v.to::<StringName>()) else {return false};
+        if self.on_combine.get(combine_name).is_some() {
+            return true
+        }
+        false
+    }
+
     #[func]
     pub fn builder_name(&self) -> StringName {
         "CombineInventoryItemGameEffect".into()
@@ -88,7 +96,9 @@ impl GameEffect for CombineItemsInInventory {
         }
         inventory_manager.bind_mut().reduce_stack(self.reactor.take().unwrap(), 1);
         for inventory_id in self.inventories_ids.iter_shared() {
-
+            if inventory_manager.bind_mut().create_item(self.outcome.clone().unwrap(), inventory_id) {
+                break
+            }
         }
         EffectResult::Free
     }

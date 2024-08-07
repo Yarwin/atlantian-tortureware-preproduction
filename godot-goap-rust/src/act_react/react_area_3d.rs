@@ -5,6 +5,7 @@ use crate::act_react::act_react_resource::ActReactResource;
 use bitflags::bitflags;
 use godot::global::PropertyHint;
 use godot::register::property::PropertyHintInfo;
+use crate::godot_api::gamesys::GameSystem;
 
 const FROB_PHYSICS_MASK: u32 = 128;
 

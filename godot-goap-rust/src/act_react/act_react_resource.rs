@@ -62,6 +62,28 @@ pub struct ActReactResource {
     base: Base<Resource>
 }
 
+impl ActReactResource {
+    pub fn is_reacting(&self, other: Gd<ActReactResource>) -> bool {
+        for mut act in other.bind().emits.iter_shared() {
+            let stimuli: Stimuli = act.get("stim_type".into()).to::<Stimuli>();
+            if self[stimuli].is_empty() {
+                continue
+            }
+            let act_context = act.call("get_context".into(), &[]);
+            for mut react in self[stimuli].iter_shared() {
+                if react.has_method("can_react".into()) {
+                    if react.call("can_react".into(), &[act_context.clone()]).to::<bool>() {
+                        return true
+                    }
+                } else {
+                    return true
+                }
+            }
+        }
+        false
+    }
+}
+
 
 impl Index<Stimuli> for ActReactResource {
     type Output = Array<Gd<Resource>>;

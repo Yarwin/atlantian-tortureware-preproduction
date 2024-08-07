@@ -44,6 +44,7 @@ impl AINode {
                 orientation,
             },
             _ => {
+                godot_print!("what");
                 unimplemented!()
             }
         }

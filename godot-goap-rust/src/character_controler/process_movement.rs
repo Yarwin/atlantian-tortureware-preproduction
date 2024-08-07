@@ -223,7 +223,10 @@ fn move_iteration(movement_type: MovementType, args: &mut MovementParameters, mo
         } else {
             next_translation = initial_influenced_translation.normalized() * continued_translation.length();
         }
-        if next_translation.normalized().distance_to(translation.normalized()) <= f32::EPSILON {
+        if !next_translation.is_zero_approx() &&
+            !translation.is_zero_approx() &&
+            next_translation.normalized().distance_to(translation.normalized()) <= f32::EPSILON
+        {
             next_translation += collision.get_normal() * 0.001;
         }
         *translation = next_translation;
@@ -247,13 +250,6 @@ fn step(forward_collision: &Gd<KinematicCollision3D>, args: &mut MovementParamet
     if let Some(excluded) = args.excluded_bodies.take() {
         motion_parameters.set_exclude_bodies(excluded)
     }
-    // let mut excluded_bodies = Array::new();
-    // excluded_bodies.push(body_rid);
-    // // grabbed object
-    // player_state.grabber.as_ref().map(|g| g.bind().attached.as_ref().map(
-    //     |a| excluded_bodies.push(a.get_rid())
-    // ));
-    // motion_parameters.set_exclude_bodies(args.excluded_bodies);
     motion_parameters.set_from(trans_step);
     motion_parameters.set_motion(Vector3::UP * MAX_STEP_HEIGHT);
     let is_colliding_up = call_body_test_motion(&[body_rid.to_variant(), motion_parameters.to_variant(), motion_result.to_variant()]);

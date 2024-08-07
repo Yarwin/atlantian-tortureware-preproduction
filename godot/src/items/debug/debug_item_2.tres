@@ -1,8 +1,13 @@
-[gd_resource type="InventoryItemData" load_steps=3 format=3 uid="uid://dws0xc3vhmiu7"]
+[gd_resource type="InventoryItemData" load_steps=4 format=3 uid="uid://dws0xc3vhmiu7"]
 
 [ext_resource type="Texture2D" uid="uid://utfyuvs3i7r8" path="res://quake_logo.svg" id="1_c2b4m"]
 
+[sub_resource type="ActCombine" id="ActCombine_02jem"]
+reduce_stack = true
+combinator = &"quake"
+
 [sub_resource type="ActReactResource" id="ActReactResource_yreqc"]
+emits = Array[Resource]([SubResource("ActCombine_02jem")])
 
 [resource]
 rectangular_grid_size = Vector2i(1, 1)

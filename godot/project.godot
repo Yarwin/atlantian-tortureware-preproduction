@@ -19,10 +19,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-AiManager="*res://src/ai/managers/ai_manager.tscn"
-EventBus="*res://src/managers/event_bus.gd"
-GameEffectsManager="*res://src/managers/game_effects_manager.tscn"
-GameInventoryManager="*res://src/managers/game_inventory_manager.tscn"
+GameSystems="*res://src/managers/game_systems.gd"
 
 [editor_plugins]
 

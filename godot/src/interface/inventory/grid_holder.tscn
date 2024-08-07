@@ -9,7 +9,6 @@ grid = NodePath("MarginContainer/GridContainer")
 inventory_group = &"player_inventory_left"
 grid_cell_scene = ExtResource("1_sh3v5")
 item_scene = ExtResource("2_lgo54")
-z_index = 2
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -35,5 +34,3 @@ grow_vertical = 2
 
 [node name="GridContainer" type="GridContainer" parent="MarginContainer"]
 layout_mode = 2
-
-[connection signal="mouse_exited" from="." to="." method="on_mouse_exited"]

@@ -2,8 +2,9 @@ use std::cmp::Ordering;
 use std::collections::{HashMap};
 use godot::classes::Engine;
 use godot::prelude::*;
+use crate::godot_api::gamesys::GameSystem;
 use crate::godot_api::godot_inventory::{InventoryAgent, ItemToSpawn};
-use crate::godot_api::item_object::{Item, ItemResource};
+use crate::godot_api::item_object::{Item};
 use crate::inventory::inventory_entity::{InventoryEntity, InventoryEntityResult};
 use crate::inventory::inventory_item::StackResult;
 use crate::utils::generate_id::assign_id;
@@ -58,7 +59,7 @@ impl Ord for InventoryToCreate {
 ///
 /// In the future it might be moved to some kind of GameManager autoload.
 #[derive(GodotClass)]
-#[class(init, base=Node)]
+#[class(init, base=Object)]
 pub struct InventoryManager {
     /// ids
     #[init(default = 0)]
@@ -66,26 +67,12 @@ pub struct InventoryManager {
     #[init(default = 0)]
     current_item_id: u32,
     inventories: HashMap<u32, InventoryEntity>,
+    inventory_agents: HashMap<u32, Gd<InventoryAgent>>,
     items: HashMap<u32, Gd<Item>>,
     #[init(default = Some(Vec::new()))]
     inventories_to_create: Option<Vec<InventoryToCreate>>,
-    base: Base<Node>
-}
-
-#[godot_api]
-impl INode for InventoryManager {
-    fn enter_tree(&mut self) {
-        Engine::singleton()
-            .register_singleton(Self::singleton_name(), self.base().clone().upcast::<Object>());
-    }
-
-    fn exit_tree(&mut self) {
-        Engine::singleton().unregister_singleton(Self::singleton_name());
-    }
-
-    fn ready(&mut self) {
-        self.base_mut().call_deferred("create_inventories".into(), &[]);
-    }
+    pub is_initialized: bool,
+    base: Base<Object>
 }
 
 #[godot_api]
@@ -93,10 +80,11 @@ impl InventoryManager {
     #[signal]
     fn post_init();
 
-    #[func]
-    fn create_inventories(&mut self) {
-        self.initialize_inventories();
-        self.base_mut().emit_signal("post_init".into(), &[]);
+    #[func(gd_self)]
+    fn create_inventories(mut this: Gd<Self>) {
+        this.bind_mut().initialize_inventories();
+        this.bind_mut().is_initialized = true;
+        this.emit_signal("post_init".into(), &[]);
     }
 
     #[func]
@@ -111,16 +99,6 @@ impl InventoryManager {
 }
 
 impl InventoryManager {
-    pub fn singleton_name() -> StringName {
-        StringName::from("InventoryManager")
-    }
-
-    pub fn singleton() -> Gd<Self> {
-        Engine::singleton()
-            .get_singleton(Self::singleton_name())
-            .unwrap()
-            .cast::<InventoryManager>()
-    }
 
     pub fn register_inventory(&mut self, to_create: InventoryToCreate) {
         self.inventories_to_create.as_mut().unwrap().push(to_create);
@@ -139,7 +117,7 @@ impl InventoryManager {
     pub fn reduce_stack(&mut self, mut item: Gd<Item>, by: u32) {
         // bail if no inventory
         let mut item_bind = item.bind_mut();
-        let Some(mut inventory_component) = item_bind.inventory.as_mut() else {return; };
+        let Some(inventory_component) = item_bind.inventory.as_mut() else {return; };
         let result = inventory_component.reduce_stack(by);
         drop(item_bind);
         match result {
@@ -149,9 +127,10 @@ impl InventoryManager {
         };
     }
 
-    fn create_items_in_inventory(&mut self, item_to_spawn: Gd<ItemToSpawn>, inventory: Option<&mut InventoryEntity>, inventory_id: u32) {
+    fn create_items_in_inventory(&mut self, item_to_spawn: Gd<ItemToSpawn>, inventory: Option<&mut InventoryEntity>, inventory_id: u32) -> bool {
         // inventory might already be owned or not yet initialized. In latter case we are sending a reference to InventoryEntity.
-        let mut inventory = inventory.unwrap_or_else(|| self.inventories.get_mut(&inventory_id).expect("no such inventory!"));
+        let inventory = inventory.unwrap_or_else(|| self.inventories.get_mut(&inventory_id).expect("no such inventory!"));
+        let mut inventory_agent = self.inventory_agents.get_mut(&inventory_id);
 
         let bind = item_to_spawn.bind();
         let builder = bind.builder().id(&mut self.current_item_id);
@@ -165,24 +144,34 @@ impl InventoryManager {
                 let size = inventory.get_size();
                 let at_index = pos.y as usize * size.0 + pos.x as usize;
                 // panics if user tries to spawn multiple items
-                let Ok(item) = inventory.try_insert_item_at(item, at_index) else { panic!("couldn't initialize inventory!") };
+                let Ok(item) = inventory.try_insert_item_at(item, at_index) else { return false };
                 item
             } else {
                 // panics if there isn't space for given item in the inventory
-                let Ok(item) = inventory.insert_at_first_free_space(item) else { panic!("couldn't initialize inventory!") };
+                let Ok(item) = inventory.insert_at_first_free_space(item) else { return false };
                 item
             };
+            if let Some(ref mut agent) = inventory_agent {
+                agent.emit_signal("new_item_created".into(), &[item_to_insert.to_variant()]);
+            }
             self.items.insert(id, item_to_insert);
         }
+        true
     }
 
-    pub fn create_item(&mut self, item_to_spawn: Gd<ItemToSpawn>, inventory_id: u32) {
-        self.create_items_in_inventory(item_to_spawn, None, inventory_id);
+    pub fn create_item(&mut self, item_to_spawn: Gd<ItemToSpawn>, inventory_id: u32) -> bool {
+        self.create_items_in_inventory(item_to_spawn, None, inventory_id)
     }
 
     pub fn check_grid_cells(&self, item: Gd<Item>, inventory_id: u32, position_idx: usize) -> InventoryEntityResult {
         let Some(inventory) = self.inventories.get(&inventory_id) else {return InventoryEntityResult::WrongItemType(item);};
         inventory.check_at(item, position_idx)
+    }
+
+    pub fn get_item_at(&self, inventory_id: u32, position_idx: usize) -> Option<Gd<Item>> {
+        let inventory = self.inventories.get(&inventory_id)?;
+        let item_id = inventory.get_item_id_at(position_idx)?;
+        self.items.get(&item_id).cloned()
     }
 
     pub fn move_item(&mut self, mut item: Gd<Item>, inventory_id: u32, position_idx: usize) -> Result<Gd<Item>, InventoryEntityResult> {
@@ -247,33 +236,37 @@ impl InventoryManager {
             let inventory_id = assign_id(to_create.agent.bind().id, &mut self.current_inventory_id);
 
             for item_to_spawn in to_create.agent.bind().items_to_spawn.iter_shared() {
-                self.create_items_in_inventory(item_to_spawn, Some(&mut inventory), inventory_id);
-                // let bind = item_to_spawn.bind();
-                // let builder = bind.builder().id(&mut self.current_item_id);
-                //
-                // for mut item in builder {
-                //     item.bind_mut().inventory.as_mut().unwrap().current_inventory_id = Some(inventory_id);
-                //     let id = item.bind().id;
-                //
-                //     let item_to_insert = if item_to_spawn.bind().assign_position {
-                //         let pos = item_to_spawn.bind().position;
-                //         let size = inventory.get_size();
-                //         let at_index = pos.y as usize * size.0 + pos.x as usize;
-                //         // panics if user tries to spawn multiple items
-                //         let Ok(item) = inventory.try_insert_item_at(item, at_index) else {panic!("couldn't initialize inventory!")};
-                //         item
-                //     } else {
-                //         // panics if there isn't space for given item in the inventory
-                //         let Ok(item) = inventory.insert_at_first_free_space(item) else {panic!("couldn't initialize inventory!")};
-                //         item
-                //     };
-                //     self.items.insert(id, item_to_insert);
-                // }
+                if !self.create_items_in_inventory(item_to_spawn, Some(&mut inventory), inventory_id) {
+                    panic!("failed to initialize inventory!");
+                }
             }
 
             to_create.agent.bind_mut().id = inventory_id;
             self.inventories.insert(inventory_id, inventory);
+            self.inventory_agents.insert(inventory_id, to_create.agent);
         }
         self.base_mut().emit_signal("inventories_initialized".into(), &[]);
+    }
+}
+
+
+impl GameSystem for InventoryManager {
+    fn singleton_name() -> StringName {
+        StringName::from("InventoryManager")
+    }
+
+    fn initialize() -> Gd<Self> {
+        let mut inventory_manager = Self::new_alloc();
+        Engine::singleton()
+            .register_singleton(Self::singleton_name(), inventory_manager.clone());
+        inventory_manager.call_deferred("create_inventories".into(), &[]);
+        inventory_manager
+    }
+
+    fn exit(&mut self) {
+        Engine::singleton().unregister_singleton(Self::singleton_name());
+        for (_id, item) in self.items.drain() {
+            item.free();
+        }
     }
 }

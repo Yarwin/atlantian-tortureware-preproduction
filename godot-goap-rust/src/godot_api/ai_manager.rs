@@ -20,10 +20,12 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use crate::ai::working_memory::WMProperty;
+use crate::godot_api::gamesys::GameSystem;
 use crate::utils::generate_id::assign_id;
 
+
 #[derive(GodotClass)]
-#[class(init, base=Node, rename=AIManager)]
+#[class(init, base=Object, rename=AIManager)]
 pub struct GodotAIManager {
     pub actions: HashMap<GString, Arc<Vec<Action>>>,
     pub goals: HashMap<GString, Arc<Vec<GoalComponent>>>,
@@ -38,62 +40,43 @@ pub struct GodotAIManager {
     pub sender: Option<Sender<ThinkerPlanEvent>>,
     pub receiver: Option<Receiver<()>>,
     pub thread: Option<thread::JoinHandle<()>>,
-    base: Base<Node>,
+    base: Base<Object>,
 }
 
 #[godot_api]
-impl INode for GodotAIManager {
-    fn physics_process(&mut self, delta: f64) {
-        let mut memories: Vec<_> = self.thinkers.values().map(|t| t.shared.clone()).collect();
-        memories.par_iter_mut().rev().for_each(|shared| {
-            let Ok(mut shared) = shared.lock() else {
-                panic!("mutex failed")
-            };
-            shared.working_memory.validate();
-        });
-        drop(memories);
+impl IObject for GodotAIManager {}
 
-        for thinker in self.thinkers.values_mut() {
-            if !thinker.is_active {
-                continue;
-            }
-            process_thinker(thinker, delta, &self.ai_nodes);
-            if let Some(sender) = self.sender.as_mut() {
-                let _result = sender.send(ThinkerPlanEvent::Process(
-                    ThinkerProcess::from(&*thinker).with_ainodes(self.ai_nodes.clone()),
-                ));
-            }
-        }
-    }
-
-    fn enter_tree(&mut self) {
-        Engine::singleton()
-            .register_singleton(GodotAIManager::name(), self.base().clone().upcast::<Object>());
-    }
-
-    fn exit_tree(&mut self) {
-        Engine::singleton().unregister_singleton(GodotAIManager::name());
-        if let Some(sender) = self.sender.take() {
-            let _ = sender.send(ThinkerPlanEvent::Terminate);
-        }
-        if let Some(thread) = self.thread.take() {
-            let _ = thread.join();
-        }
-    }
-
-    /// starts a Thinker/planner thread and registers all the API consumers
-    fn ready(&mut self) {
-        let (process_sender, process_receiver) = mpsc::channel();
-        let (update_sender, update_receiver) = mpsc::channel();
-        self.sender = Some(process_sender);
-        self.receiver = Some(update_receiver);
-        // spawns a new thread ready to accept events
-        self.thread = Some(thread::spawn(|| {
-            process_plan(process_receiver, update_sender);
-        }));
-        self.base_mut().call_deferred("post_ready".into(), &[]);
-    }
-}
+// #[godot_api]
+// impl INode for GodotAIManager {
+//
+//     fn enter_tree(&mut self) {
+//         Engine::singleton()
+//             .register_singleton(GodotAIManager::name(), self.base().clone().upcast::<Object>());
+//     }
+//
+//     fn exit_tree(&mut self) {
+//         Engine::singleton().unregister_singleton(GodotAIManager::name());
+//         if let Some(sender) = self.sender.take() {
+//             let _ = sender.send(ThinkerPlanEvent::Terminate);
+//         }
+//         if let Some(thread) = self.thread.take() {
+//             let _ = thread.join();
+//         }
+//     }
+//
+//     /// starts a Thinker/planner thread and registers all the API consumers
+//     fn ready(&mut self) {
+//         let (process_sender, process_receiver) = mpsc::channel();
+//         let (update_sender, update_receiver) = mpsc::channel();
+//         self.sender = Some(process_sender);
+//         self.receiver = Some(update_receiver);
+//         // spawns a new thread ready to accept events
+//         self.thread = Some(thread::spawn(|| {
+//             process_plan(process_receiver, update_sender);
+//         }));
+//         self.base_mut().call_deferred("post_ready".into(), &[]);
+//     }
+// }
 
 #[godot_api]
 impl GodotAIManager {
@@ -156,17 +139,6 @@ impl GodotAIManager {
 }
 
 impl GodotAIManager {
-
-    fn name() -> StringName {
-        StringName::from("AIManager")
-    }
-
-    pub fn singleton() -> Gd<Self> {
-        Engine::singleton()
-            .get_singleton(GodotAIManager::name())
-            .unwrap()
-            .cast::<GodotAIManager>()
-    }
 
     pub fn add_new_wm_fact(&mut self, thinker_id: u32, fact: WMProperty, confidence: f32, expiration: f64) {
         let Ok(mut guard) = self.thinkers[&thinker_id].shared.lock() else {panic!("mutex failed!")};
@@ -292,5 +264,60 @@ impl GodotAIManager {
         self.sensors_blueprint
             .insert(path.clone(), components.clone());
         Some(components)
+    }
+}
+
+impl GameSystem for GodotAIManager {
+    fn singleton_name() -> StringName {
+        StringName::from("AIManager")
+    }
+
+    fn initialize() -> Gd<Self> {
+        let (process_sender, process_receiver) = mpsc::channel();
+        let (update_sender, update_receiver) = mpsc::channel();
+
+        let mut ai_manager = Self::new_alloc();
+        ai_manager.bind_mut().sender = Some(process_sender);
+        ai_manager.bind_mut().receiver = Some(update_receiver);
+        ai_manager.bind_mut().thread = Some(thread::spawn(|| {
+            process_plan(process_receiver, update_sender);
+        }));
+        Engine::singleton()
+            .register_singleton(Self::singleton_name(), ai_manager.clone());
+        ai_manager.call_deferred("post_ready".into(), &[]);
+        ai_manager
+    }
+
+    fn exit(&mut self) {
+        Engine::singleton().unregister_singleton(Self::singleton_name());
+        if let Some(sender) = self.sender.take() {
+            let _ = sender.send(ThinkerPlanEvent::Terminate);
+        }
+        if let Some(thread) = self.thread.take() {
+            let _ = thread.join();
+        }
+    }
+
+    fn physics_process(&mut self, delta: f64) {
+        let mut memories: Vec<_> = self.thinkers.values().map(|t| t.shared.clone()).collect();
+        memories.par_iter_mut().rev().for_each(|shared| {
+            let Ok(mut shared) = shared.lock() else {
+                panic!("mutex failed")
+            };
+            shared.working_memory.validate();
+        });
+        drop(memories);
+
+        for thinker in self.thinkers.values_mut() {
+            if !thinker.is_active {
+                continue;
+            }
+            process_thinker(thinker, delta, &self.ai_nodes);
+            if let Some(sender) = self.sender.as_mut() {
+                let _result = sender.send(ThinkerPlanEvent::Process(
+                    ThinkerProcess::from(&*thinker).with_ainodes(self.ai_nodes.clone()),
+                ));
+            }
+        }
     }
 }

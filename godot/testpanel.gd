@@ -4,7 +4,8 @@ extends Panel
 
 
 func _ready():
-	EventBus.new_debug_entity_picked.connect(_on_new_debug_entity_picked)
+	return
+	#EventBus.new_debug_entity_picked.connect(_on_new_debug_entity_picked)
 
 
 func _on_new_debug_entity_picked(info, entity_id):
