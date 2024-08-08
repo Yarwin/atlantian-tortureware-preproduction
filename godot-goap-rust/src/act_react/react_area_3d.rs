@@ -93,11 +93,7 @@ impl IArea3D for ActReactArea3D {
     }
 
     fn ready(&mut self) {
-        self.base_mut().set_monitoring(true);
-        self.base_mut().set_collision_mask(FROB_PHYSICS_MASK);
-        self.base_mut().set_collision_layer(FROB_PHYSICS_MASK);
         if self.propagation_mode.contains(PropagationMode::Contact) {
-            self.base_mut().set_monitorable(true);
             let callable = self.base().callable("on_other_area_act");
             self.base_mut().connect("area_entered".into(), callable);
         }
@@ -131,7 +127,7 @@ impl ActReactArea3D {
     }
 
     #[func]
-    pub fn react(&self, act: Gd<ActReactResource>) {
+    pub fn react(&self, act: Gd<ActReactResource>, actor_context: Dictionary) {
         let Some(react) = self.act_react.clone() else {return;};
         let mut act_react_executor = ActReactExecutor::singleton();
         act_react_executor.bind_mut().react(act, react, dict!{});

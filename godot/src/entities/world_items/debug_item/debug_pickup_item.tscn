@@ -1,0 +1,40 @@
+[gd_scene load_steps=8 format=3 uid="uid://dyd1eq0asf4id"]
+
+[ext_resource type="ItemResource" uid="uid://b575j7gip5c3t" path="res://src/entities/world_items/debug_item/debug_item_resource.tres" id="1_nye7c"]
+[ext_resource type="ActReactResource" uid="uid://yysbnvqe4nht" path="res://src/entities/world_items/meta/item_pickup_metaproperties.tres" id="1_oj5dn"]
+
+[sub_resource type="ItemToSpawn" id="ItemToSpawn_bfg58"]
+amount = 1
+item_data = ExtResource("1_nye7c")
+
+[sub_resource type="BoxMesh" id="BoxMesh_l655w"]
+size = Vector3(0.2, 0.2, 0.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ba8od"]
+size = Vector3(0.255, 0.22, 0.56)
+
+[sub_resource type="ActReactResource" id="ActReactResource_p3wja"]
+metaproperties = Array[ActReactResource]([ExtResource("1_oj5dn")])
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qhqw2"]
+size = Vector3(0.385, 0.36, 0.65)
+
+[node name="DebugPickupItem" type="WorldItem"]
+item_to_spawn = SubResource("ItemToSpawn_bfg58")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_l655w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_ba8od")
+
+[node name="ActReactArea3D" type="ActReactArea3D" parent="." node_paths=PackedStringArray("target")]
+propagation_mode = 1
+target = NodePath("..")
+act_react = SubResource("ActReactResource_p3wja")
+collision_layer = 64
+collision_mask = 0
+monitoring = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ActReactArea3D"]
+shape = SubResource("BoxShape3D_qhqw2")

@@ -1,10 +1,14 @@
 use std::f32::consts::FRAC_PI_2;
 use std::f64::consts::PI;
-use godot::classes::{InputEvent, InputEventMouseMotion};
+use godot::classes::{InputEvent, InputEventMouseMotion, ShapeCast3D};
 use godot::prelude::*;
 use crate::character_controler::character_controller_3d::CharacterController3D;
 use godot::classes::input::MouseMode;
 use godot::global::{fmod, lerpf, sin};
+use crate::act_react::act_react_executor::ActReactExecutor;
+use crate::act_react::act_react_resource::ActReactResource;
+use crate::act_react::react_area_3d::ActReactArea3D;
+use crate::godot_api::gamesys::{GameSys, GameSystem};
 
 
 #[derive(Debug, Default)]
@@ -20,6 +24,9 @@ pub struct CameraData {
 #[derive(GodotClass)]
 #[class(init, base=Node)]
 pub struct PlayerCameraController3D {
+    #[init(node = "../Head/Camera3D/InterfaceShapeCast")]
+    pub interface_shape_cast: OnReady<Gd<ShapeCast3D>>,
+    pub interface_act_react: Option<Gd<ActReactResource>>,
     #[export]
     pub head: Option<Gd<Node3D>>,
     #[export]
@@ -37,16 +44,17 @@ pub struct PlayerCameraController3D {
     #[export]
     bob_frequency: Vector3,
     original_camera_pos: Vector3,
-    camera_data: CameraData
+    camera_data: CameraData,
+    base: Base<Node>
 }
 
 impl PlayerCameraController3D {
     fn engage_mouselook(&mut self) {
         if Input::singleton().get_mouse_mode() == MouseMode::CAPTURED {
-            // event_bus.emit_signal("hud_enabled".into(), &[]);
+            GameSys::singleton().emit_signal("hud_visibility_changed".into(), &[false.to_variant()]);
             Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
         } else if Input::singleton().get_mouse_mode() == MouseMode::VISIBLE {
-            // event_bus.emit_signal("hud_disabled".into(), &[]);
+            GameSys::singleton().emit_signal("hud_visibility_changed".into(), &[true.to_variant()]);
             Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
         }
     }
@@ -55,7 +63,6 @@ impl PlayerCameraController3D {
         self.camera_data.rotation_origins.x = (self.camera_data.rotation_origins.x - (self.camera_data.mouse_movement.y * self.mouse_sensitivity * delta)).clamp(-FRAC_PI_2, FRAC_PI_2);
         self.camera_data.target_rotation_change_y += -self.camera_data.mouse_movement.x * delta * self.mouse_sensitivity;
         let Some(char) = self.character_controller.as_mut() else {return;};
-
         self.camera_data.target_rotation_head.x = self.camera_data.target_rotation_head.x.lerp(self.camera_data.rotation_origins.x, 5.0 * delta);
         let rot_change_y = 0.0.lerp(self.camera_data.target_rotation_change_y, delta * 5.0);
         self.camera_data.target_rotation_change_y -= rot_change_y;
@@ -122,13 +129,29 @@ impl INode for PlayerCameraController3D {
         self.perform_mouse_rotation(delta as f32);
         self.tilt_camera(delta as f32);
         let bob = self.calculate_bob(delta as f32);
-        // self.calculate_bob(delta as f32, BOB_FREQUENCY, 0);
         if let Some(head) = self.head.as_mut() {
             head.set_rotation(self.camera_data.target_rotation_head);
         }
         if let Some(camera) = self.camera.as_mut() {
             camera.set_position(self.original_camera_pos + bob * self.immersion_scale);
         }
+        if Input::singleton().is_action_just_pressed("frob".into()) {
+            let actor = self.base().clone();
+            let Some(acts) = self.interface_act_react.as_mut() else {return;};
+            if self.interface_shape_cast.is_colliding() {
+                if let Some(Ok(react_area)) = self.interface_shape_cast.get_collider(0).map(|o| o.try_cast::<ActReactArea3D>()) {
+
+                    let context = dict! {
+                        "actor": actor,
+                        "reactor": react_area.bind().target.clone(),
+
+                    };
+                    ActReactExecutor::singleton().bind_mut().react(acts.clone(), react_area.bind().act_react.clone().unwrap(), context);
+                }
+
+            }
+        }
+
     }
 
     fn ready(&mut self) {

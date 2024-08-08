@@ -95,10 +95,16 @@ impl GameEffect for CombineItemsInInventory {
             inventory_manager.bind_mut().reduce_stack(self.actor.take().unwrap(), 1);
         }
         inventory_manager.bind_mut().reduce_stack(self.reactor.take().unwrap(), 1);
+        let mut was_item_created: bool = false;
         for inventory_id in self.inventories_ids.iter_shared() {
-            if inventory_manager.bind_mut().create_item(self.outcome.clone().unwrap(), inventory_id) {
+            if inventory_manager.bind_mut().create_item_in_inventory(self.outcome.clone().unwrap(), inventory_id) {
+                was_item_created = true;
                 break
             }
+        }
+        if !was_item_created {
+            /// todo – create & drop the item if there is no space in the inventory. Might require more context.
+            godot_print!("item was not created!");
         }
         EffectResult::Free
     }

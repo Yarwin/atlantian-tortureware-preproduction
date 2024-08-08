@@ -33,6 +33,7 @@ pub struct InventoryUIManager {
 }
 
 pub struct InventoryUIManagerView<'view> {
+    pub animation_player: &'view mut Option<Gd<AnimationPlayer>>,
     pub inventories: &'view Array<Gd<InventoryUIGrid>>,
     pub player_inventory_ids: &'view Array<u32>,
     pub current_focused_grid: &'view mut Option<Gd<InventoryUIGrid>>,
@@ -45,6 +46,7 @@ impl InventoryUIManager {
     pub fn as_view(&mut self) -> InventoryUIManagerView {
         let base = self.base_mut().clone();
         InventoryUIManagerView {
+            animation_player: &mut self.animation_player,
             inventories: &self.inventories,
             player_inventory_ids: &self.player_inventory_ids,
             current_focused_grid: &mut self.current_focused_grid,
@@ -74,6 +76,8 @@ impl IControl for InventoryUIManager {
         }
 
         self.base_mut().call_deferred("calculate_offset".into(), &[]);
+        let on_hud_visibility_changed = self.base().callable("on_hud_visibility_changed");
+        GameSys::singleton().connect("hud_visibility_changed".into(), on_hud_visibility_changed);
     }
 
     fn unhandled_input(&mut self, event: Gd<InputEvent>) {
@@ -101,6 +105,35 @@ impl InventoryUIManager {
             return;
         }
         InventoryManager::singleton().connect_ex("post_init".into(), self.base().callable("on_inventory_init")).flags(CONNECT_ONE_SHOT).done();
+    }
+
+    #[func]
+    fn calculate_offset(&mut self) {
+        let mut offset: Option<f32> = None;
+        for grid_holder in self.inventories.iter_shared() {
+            if let Ok(inventory_agent) = grid_holder
+                .get("inventory_agent".into())
+                .try_to::<Gd<InventoryAgent>>()
+            {
+                let size = grid_holder.get_size();
+                // smallest side of the square
+                let grid_min_offset = (size.x / inventory_agent.bind().size.x as f32)
+                    .min(size.y / inventory_agent.bind().size.y as f32);
+
+                if let Some(off) = offset {
+                    if off > grid_min_offset {
+                        offset = Some(grid_min_offset);
+                    }
+                } else {
+                    offset = Some(grid_min_offset);
+                }
+            }
+        }
+        if let Some(off) = offset {
+            self.current_cell_size = off;
+            self.base_mut()
+                .emit_signal("cell_size_calculated".into(), &[off.to_variant()]);
+        }
     }
 
     #[func]
@@ -134,7 +167,6 @@ impl InventoryUIManager {
         }
     }
 
-
     #[func]
     fn on_resized(&mut self) {
         self.base_mut().call_deferred("calculate_offset".into(), &[]);
@@ -156,31 +188,9 @@ impl InventoryUIManager {
     }
 
     #[func]
-    fn calculate_offset(&mut self) {
-        let mut offset: Option<f32> = None;
-        for grid_holder in self.inventories.iter_shared() {
-            if let Ok(inventory_agent) = grid_holder
-                .get("inventory_agent".into())
-                .try_to::<Gd<InventoryAgent>>()
-            {
-                let size = grid_holder.get_size();
-                // smallest side of the square
-                let grid_min_offset = (size.x / inventory_agent.bind().size.x as f32)
-                    .min(size.y / inventory_agent.bind().size.y as f32);
-
-                if let Some(off) = offset {
-                    if off > grid_min_offset {
-                        offset = Some(grid_min_offset);
-                    }
-                } else {
-                    offset = Some(grid_min_offset);
-                }
-            }
-        }
-        if let Some(off) = offset {
-            self.current_cell_size = off;
-            self.base_mut()
-                .emit_signal("cell_size_calculated".into(), &[off.to_variant()]);
+    fn on_hud_visibility_changed(&mut self, is_hidden: bool) {
+        if let Some(state) = self.state.take() {
+            self.state = Some(state.hide_event(self.as_view(), is_hidden));
         }
     }
 }

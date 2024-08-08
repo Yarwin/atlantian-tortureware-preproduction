@@ -127,6 +127,29 @@ impl InventoryManager {
         };
     }
 
+    fn update_item_and_return_result(&mut self, result: Result<Gd<Item>, InventoryEntityResult>, inventory_id: u32) -> Result<Gd<Item>, InventoryEntityResult> {
+        match result {
+            Ok(mut item) => {
+                let previous_inventory = item.bind().inventory.as_ref().unwrap().current_inventory_id;
+                let inventory_changed = previous_inventory.map(|p_id| p_id != inventory_id).unwrap_or(false);
+                if inventory_changed {
+                    if let Some(inv) = self.inventories.get_mut(previous_inventory.as_ref().unwrap()) {
+                        inv.remove_item(item.bind().id);
+                    }
+                    item.emit_signal("inventory_switched".into(), &[inventory_id.to_variant()]);
+                }
+                item.bind_mut().inventory.as_mut().unwrap().current_inventory_id = Some(inventory_id);
+                if previous_inventory.is_none() {
+                    if let Some(inventory_agent) = self.inventory_agents.get_mut(&inventory_id) {
+                        inventory_agent.emit_signal("new_item_created".into(), &[item.to_variant()]);
+                    }
+                }
+                Ok(item)
+            },
+            Err(e) => {Err(e)}
+        }
+    }
+
     fn create_items_in_inventory(&mut self, item_to_spawn: Gd<ItemToSpawn>, inventory: Option<&mut InventoryEntity>, inventory_id: u32) -> bool {
         // inventory might already be owned or not yet initialized. In latter case we are sending a reference to InventoryEntity.
         let inventory = inventory.unwrap_or_else(|| self.inventories.get_mut(&inventory_id).expect("no such inventory!"));
@@ -159,8 +182,35 @@ impl InventoryManager {
         true
     }
 
-    pub fn create_item(&mut self, item_to_spawn: Gd<ItemToSpawn>, inventory_id: u32) -> bool {
+    pub fn put_item_at_first_free_space(&mut self, item: Gd<Item>, inventory: Option<&mut InventoryEntity>, inventory_id: u32) -> Result<Gd<Item>, InventoryEntityResult> {
+        let inventory = inventory.unwrap_or_else(|| self.inventories.get_mut(&inventory_id).expect("no such inventory!"));
+        let result = inventory.insert_at_first_free_space(item);
+        self.update_item_and_return_result(result, inventory_id)
+        // match result {
+        //     Ok(mut item) => {
+        //         let previous_inventory = item.bind().inventory.as_ref().unwrap().current_inventory_id;
+        //         let inventory_changed = previous_inventory.map(|p_id| p_id != inventory_id).unwrap_or(false);
+        //         if inventory_changed {
+        //             if let Some(inv) = self.inventories.get_mut(previous_inventory.as_ref().unwrap()) {
+        //                 inv.remove_item(item.bind().id);
+        //             }
+        //             item.emit_signal("inventory_switched".into(), &[inventory_id.to_variant()]);
+        //         }
+        //         item.bind_mut().inventory.as_mut().unwrap().current_inventory_id = Some(inventory_id);
+        //         Ok(item)
+        //     },
+        //     Err(e) => {Err(e)}
+        // }
+    }
+
+    pub fn create_item_in_inventory(&mut self, item_to_spawn: Gd<ItemToSpawn>, inventory_id: u32) -> bool {
         self.create_items_in_inventory(item_to_spawn, None, inventory_id)
+    }
+
+    pub fn create_item(&mut self, item_to_spawn: Gd<ItemToSpawn>) -> Gd<Item> {
+        let bind = item_to_spawn.bind();
+        let builder = bind.builder().id(&mut self.current_item_id);
+        builder.build()
     }
 
     pub fn check_grid_cells(&self, item: Gd<Item>, inventory_id: u32, position_idx: usize) -> InventoryEntityResult {
@@ -174,6 +224,7 @@ impl InventoryManager {
         self.items.get(&item_id).cloned()
     }
 
+    // todo – inventory manager shouldn't actually decide if items should be stacked and whatnot – such stuff should be handled in implementation details (UI and whatnot)
     pub fn move_item(&mut self, mut item: Gd<Item>, inventory_id: u32, position_idx: usize) -> Result<Gd<Item>, InventoryEntityResult> {
         let Some(inventory) = self.inventories.get_mut(&inventory_id) else {return Err(InventoryEntityResult::WrongItemType(item));};
 
@@ -211,23 +262,23 @@ impl InventoryManager {
         }
 
         let result = { inventory.try_insert_item_at(item, position_idx)};
+        self.update_item_and_return_result(result, inventory_id)
 
-
-        match result {
-            Ok(mut item) => {
-                let previous_inventory = item.bind().inventory.as_ref().unwrap().current_inventory_id;
-                let inventory_changed = previous_inventory.map(|p_id| p_id != inventory_id).unwrap_or(false);
-                if inventory_changed {
-                    if let Some(inv) = self.inventories.get_mut(previous_inventory.as_ref().unwrap()) {
-                        inv.remove_item(item.bind().id);
-                    }
-                    item.emit_signal("inventory_switched".into(), &[inventory_id.to_variant()]);
-                }
-                item.bind_mut().inventory.as_mut().unwrap().current_inventory_id = Some(inventory_id);
-                Ok(item)
-            },
-            Err(e) => {Err(e)}
-        }
+        // match result {
+        //     Ok(mut item) => {
+        //         let previous_inventory = item.bind().inventory.as_ref().unwrap().current_inventory_id;
+        //         let inventory_changed = previous_inventory.map(|p_id| p_id != inventory_id).unwrap_or(false);
+        //         if inventory_changed {
+        //             if let Some(inv) = self.inventories.get_mut(previous_inventory.as_ref().unwrap()) {
+        //                 inv.remove_item(item.bind().id);
+        //             }
+        //             item.emit_signal("inventory_switched".into(), &[inventory_id.to_variant()]);
+        //         }
+        //         item.bind_mut().inventory.as_mut().unwrap().current_inventory_id = Some(inventory_id);
+        //         Ok(item)
+        //     },
+        //     Err(e) => {Err(e)}
+        // }
     }
 
     fn initialize_inventories(&mut self) {

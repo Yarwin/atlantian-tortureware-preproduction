@@ -15,7 +15,6 @@ func _physics_process(delta: float) -> void:
 
 func react_and_vanish(collider):
 	if collider.get("act_react"):
-		return
-		#GameEffectsManager.react(self.act_react, collider.get("act_react"), {})
-		#GameEffectsManager.react(collider.get("act_react"), self.act_react, {})
+		GameSystems.act_react_executor.react(self.act_react, collider.get("act_react"), {})
+		GameSystems.act_react_executor.react(collider.get("act_react"), self.act_react, {})
 	queue_free()

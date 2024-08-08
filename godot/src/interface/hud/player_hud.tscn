@@ -1,8 +1,117 @@
-[gd_scene load_steps=4 format=3 uid="uid://t0ys0mdppkhu"]
+[gd_scene load_steps=7 format=3 uid="uid://t0ys0mdppkhu"]
 
 [ext_resource type="Texture2D" uid="uid://d0j3333cmbnwh" path="res://assets/sprites/ui/inventory/frame.png" id="1_hls88"]
 [ext_resource type="Script" path="res://src/interface/hud/player_hud.gd" id="1_nfd7g"]
 [ext_resource type="PackedScene" uid="uid://dpxjflejy405l" path="res://src/interface/inventory/grid_holder.tscn" id="3_hla68"]
+
+[sub_resource type="Animation" id="Animation_7nbyq"]
+resource_name = "hide"
+length = 0.51
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("InventoryUIItemsManager:anchor_top")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.7, 1.0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("InventoryUIItemsManager:anchor_bottom")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [1.0, 1.3]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("../CanvasLayer/ItemHolder:anchor_top")
+tracks/2/interp = 2
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 0.3]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("../CanvasLayer/ItemHolder:anchor_bottom")
+tracks/3/interp = 2
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [1.0, 1.3]
+}
+
+[sub_resource type="Animation" id="Animation_rgssw"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("InventoryUIItemsManager:anchor_top")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.7]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("InventoryUIItemsManager:anchor_bottom")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [1.0]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("../CanvasLayer/ItemHolder:anchor_top")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("../CanvasLayer/ItemHolder:anchor_bottom")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [1.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_2q7or"]
+_data = {
+"RESET": SubResource("Animation_rgssw"),
+"hide": SubResource("Animation_7nbyq")
+}
 
 [node name="PlayerHud" type="Control"]
 layout_mode = 3
@@ -16,8 +125,9 @@ script = ExtResource("1_nfd7g")
 
 [node name="PlayerStuff" type="CanvasLayer" parent="."]
 
-[node name="InventoryUIItemsManager" type="InventoryUIManager" parent="PlayerStuff" node_paths=PackedStringArray("inventories")]
+[node name="InventoryUIItemsManager" type="InventoryUIManager" parent="PlayerStuff" node_paths=PackedStringArray("inventories", "animation_player")]
 inventories = [NodePath("NinePatchRect/MarginContainer/HBoxContainer/GridHolder"), NodePath("NinePatchRect/MarginContainer/HBoxContainer/GridHolder2"), NodePath("NinePatchRect/MarginContainer/HBoxContainer/GridHolder3")]
+animation_player = NodePath("../AnimationPlayer")
 cooldown_time = 0.2
 anchors_preset = -1
 anchor_left = 0.25
@@ -79,6 +189,11 @@ inventory_group = &"player_inventory_right"
 item_holder = NodePath("../../../../../../CanvasLayer/ItemHolder")
 layout_mode = 2
 
+[node name="AnimationPlayer" type="AnimationPlayer" parent="PlayerStuff"]
+libraries = {
+"": SubResource("AnimationLibrary_2q7or")
+}
+
 [node name="Cooldown" type="Timer" parent="."]
 wait_time = 0.2
 one_shot = true
@@ -88,7 +203,6 @@ layer = 2
 
 [node name="ItemHolder" type="Control" parent="CanvasLayer"]
 layout_mode = 3
-anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2

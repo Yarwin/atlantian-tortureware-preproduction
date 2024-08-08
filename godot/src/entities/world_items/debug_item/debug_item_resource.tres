@@ -1,0 +1,11 @@
+[gd_resource type="ItemResource" load_steps=3 format=3 uid="uid://b575j7gip5c3t"]
+
+[ext_resource type="Texture2D" uid="uid://ctnwk7h2qbkqr" path="res://icon.svg" id="1_kcgua"]
+
+[sub_resource type="InventoryItemData" id="InventoryItemData_pqemm"]
+rectangular_grid_size = Vector2i(1, 3)
+texture = ExtResource("1_kcgua")
+
+[resource]
+name = &"debug_item"
+inventory = SubResource("InventoryItemData_pqemm")

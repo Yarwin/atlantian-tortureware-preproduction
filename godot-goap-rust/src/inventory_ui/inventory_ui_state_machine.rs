@@ -28,7 +28,8 @@ pub trait InventoryUIManagerState {
 
     fn hide_event(
         self: Box<Self>,
-        inventory_ui_manager: InventoryUIManagerView
+        inventory_ui_manager: InventoryUIManagerView,
+        is_hidden: bool
     ) -> Box<dyn InventoryUIManagerState>;
 }
 
@@ -84,8 +85,9 @@ impl InventoryUIManagerState for InventoryUIDefaultState {
         frob_state
     }
 
-    fn hide_event(self: Box<Self>, _inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
-        self
+    fn hide_event(self: Box<Self>, inventory_ui_manager: InventoryUIManagerView, is_hidden: bool) -> Box<dyn InventoryUIManagerState> {
+        let new_state = Box::new(InventoryHiddenState::default());
+        new_state.hide_event(inventory_ui_manager, is_hidden)
     }
 }
 
@@ -179,14 +181,14 @@ impl InventoryUIManagerState for InventoryUIMoveItemState {
         self
     }
 
-    fn hide_event(mut self: Box<Self>, mut inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+    fn hide_event(mut self: Box<Self>, mut inventory_ui_manager: InventoryUIManagerView, is_hidden: bool) -> Box<dyn InventoryUIManagerState> {
         let mut ui_item_bind = self.item_held.bind_mut();
         let item = ui_item_bind.item.as_mut().unwrap();
         item.emit_signal("moved".into(), &[]);
         drop(ui_item_bind);
         self.stop_highlighting_all(&mut inventory_ui_manager);
-        let new_state = Box::new(InventoryUIDefaultState);
-        new_state.hide_event(inventory_ui_manager)
+        let new_state = Box::new(InventoryHiddenState::default());
+        new_state.hide_event(inventory_ui_manager, is_hidden)
     }
 }
 
@@ -199,7 +201,7 @@ impl InventoryFrobState {
     fn enter(&self, mut inventory_ui_manager: InventoryUIManagerView) {
         inventory_ui_manager.base.emit_signal("inventory_frob_started".into(), &[self.frob_act_react.to_variant()]);
     }
-    fn exit(&self, mut inventory_ui_manager: InventoryUIManagerView) {
+    fn exit(&self, inventory_ui_manager: &mut InventoryUIManagerView) {
         inventory_ui_manager.base.emit_signal("inventory_frob_finished".into(), &[]);
     }
 }
@@ -209,10 +211,10 @@ impl InventoryUIManagerState for InventoryFrobState {
         self
     }
 
-    fn press_event(self: Box<Self>, presser: Gd<InventoryUIItem>, inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+    fn press_event(self: Box<Self>, presser: Gd<InventoryUIItem>, mut inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
         if inventory_ui_manager.cooldown.elapsed().unwrap().as_secs_f64() < inventory_ui_manager.cooldown_time {return self}
         if presser == self.frobber {
-            self.exit(inventory_ui_manager);
+            self.exit(&mut inventory_ui_manager);
             return Box::new(InventoryUIDefaultState {})
         }
         let presser_bind = presser.bind();
@@ -228,7 +230,7 @@ impl InventoryUIManagerState for InventoryFrobState {
             "inventories": inventory_ui_manager.player_inventory_ids.clone()
         };
         ActReactExecutor::singleton().bind_mut().react(self.frob_act_react.clone(), act_react, context);
-        self.exit(inventory_ui_manager);
+        self.exit(&mut inventory_ui_manager);
         Box::new(InventoryUIDefaultState {})
     }
 
@@ -236,7 +238,40 @@ impl InventoryUIManagerState for InventoryFrobState {
         self
     }
 
-    fn hide_event(self: Box<Self>, _inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+    fn hide_event(self: Box<Self>, mut inventory_ui_manager: InventoryUIManagerView, is_hidden: bool) -> Box<dyn InventoryUIManagerState> {
+        self.exit(&mut inventory_ui_manager);
+        let new_state = Box::new(InventoryHiddenState::default());
+        new_state.hide_event(inventory_ui_manager, is_hidden)
+    }
+}
+
+#[derive(Default)]
+pub struct InventoryHiddenState {}
+
+impl InventoryUIManagerState for InventoryHiddenState {
+    fn input(self: Box<Self>, _event: Gd<InputEvent>, _inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
         self
+    }
+
+    fn press_event(self: Box<Self>, _presser: Gd<InventoryUIItem>, _inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+        self
+    }
+
+    fn frob_event(self: Box<Self>, _frobber: Gd<InventoryUIItem>, _inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+        self
+    }
+
+    fn hide_event(self: Box<Self>, inventory_ui_manager: InventoryUIManagerView, is_hidden: bool) -> Box<dyn InventoryUIManagerState> {
+        godot_print!("hide event?!?!!");
+        if is_hidden {
+            if let Some(anim_player) = inventory_ui_manager.animation_player.as_mut() {
+                anim_player.play_ex().name("hide".into()).done();
+            }
+            return self
+        }
+        if let Some(anim_player) = inventory_ui_manager.animation_player.as_mut() {
+            anim_player.play_backwards_ex().name("hide".into()).done();
+        }
+        Box::new(InventoryUIDefaultState)
     }
 }

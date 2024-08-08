@@ -5,7 +5,7 @@ use crate::act_react::act_react_executor::ActReactExecutor;
 use crate::godot_api::ai_manager::GodotAIManager;
 use crate::godot_api::inventory_manager::InventoryManager;
 
-/// A node responsible for initializing all the game systems and managing game events
+/// A node responsible for initializing&keeping all the game systems and acting as an event bus.
 #[derive(GodotClass)]
 #[class(init, base=Node)]
 pub struct GameSys {
@@ -56,8 +56,12 @@ impl INode for GameSys {
 
 #[godot_api]
 impl GameSys {
+    /// emitted when all the systems are initialized
     #[signal]
     fn initialization_completed();
+
+    #[signal]
+    fn hud_visibility_changed(hidden: bool);
 
 }
 
