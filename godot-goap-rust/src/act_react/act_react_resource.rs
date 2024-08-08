@@ -70,13 +70,11 @@ impl ActReactResource {
                 continue
             }
             let act_context = act.call("get_context".into(), &[]);
-            for mut react in self[stimuli].iter_shared() {
-                if react.has_method("can_react".into()) {
-                    if react.call("can_react".into(), &[act_context.clone()]).to::<bool>() {
-                        return true
-                    }
+            if let Some(mut react) = self[stimuli].iter_shared().next() {
+                return if react.has_method("can_react".into()) {
+                    react.call("can_react".into(), &[act_context.clone()]).to::<bool>()
                 } else {
-                    return true
+                    true
                 }
             }
         }

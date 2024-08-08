@@ -103,7 +103,7 @@ impl GameEffect for CombineItemsInInventory {
             }
         }
         if !was_item_created {
-            /// todo – create & drop the item if there is no space in the inventory. Might require more context.
+            // todo – create & drop the item if there is no space in the inventory. Might require more context.
             godot_print!("item was not created!");
         }
         EffectResult::Free

@@ -81,7 +81,7 @@ impl PollingResult {
         query_parameters.set_collide_with_areas(collide_with_arenas);
         query_parameters.set_collision_mask(collision_mask);
         space
-            .intersect_shape(query_parameters.clone())
+            .intersect_shape(&query_parameters)
             .iter_shared()
             .filter_map(mapping)
             .collect()

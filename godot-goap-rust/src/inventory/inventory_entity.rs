@@ -86,19 +86,19 @@ impl InventoryEntity {
         let mut item_bind = item.bind_mut();
         let item_id = item_bind.id;
         let Some(inventory_component) = item_bind.inventory.as_mut() else {
-            std::mem::drop(item_bind);
+            drop(item_bind);
             return Err(InventoryEntityResult::WrongItemType(item))
         };
         let space_check = self.grid.get_first_free_space(inventory_component.inventory_data.bind_mut().get_size());
         match space_check {
             InventoryResult::Free(ids) => {
-                std::mem::drop(item_bind);
+                drop(item_bind);
                 self.grid.force_insert(item_id, &ids);
                 item.bind_mut().inventory.as_mut().unwrap().location = self.index_to_coord(ids[0]);
                 Ok(item)
             }
             InventoryResult::OutsideRange => {
-                std::mem::drop(item_bind);
+                drop(item_bind);
                 Err(InventoryEntityResult::NoSpaceForItem(item))
             }
             _ => unreachable!()

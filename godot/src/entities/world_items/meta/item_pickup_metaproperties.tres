@@ -1,3 +1,6 @@
-[gd_resource type="ActReactResource" format=3 uid="uid://yysbnvqe4nht"]
+[gd_resource type="ActReactResource" load_steps=2 format=3 uid="uid://yysbnvqe4nht"]
+
+[ext_resource type="PickupItemGameEffect" uid="uid://bbwyoq25vxf18" path="res://src/entities/world_items/debug_item/pickup_item_game_effect.tres" id="1_2f2lq"]
 
 [resource]
+player_frob = Array[Resource]([ExtResource("1_2f2lq")])

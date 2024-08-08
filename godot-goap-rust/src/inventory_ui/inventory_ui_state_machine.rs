@@ -1,6 +1,7 @@
 use godot::prelude::*;
-use godot::classes::{InputEvent, InputEventMouseButton, InputEventMouseMotion};
+use godot::classes::{InputEvent, InputEventMouseButton, InputEventMouseMotion, Tween};
 use godot::classes::control::MouseFilter;
+use godot::classes::tween::{EaseType, TransitionType};
 use crate::act_react::act_react_executor::ActReactExecutor;
 use crate::act_react::act_react_resource::ActReactResource;
 use crate::godot_api::inventory_manager::InventoryManager;
@@ -110,7 +111,7 @@ impl InventoryUIMoveItemState {
         match result {
             // bail if item no longer exists
             Err(InventoryEntityResult::ItemDepleted) => {
-                std::mem::drop(ui_item_bind);
+                drop(ui_item_bind);
                 self.stop_highlighting_all(inventory_ui_manager);
                 return Ok(Box::new(InventoryUIDefaultState));
             }
@@ -217,18 +218,27 @@ impl InventoryUIManagerState for InventoryFrobState {
             self.exit(&mut inventory_ui_manager);
             return Box::new(InventoryUIDefaultState {})
         }
-        let presser_bind = presser.bind();
-        let Some(reactor) = presser_bind.item.clone() else { return self };
-        let item_bind = reactor.bind();
-        let Some(Some(act_react)) = item_bind.inventory.as_ref().map(|i| i.inventory_data.bind().act_react.clone()) else {return self};
-        let Some(actor) = self.frobber.bind().item.clone() else {return self};
-        drop(item_bind);
-        drop(presser_bind);
-        let context = dict! {
+        let (act_react, context) = {
+            let presser_bind = presser.bind();
+            let Some(reactor) = presser_bind.item.clone() else { return self; };
+            let item_bind = reactor.bind();
+            let Some(Some(act_react)) = item_bind.inventory.as_ref().map(|i| i.inventory_data.bind().act_react.clone()) else { return self; };
+            if act_react == self.frob_act_react {
+                drop(item_bind);
+                drop(presser_bind);
+                self.exit(&mut inventory_ui_manager);
+                return Box::new(InventoryUIDefaultState {})
+            }
+            let Some(actor) = self.frobber.bind().item.clone() else { return self; };
+            drop(item_bind);
+            let context = dict! {
             "actor": actor,
             "reactor": reactor,
             "inventories": inventory_ui_manager.player_inventory_ids.clone()
         };
+            (act_react, context)
+        };
+
         ActReactExecutor::singleton().bind_mut().react(self.frob_act_react.clone(), act_react, context);
         self.exit(&mut inventory_ui_manager);
         Box::new(InventoryUIDefaultState {})
@@ -246,7 +256,48 @@ impl InventoryUIManagerState for InventoryFrobState {
 }
 
 #[derive(Default)]
-pub struct InventoryHiddenState {}
+pub struct InventoryHiddenState {
+}
+
+impl InventoryHiddenState {
+    const TWEEN_TIME: f64 = 0.44;
+    fn do_tween(&self, inventory_ui_manager: &mut InventoryUIManagerView, is_hidden: bool) -> Option<Gd<Tween>> {
+        let (desired_translation, items_holder_desired_anchors) = if is_hidden {
+            (inventory_ui_manager.hidden_anchors, *inventory_ui_manager.items_holder_initial_anchors + (*inventory_ui_manager.hidden_anchors - *inventory_ui_manager.initial_anchors))
+        } else {
+          (inventory_ui_manager.initial_anchors, *inventory_ui_manager.items_holder_initial_anchors)
+        };
+
+        if let Some(mut tween) = inventory_ui_manager.tween.take() {
+            tween.kill();
+        }
+        let mut tween = inventory_ui_manager.base.create_tween().unwrap();
+        tween
+            .tween_property(inventory_ui_manager.base.clone(), "anchor_top".into(), desired_translation.y.to_variant(), Self::TWEEN_TIME)?
+            .set_trans(TransitionType::EXPO)?
+            .set_ease(EaseType::OUT)?;
+        tween
+            .parallel()
+            .unwrap()
+            .tween_property(inventory_ui_manager.base.clone(), "anchor_bottom".into(), desired_translation.w.to_variant(), Self::TWEEN_TIME)?
+            .set_trans(TransitionType::EXPO)?
+            .set_ease(EaseType::OUT)?;
+        tween
+            .parallel()
+            .unwrap()
+            .tween_property((*inventory_ui_manager.items_holder).clone(), "anchor_top".into(), items_holder_desired_anchors.y.to_variant(), Self::TWEEN_TIME)?
+            .set_trans(TransitionType::EXPO)?
+            .set_ease(EaseType::OUT)?;
+        tween
+            .parallel()
+            .unwrap()
+            .tween_property((*inventory_ui_manager.items_holder).clone(), "anchor_bottom".into(), items_holder_desired_anchors.w.to_variant(), Self::TWEEN_TIME)?
+            .set_trans(TransitionType::EXPO)?
+            .set_ease(EaseType::OUT)?;
+
+        Some(tween)
+    }
+}
 
 impl InventoryUIManagerState for InventoryHiddenState {
     fn input(self: Box<Self>, _event: Gd<InputEvent>, _inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
@@ -261,17 +312,12 @@ impl InventoryUIManagerState for InventoryHiddenState {
         self
     }
 
-    fn hide_event(self: Box<Self>, inventory_ui_manager: InventoryUIManagerView, is_hidden: bool) -> Box<dyn InventoryUIManagerState> {
-        godot_print!("hide event?!?!!");
+    fn hide_event(self: Box<Self>, mut inventory_ui_manager: InventoryUIManagerView, is_hidden: bool) -> Box<dyn InventoryUIManagerState> {
         if is_hidden {
-            if let Some(anim_player) = inventory_ui_manager.animation_player.as_mut() {
-                anim_player.play_ex().name("hide".into()).done();
-            }
+            *inventory_ui_manager.tween = self.do_tween(&mut inventory_ui_manager, is_hidden);
             return self
         }
-        if let Some(anim_player) = inventory_ui_manager.animation_player.as_mut() {
-            anim_player.play_backwards_ex().name("hide".into()).done();
-        }
+        *inventory_ui_manager.tween = self.do_tween(&mut inventory_ui_manager, is_hidden);
         Box::new(InventoryUIDefaultState)
     }
 }

@@ -1,6 +1,6 @@
 use crate::godot_api::gamesys::GameSystem;
 use godot::prelude::*;
-use godot::classes::{AnimationPlayer, Control, IControl, InputEvent};
+use godot::classes::{Control, IControl, InputEvent, Tween};
 use std::time::SystemTime;
 use crate::act_react::act_react_resource::ActReactResource;
 use crate::godot_api::CONNECT_ONE_SHOT;
@@ -15,10 +15,16 @@ use crate::inventory_ui::inventory_ui_state_machine::{InventoryUIManagerState, I
 #[derive(GodotClass)]
 #[class(init, base=Control)]
 pub struct InventoryUIManager {
+    #[init(node = "../../CanvasLayer/ItemHolder")]
+    items_holder: OnReady<Gd<Control>>,
     #[export]
     pub inventories: Array<Gd<InventoryUIGrid>>,
+    #[var]
+    tween: Option<Gd<Tween>>,
+    initial_anchors: Vector4,
+    items_holder_initial_anchors: Vector4,
     #[export]
-    animation_player: Option<Gd<AnimationPlayer>>,
+    anchors_hidden: Vector4,
     #[export]
     cooldown_time: f64,
     #[init(default = SystemTime::now())]
@@ -33,7 +39,11 @@ pub struct InventoryUIManager {
 }
 
 pub struct InventoryUIManagerView<'view> {
-    pub animation_player: &'view mut Option<Gd<AnimationPlayer>>,
+    pub tween: &'view mut Option<Gd<Tween>>,
+    pub initial_anchors: &'view Vector4,
+    pub hidden_anchors: &'view Vector4,
+    pub items_holder_initial_anchors: &'view Vector4,
+    pub items_holder: &'view OnReady<Gd<Control>>,
     pub inventories: &'view Array<Gd<InventoryUIGrid>>,
     pub player_inventory_ids: &'view Array<u32>,
     pub current_focused_grid: &'view mut Option<Gd<InventoryUIGrid>>,
@@ -46,7 +56,11 @@ impl InventoryUIManager {
     pub fn as_view(&mut self) -> InventoryUIManagerView {
         let base = self.base_mut().clone();
         InventoryUIManagerView {
-            animation_player: &mut self.animation_player,
+            tween: &mut self.tween,
+            initial_anchors: &self.initial_anchors,
+            hidden_anchors: &self.anchors_hidden,
+            items_holder_initial_anchors: &self.items_holder_initial_anchors,
+            items_holder: &self.items_holder,
             inventories: &self.inventories,
             player_inventory_ids: &self.player_inventory_ids,
             current_focused_grid: &mut self.current_focused_grid,
@@ -60,6 +74,18 @@ impl InventoryUIManager {
 #[godot_api]
 impl IControl for InventoryUIManager {
     fn ready(&mut self) {
+        self.initial_anchors = Vector4::new(
+            self.base().get_anchor(Side::LEFT),
+            self.base().get_anchor(Side::TOP),
+            self.base().get_anchor(Side::RIGHT),
+            self.base().get_anchor(Side::BOTTOM),
+        );
+        self.items_holder_initial_anchors = Vector4::new(
+            self.items_holder.get_anchor(Side::LEFT),
+            self.items_holder.get_anchor(Side::TOP),
+            self.items_holder.get_anchor(Side::RIGHT),
+            self.items_holder.get_anchor(Side::BOTTOM),
+        );
         let callable = self.base().callable("on_resized");
         let mouse_entered_callable = self.base().callable("on_mouse_entered_grid");
         let mouse_exited_callable = self.base().callable("on_mouse_exited_grid");

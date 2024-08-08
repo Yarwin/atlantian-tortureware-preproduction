@@ -3,6 +3,7 @@
 [ext_resource type="Shader" path="res://src/interface/inventory/inventory_item.gdshader" id="1_6jvdl"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_13f7m"]
+resource_local_to_scene = true
 shader = ExtResource("1_6jvdl")
 shader_parameter/shine_color = Color(1, 1, 1, 1)
 shader_parameter/shine = 0.0

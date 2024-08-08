@@ -186,31 +186,19 @@ impl InventoryManager {
         let inventory = inventory.unwrap_or_else(|| self.inventories.get_mut(&inventory_id).expect("no such inventory!"));
         let result = inventory.insert_at_first_free_space(item);
         self.update_item_and_return_result(result, inventory_id)
-        // match result {
-        //     Ok(mut item) => {
-        //         let previous_inventory = item.bind().inventory.as_ref().unwrap().current_inventory_id;
-        //         let inventory_changed = previous_inventory.map(|p_id| p_id != inventory_id).unwrap_or(false);
-        //         if inventory_changed {
-        //             if let Some(inv) = self.inventories.get_mut(previous_inventory.as_ref().unwrap()) {
-        //                 inv.remove_item(item.bind().id);
-        //             }
-        //             item.emit_signal("inventory_switched".into(), &[inventory_id.to_variant()]);
-        //         }
-        //         item.bind_mut().inventory.as_mut().unwrap().current_inventory_id = Some(inventory_id);
-        //         Ok(item)
-        //     },
-        //     Err(e) => {Err(e)}
-        // }
     }
 
     pub fn create_item_in_inventory(&mut self, item_to_spawn: Gd<ItemToSpawn>, inventory_id: u32) -> bool {
         self.create_items_in_inventory(item_to_spawn, None, inventory_id)
     }
 
+    /// creates & registers given item.
     pub fn create_item(&mut self, item_to_spawn: Gd<ItemToSpawn>) -> Gd<Item> {
         let bind = item_to_spawn.bind();
         let builder = bind.builder().id(&mut self.current_item_id);
-        builder.build()
+        let item = builder.build();
+        self.items.insert(item.bind().id, item.clone());
+        item
     }
 
     pub fn check_grid_cells(&self, item: Gd<Item>, inventory_id: u32, position_idx: usize) -> InventoryEntityResult {

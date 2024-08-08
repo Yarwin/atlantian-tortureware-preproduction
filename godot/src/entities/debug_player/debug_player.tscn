@@ -1,8 +1,13 @@
-[gd_scene load_steps=12 format=3 uid="uid://b4tvyguynxs6f"]
+[gd_scene load_steps=15 format=3 uid="uid://b4tvyguynxs6f"]
 
 [ext_resource type="Script" path="res://src/entities/debug_player/debug_player.gd" id="1_evmxd"]
+[ext_resource type="ActFrob" uid="uid://be1sdts8lk5mf" path="res://src/entities/debug_player/actreact/act_debug_frob.tres" id="2_dwpq8"]
+[ext_resource type="ActPlayerFrob" uid="uid://wvt3hqsi78ga" path="res://src/entities/debug_player/actreact/act_debug_player_frob.tres" id="3_1d3xj"]
 [ext_resource type="ItemResource" uid="uid://oyv8e11fd1bm" path="res://src/items/debug/debug_item_1_resource.tres" id="3_vgf5h"]
 [ext_resource type="ItemResource" uid="uid://cuglenwh0g7uf" path="res://src/items/debug/debug_item_2_resource.tres" id="4_dvjdx"]
+
+[sub_resource type="ActReactResource" id="ActReactResource_gauij"]
+emits = Array[Resource]([ExtResource("2_dwpq8"), ExtResource("3_1d3xj")])
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_8f5f6"]
 height = 1.75
@@ -45,7 +50,9 @@ acceleration = 0.75
 gravity_scale = 1.0
 script = ExtResource("1_evmxd")
 
-[node name="PlayerCameraController3D" type="PlayerCameraController3D" parent="." node_paths=PackedStringArray("head", "camera", "character_controller")]
+[node name="PlayerCameraController3D" type="PlayerCameraController3D" parent="." node_paths=PackedStringArray("inventories", "head", "camera", "character_controller")]
+inventories = [NodePath("../InventoryAgent"), NodePath("../InventoryAgent2"), NodePath("../InventoryAgent3")]
+interface_act_react = SubResource("ActReactResource_gauij")
 head = NodePath("../Head")
 camera = NodePath("../Head/Camera3D")
 character_controller = NodePath("..")

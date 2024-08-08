@@ -15,14 +15,25 @@ pub struct PickupItemGameEffect {
 #[godot_api]
 impl IResource for PickupItemGameEffect {
     fn init(base: Base<Self::Base>) -> Self {
-        register_effect_builder::<Self>("PrintMessageGameEffect".into());
+        register_effect_builder::<Self>("PickupItemGameEffect".into());
         PickupItemGameEffect{ base }
+    }
+}
+
+#[godot_api]
+impl PickupItemGameEffect {
+    #[func]
+    pub fn builder_name(&self) -> StringName {
+        "PickupItemGameEffect".into()
     }
 }
 
 impl GameEffectInitializer for PickupItemGameEffect {
     fn build(&self, _act: &Dictionary, context: &Dictionary) -> GameEffectProcessor {
-        let Some(item) = context.get("item").map(|v| v.to::<Gd<Item>>()) else {panic!("no item to pickup!")};
+        let Some(reactor) = context.get("reactor").map(|v| v.to::<Gd<Node>>()) else {panic!("no reactor!")};
+
+        let Ok(item) = reactor.get("item".into()).try_to::<Gd<Item>>() else {panic!("no item to pickup!")};
+
         let Some(inventories) = context.get("inventories").map(|v| v.to::<Array<u32>>()) else {panic!("no inventories to put item in!")};
         let pickup_item = PickupItem {
             item: Some(item),

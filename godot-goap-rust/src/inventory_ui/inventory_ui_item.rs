@@ -102,6 +102,9 @@ impl InventoryUIItem {
         let Some(inventory_component) = item_bind.inventory.as_ref() else { return; };
         let inventory_data_bind = inventory_component.inventory_data.bind();
         let Some(act_react) = inventory_data_bind.act_react.as_ref() else { return; };
+        if *act_react == other_act_react {
+            return;
+        }
         if act_react.bind().is_reacting(other_act_react) {
             self.texture_rect.get_material().unwrap().cast::<ShaderMaterial>().set_shader_parameter("shine".into(), 0.6.to_variant());
         }

@@ -3,3 +3,4 @@
 mod damage_bash_resource;
 mod frob_resource;
 mod combine_resource;
+mod player_frob_resource;
