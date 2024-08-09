@@ -1,6 +1,4 @@
 use godot::prelude::*;
-use crate::godot_api::CONNECT_ONE_SHOT;
-use crate::godot_api::gamesys::GameSys;
 use crate::godot_api::inventory_manager::{InventoryManager, InventoryToCreate};
 use crate::godot_api::item_object::{Item, ItemResource};
 use crate::inventory::item_builder::ItemBuilder;
@@ -52,12 +50,7 @@ impl InventoryAgent {
 #[godot_api]
 impl INode for InventoryAgent {
     fn ready(&mut self) {
-        if GameSys::singleton().bind().is_initialized {
-            self.register_inventory();
-        } else {
-            let callable = self.base().callable("register_inventory");
-            GameSys::singleton().connect_ex("initialization_completed".into(), callable).flags(CONNECT_ONE_SHOT).done();
-        }
+        self.register_inventory();
     }
 }
 

@@ -268,6 +268,7 @@ impl GodotAIManager {
 }
 
 impl GameSystem for GodotAIManager {
+    const NAME: &'static str = "AIManager";
     fn singleton_name() -> StringName {
         StringName::from("AIManager")
     }

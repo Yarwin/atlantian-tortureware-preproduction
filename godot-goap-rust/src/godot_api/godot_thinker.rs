@@ -6,8 +6,7 @@ use godot::prelude::*;
 use crate::ai::working_memory::Event::AnimationCompleted;
 use crate::ai::working_memory::WMProperty;
 use crate::character_controler::character_controller_3d::CharacterController3D;
-use crate::godot_api::{CONNECT_DEFERRED, CONNECT_ONE_SHOT};
-use crate::godot_api::gamesys::{GameSys, GameSystem};
+use crate::godot_api::gamesys::{GameSystem};
 
 /// an interface to speak with AI manager
 #[derive(GodotClass, Debug)]
@@ -105,11 +104,6 @@ impl GodotThinker {
 #[godot_api]
 impl INode3D for GodotThinker {
     fn ready(&mut self) {
-        if GameSys::singleton().bind().is_initialized {
-            self.base_mut().call_deferred("register_self".into(), &[]);
-        } else {
-            let callable = self.base().callable("register_self");
-            GameSys::singleton().connect_ex("initialization_completed".into(), callable).flags(CONNECT_ONE_SHOT + CONNECT_DEFERRED).done();
-        }
+        self.base_mut().call_deferred("register_self".into(), &[]);
     }
 }

@@ -5,6 +5,7 @@ pub mod inventory_manager;
 pub mod item_object;
 pub mod godot_inventory;
 pub mod gamesys;
+mod main_loop;
 
 #[allow(dead_code)]
 pub(crate) const CONNECT_DEFERRED: u32 = 1 << 0;

@@ -1,7 +1,6 @@
 use godot::prelude::*;
 use godot::classes::{Control, GridContainer, IControl, MarginContainer};
 use crate::godot_api::{CONNECT_DEFERRED, CONNECT_ONE_SHOT};
-use crate::godot_api::gamesys::GameSys;
 use crate::godot_api::godot_inventory::InventoryAgent;
 use crate::godot_api::inventory_manager::InventoryManager;
 use crate::godot_api::item_object::Item;
@@ -164,12 +163,7 @@ impl InventoryUIGrid {
 #[godot_api]
 impl IControl for InventoryUIGrid {
     fn ready(&mut self) {
-        if GameSys::singleton().bind().is_initialized {
-            self.initialize_inventory();
-        } else {
-            let callable = self.base().callable("initialize_inventory");
-            GameSys::singleton().connect_ex("initialization_completed".into(), callable).flags(CONNECT_ONE_SHOT + CONNECT_DEFERRED).done();
-        }
+        self.initialize_inventory();
     }
 }
 

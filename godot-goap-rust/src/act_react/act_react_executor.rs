@@ -124,6 +124,7 @@ impl ActReactExecutor {
 }
 
 impl GameSystem for ActReactExecutor {
+    const NAME: &'static str = "ActReactExecutor";
     fn singleton_name() -> StringName {
         StringName::from("ActReactExecutor")
     }

@@ -290,6 +290,7 @@ impl InventoryManager {
 
 
 impl GameSystem for InventoryManager {
+    const NAME: &'static str = "InventoryManager";
     fn singleton_name() -> StringName {
         StringName::from("InventoryManager")
     }

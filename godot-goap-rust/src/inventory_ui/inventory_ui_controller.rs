@@ -95,11 +95,7 @@ impl IControl for InventoryUIManager {
             grid_holder.connect("mouse_entered".into(), mouse_entered_callable.bindv(callable_bind_args.clone()));
             grid_holder.connect("mouse_exited".into(), mouse_exited_callable.bindv(callable_bind_args));
         }
-        if GameSys::singleton().bind().is_initialized {
-            self.inventory_initialization();
-        } else {
-            GameSys::singleton().connect_ex("initialization_completed".into(), self.base().callable("on_inventory_manager_created")).flags(CONNECT_ONE_SHOT).done();
-        }
+        self.inventory_initialization();
 
         self.base_mut().call_deferred("calculate_offset".into(), &[]);
         let on_hud_visibility_changed = self.base().callable("on_hud_visibility_changed");

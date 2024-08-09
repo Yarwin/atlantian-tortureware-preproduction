@@ -2,8 +2,7 @@ use crate::ai_nodes::ai_node::AINodeStatus;
 use crate::godot_api::ai_manager::GodotAIManager;
 use godot::classes::{Area3D, IArea3D, Marker3D};
 use godot::prelude::*;
-use crate::godot_api::CONNECT_ONE_SHOT;
-use crate::godot_api::gamesys::{GameSys, GameSystem};
+use crate::godot_api::gamesys::{GameSystem};
 
 #[derive(GodotConvert, Var, Export, Clone, Debug, Copy, Default, PartialEq, Eq)]
 #[godot(via = u32)]
@@ -38,11 +37,7 @@ pub struct GodotAINode {
 #[godot_api]
 impl IArea3D for GodotAINode {
     fn ready(&mut self) {
-        if GameSys::singleton().bind().is_initialized {
-            self.initialize();
-        } else {
-            GameSys::singleton().connect_ex("initialization_completed".into(), self.base().callable("initialize")).flags(CONNECT_ONE_SHOT).done();
-        }
+        self.initialize();
     }
 }
 
