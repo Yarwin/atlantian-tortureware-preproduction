@@ -1,14 +1,13 @@
 use godot::classes::Engine;
 use godot::obj::{bounds, Bounds, NewAlloc};
 use godot::prelude::*;
+use crate::godot_api::item_object::Item;
 
 
 /// A node responsible to manage communications between different game systems.
 #[derive(GodotClass)]
 #[class(init, base=Node)]
 pub struct GameSys {
-    #[var]
-    pub is_initialized: bool,
     base: Base<Node>,
 }
 
@@ -22,21 +21,16 @@ impl INode for GameSys {
     fn exit_tree(&mut self) {
         Engine::singleton().unregister_singleton(Self::singleton_name());
     }
-
-    fn ready(&mut self) {
-        self.is_initialized = true;
-    }
 }
 
 #[godot_api]
 impl GameSys {
-    /// emitted when all the systems are initialized
     #[signal]
-    fn initialization_completed();
-
+    fn new_item_put_into_slot(slot: u32, item: Gd<Item>);
+    #[signal]
+    fn item_removed_from_slot(slot: u32, item: Gd<Item>);
     #[signal]
     fn hud_visibility_changed(hidden: bool);
-
 }
 
 impl GameSys {

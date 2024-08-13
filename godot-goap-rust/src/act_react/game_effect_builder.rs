@@ -10,10 +10,10 @@ use crate::act_react::game_effect::{GameEffectProcessor};
 
 
 pub type GameEffectInit = fn(Gd<Resource>, &Dictionary, &Dictionary, fn(&dyn GameEffectInitializer, &Dictionary, &Dictionary) -> GameEffectProcessor) -> GameEffectProcessor;
-static mut EFFECTS_REGISTRY: Option<HashMap<StringName, GameEffectInit>> = None;
+static mut EFFECTS_REGISTRY: Option<HashMap<GString, GameEffectInit>> = None;
 
 
-pub fn effects_registry() -> &'static HashMap<StringName, GameEffectInit> {
+pub fn effects_registry() -> &'static HashMap<GString, GameEffectInit> {
 
     unsafe {
         if EFFECTS_REGISTRY.is_none() {
@@ -24,7 +24,7 @@ pub fn effects_registry() -> &'static HashMap<StringName, GameEffectInit> {
 }
 
 
-pub fn register_effect_builder<T>(name: StringName)
+pub fn register_effect_builder<T>(name: GString)
     where
     T: Inherits<Resource> + GodotClass + Bounds<Declarer = DeclUser> + GameEffectInitializer
 {

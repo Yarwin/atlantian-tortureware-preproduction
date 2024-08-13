@@ -1,5 +1,6 @@
 use godot::classes::notify::ObjectNotification;
 use godot::prelude::*;
+use crate::equipment::equip_component::{ItemEquipmentComponent};
 use crate::inventory::inventory_item::InventoryItem;
 use crate::inventory::inventory_item_data::InventoryItemData;
 
@@ -9,14 +10,19 @@ pub struct ItemResource {
     #[export]
     pub name: StringName,
     #[export]
-    pub inventory: Option<Gd<InventoryItemData>>
+    pub inventory: Option<Gd<InventoryItemData>>,
+    #[export]
+    pub equipment: Option<Gd<Resource>>
 }
 
 #[derive(GodotClass)]
 #[class(init, base=Object)]
 pub struct Item {
     pub id: u32,
+    // responsible for managing inventory interactions
     pub inventory: Option<InventoryItem>,
+    // responsible for managing equipment data (ammo count and whatnot) & creating equipment scenes for the player
+    pub equip: Option<Box<dyn ItemEquipmentComponent>>,
     #[base]
     pub(crate) base: Base<Object>
 }
@@ -24,6 +30,10 @@ pub struct Item {
 
 #[godot_api]
 impl Item {
+    #[signal]
+    fn equipped();
+    #[signal]
+    fn taken_off();
     #[signal]
     /// emitted when item changes inventories
     fn inventory_switched(new_inventory_id: u32);

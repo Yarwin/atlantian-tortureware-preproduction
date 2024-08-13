@@ -1,4 +1,4 @@
-[gd_scene load_steps=53 format=4 uid="uid://d0bf2uc5t4h08"]
+[gd_scene load_steps=58 format=4 uid="uid://d0bf2uc5t4h08"]
 
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_it88m"]
 [ext_resource type="Resource" uid="uid://bf3ov0bdmdrs8" path="res://src/trenchbroom/config/map_setting.tres" id="3_ps11r"]
@@ -10,6 +10,8 @@
 [ext_resource type="Script" path="res://src/entities/map_entities/func_mover/func_mover.gd" id="7_cjmlj"]
 [ext_resource type="PackedScene" uid="uid://dyd1eq0asf4id" path="res://src/entities/world_items/debug_item/debug_pickup_item.tscn" id="10_3aifm"]
 [ext_resource type="PackedScene" uid="uid://b4tvyguynxs6f" path="res://src/entities/debug_player/debug_player.tscn" id="10_75pgr"]
+[ext_resource type="ItemResource" uid="uid://oyv8e11fd1bm" path="res://src/items/debug/debug_item_1_resource.tres" id="11_sgqhp"]
+[ext_resource type="ItemResource" uid="uid://cuglenwh0g7uf" path="res://src/items/debug/debug_item_2_resource.tres" id="12_382ac"]
 
 [sub_resource type="GDScript" id="GDScript_rjhqx"]
 script/source = "extends Node
@@ -289,6 +291,18 @@ _surfaces = [{
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_g5ne4"]
 points = PackedVector3Array(-0.25, 2.25, -5.25, -0.25, -2.25, -5.25, 0.25, -2.25, -5.25, 0.25, 2.25, -5.25, -0.25, 2.25, 5.25, -0.25, -2.25, 5.25, 0.25, -2.25, 5.25, 0.25, 2.25, 5.25)
 
+[sub_resource type="ItemToSpawn" id="ItemToSpawn_bxlrd"]
+amount = 4
+item_data = ExtResource("11_sgqhp")
+
+[sub_resource type="ItemToSpawn" id="ItemToSpawn_5tofa"]
+amount = 6
+item_data = ExtResource("11_sgqhp")
+
+[sub_resource type="ItemToSpawn" id="ItemToSpawn_rlpud"]
+amount = 4
+item_data = ExtResource("12_382ac")
+
 [node name="Node" type="Node3D"]
 metadata/_edit_lock_ = true
 
@@ -534,4 +548,25 @@ acceleration = 0.25
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.3636, 0.6875, 0.519017)
 
 [node name="DebugPickupItem" parent="." instance=ExtResource("10_3aifm")]
+item_to_spawn = SubResource("ItemToSpawn_bxlrd")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.1943, 0.8675, -1.73158)
+
+[node name="DebugPickupItem2" parent="." instance=ExtResource("10_3aifm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.1175, 2.16609, -1.73158)
+
+[node name="DebugPickupItem5" parent="." instance=ExtResource("10_3aifm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.1212, 0.8675, -1.73158)
+
+[node name="DebugPickupItem6" parent="." instance=ExtResource("10_3aifm")]
+item_to_spawn = SubResource("ItemToSpawn_5tofa")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.5174, 0.8675, -1.73158)
+
+[node name="DebugPickupItem3" parent="." instance=ExtResource("10_3aifm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.0947, 0.8675, -1.73158)
+
+[node name="DebugPickupItem4" parent="." instance=ExtResource("10_3aifm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.3407, 0.8675, -1.73158)
+
+[node name="OtherDebugPickupItem" parent="." instance=ExtResource("10_3aifm")]
+item_to_spawn = SubResource("ItemToSpawn_rlpud")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.3407, 0.8675, -1.73158)

@@ -17,6 +17,7 @@ mod godot_entities;
 mod inventory;
 mod utils;
 mod inventory_ui;
+mod equipment;
 
 use godot::prelude::*;
 

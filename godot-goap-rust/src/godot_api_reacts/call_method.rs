@@ -17,16 +17,8 @@ pub struct CallMethodGameEffect {
 #[godot_api]
 impl IResource for CallMethodGameEffect {
     fn init(base: Base<Self::Base>) -> Self {
-        register_effect_builder::<Self>("CallMethodGameEffect".into());
+        register_effect_builder::<Self>(Self::class_name().to_gstring());
         CallMethodGameEffect { method_name: Default::default(), args: array![], base }
-    }
-}
-
-#[godot_api]
-impl CallMethodGameEffect {
-    #[func]
-    pub fn builder_name(&self) -> StringName {
-        "CallMethodGameEffect".into()
     }
 }
 

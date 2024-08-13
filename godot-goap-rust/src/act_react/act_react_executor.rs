@@ -19,17 +19,6 @@ pub struct ActReactExecutor {
     pub base: Base<Object>,
 }
 
-// #[godot_api]
-// impl IObject for ActReactExecutor {
-//     // fn init(base: Base<Self::Base>) -> Self {
-//     //     ActReactExecutor {
-//     //         to_execute: Some(VecDeque::new()),
-//     //         to_revert: Default::default(),
-//     //         base,
-//     //     }
-//     // }
-// }
-
 #[godot_api]
 impl ActReactExecutor {
 
@@ -59,7 +48,10 @@ impl ActReactExecutor {
                     let callable = Callable::from_object_method(&(self.base().clone()), "revert");
                     timer.connect_ex("timeout".into(), callable).flags(CONNECT_ONE_SHOT + CONNECT_DEFERRED).done();
                 }
-                EffectResult::Failed => {}
+                EffectResult::Failed => {
+                    godot_print!("effect failed");
+                    effect.free();
+                }
             }
         }
         // put deque back where it belongs
@@ -76,29 +68,6 @@ impl ActReactExecutor {
 }
 
 impl ActReactExecutor {
-    // fn singleton_name() -> StringName {
-    //     StringName::from("ActReactExecutor")
-    // }
-    //
-    // pub fn singleton() -> Gd<Self> {
-    //     Engine::singleton()
-    //         .get_singleton(ActReactExecutor::singleton_name())
-    //         .unwrap()
-    //         .cast::<ActReactExecutor>()
-    // }
-    //
-    // pub fn initialize() -> Gd<Self> {
-    //     let mut act_react_executor = Gd::from_init_fn(|base| Self::init(base));
-    //     Engine::singleton()
-    //         .register_singleton(ActReactExecutor::singleton_name(), act_react_executor.clone());
-    //     act_react_executor
-    // }
-    //
-    // pub fn exit(&mut self) {
-    //     Engine::singleton().unregister_singleton(Self::singleton_name());
-    // }
-
-
     fn add_effect(&mut self, effect: GameEffectProcessor) {
         let to_execute = self.to_execute.as_mut().unwrap();
         to_execute.push_back(effect);
@@ -109,8 +78,8 @@ impl ActReactExecutor {
             let stimuli: Stimuli = act.get("stim_type".into()).to::<Stimuli>();
             let act_context = act.call("get_context".into(), &[]).to::<Dictionary>();
 
-            for mut react in reactor[stimuli].iter_shared() {
-                let command_init_fn = effects_registry()[&react.call("builder_name".into(), &[]).to::<StringName>()];
+            for react in reactor[stimuli].iter_shared() {
+                let command_init_fn = effects_registry()[&react.get_class()];
 
                 let effect = (command_init_fn)(react.clone(), &act_context, context, |effect, a_context, world_context |
                     {
@@ -123,12 +92,9 @@ impl ActReactExecutor {
     }
 }
 
+
 impl GameSystem for ActReactExecutor {
     const NAME: &'static str = "ActReactExecutor";
-    fn singleton_name() -> StringName {
-        StringName::from("ActReactExecutor")
-    }
-
     fn physics_process(&mut self, _delta: f64) {
         // process&apply all the effects at the end of the current frame
         self.base_mut().call_deferred("process_effects".into(), &[]);

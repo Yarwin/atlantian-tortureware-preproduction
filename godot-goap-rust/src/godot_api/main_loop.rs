@@ -13,8 +13,6 @@ struct AtlantianTorturewareGameLoop {
     act_react_executor: Option<Gd<ActReactExecutor>>,
 }
 
-impl AtlantianTorturewareGameLoop {}
-
 
 #[godot_api]
 impl ISceneTree for AtlantianTorturewareGameLoop {

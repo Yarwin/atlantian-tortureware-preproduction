@@ -7,6 +7,7 @@ use crate::godot_api::godot_inventory::{InventoryAgent, ItemToSpawn};
 use crate::godot_api::item_object::{Item};
 use crate::inventory::inventory_entity::{InventoryEntity, InventoryEntityResult};
 use crate::inventory::inventory_item::StackResult;
+use crate::inventory::inventory_item_data::InventoryItemData;
 use crate::utils::generate_id::assign_id;
 
 #[derive(Debug)]
@@ -96,6 +97,22 @@ impl InventoryManager {
         }
         items
     }
+
+    #[func]
+    pub fn get_items_of_the_same_type(&self, inventory_id: u32, inventory_data: Gd<InventoryItemData>) -> Array<Gd<Item>> {
+        let inventory = self.inventories.get(&inventory_id).unwrap();
+        let mut items: Array<Gd<Item>> = Array::new();
+        for id in inventory.get_items() {
+            let item = self.items.get(&id).unwrap();
+            let item_bind = item.bind();
+            let Some(other_inventory_data) = item_bind.inventory.as_ref().map(|i| &i.inventory_data) else { panic!("no inventory data") };
+            if inventory_data == *other_inventory_data {
+                drop(item_bind);
+                items.push(item.clone());
+            }
+        }
+        items
+    }
 }
 
 impl InventoryManager {
@@ -140,6 +157,7 @@ impl InventoryManager {
                 }
                 item.bind_mut().inventory.as_mut().unwrap().current_inventory_id = Some(inventory_id);
                 if previous_inventory.is_none() {
+                    item.emit_signal("inventory_switched".into(), &[inventory_id.to_variant()]);
                     if let Some(inventory_agent) = self.inventory_agents.get_mut(&inventory_id) {
                         inventory_agent.emit_signal("new_item_created".into(), &[item.to_variant()]);
                     }
@@ -190,6 +208,36 @@ impl InventoryManager {
 
     pub fn create_item_in_inventory(&mut self, item_to_spawn: Gd<ItemToSpawn>, inventory_id: u32) -> bool {
         self.create_items_in_inventory(item_to_spawn, None, inventory_id)
+    }
+
+    pub fn try_stack_item(&mut self, mut item: Gd<Item>, mut other: Gd<Item>) -> StackResult {
+        if item == other {
+            return StackResult::WrongType;
+        }
+        let result = {
+            let mut item_bind = item.bind_mut();
+            let mut other_item_bind = other.bind_mut();
+            let Some(inventory_component) = item_bind.inventory.as_mut() else {return StackResult::WrongType};
+            let Some(other_inventory_component) = other_item_bind.inventory.as_mut() else {return StackResult::WrongType};
+            if inventory_component.inventory_data != other_inventory_component.inventory_data {
+                return StackResult::WrongType;
+            }
+            inventory_component.stack(other_inventory_component)
+        };
+
+        match &result {
+            StackResult::Depleted => {
+                other.emit_signal("updated".into(), &[]);
+                self.remove_item(item);
+            }
+            StackResult::Updated => {
+                item.emit_signal("updated".into(), &[]);
+                other.emit_signal("updated".into(), &[]);
+            }
+            StackResult::WrongType => unreachable!(),
+            _ => {}
+        };
+        result
     }
 
     /// creates & registers given item.

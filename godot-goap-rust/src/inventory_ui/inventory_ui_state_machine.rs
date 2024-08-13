@@ -1,5 +1,5 @@
 use godot::prelude::*;
-use godot::classes::{InputEvent, InputEventMouseButton, InputEventMouseMotion, Tween};
+use godot::classes::{InputEvent, InputEventKey, InputEventMouseButton, InputEventMouseMotion, Tween};
 use godot::classes::control::MouseFilter;
 use godot::classes::tween::{EaseType, TransitionType};
 use crate::act_react::act_react_executor::ActReactExecutor;
@@ -8,7 +8,9 @@ use crate::godot_api::inventory_manager::InventoryManager;
 use crate::inventory::inventory_entity::InventoryEntityResult;
 use crate::inventory_ui::inventory_ui_item::InventoryUIItem;
 use crate::inventory_ui::inventory_ui_controller::InventoryUIManagerView;
-use crate::godot_api::gamesys::GameSystem;
+use crate::godot_api::gamesys::{GameSys, GameSystem};
+
+
 
 pub trait InventoryUIManagerState {
     fn input(
@@ -38,7 +40,31 @@ pub trait InventoryUIManagerState {
 pub struct InventoryUIDefaultState;
 
 impl InventoryUIManagerState for InventoryUIDefaultState {
-    fn input(self: Box<Self>, _event: Gd<InputEvent>, _inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+    fn input(self: Box<Self>, event: Gd<InputEvent>, inventory_ui_manager: InventoryUIManagerView) -> Box<dyn InventoryUIManagerState> {
+        // put given item in a slot
+        if let Ok(e) = event.try_cast::<InputEventKey>() {
+            let mouse_position = inventory_ui_manager.base.get_global_mouse_position();
+            if !e.is_pressed() || e.is_echo() || !inventory_ui_manager.base.get_global_rect().has_point(mouse_position) {
+                return self
+            }
+
+            for i in 1..6 {
+                let action_name = format!("slot_{i}");
+                if e.is_action(StringName::from(action_name)) {
+                    inventory_ui_manager.base.get_viewport().unwrap().set_input_as_handled();
+                    let Some(inventory_grid) = inventory_ui_manager.current_focused_grid.as_mut() else {return self;};
+                    let inventory_id = inventory_grid.bind().inventory_agent.as_ref().unwrap().bind().id;
+                    let Some(index) = inventory_grid.bind().global_coords_to_index(mouse_position) else {return self;};
+                    let Some(item) = InventoryManager::singleton().bind().get_item_at(inventory_id, index) else {return self};
+                    // bail if item can't be equipped
+                    if item.bind().equip.is_none() {
+                        return self
+                    }
+                    GameSys::singleton().emit_signal("new_item_put_into_slot".into(), &[i.to_variant(), item.to_variant()]);
+                    return self
+                }
+            }
+        }
         self
     }
 
@@ -265,7 +291,7 @@ impl InventoryHiddenState {
         let (desired_translation, items_holder_desired_anchors) = if is_hidden {
             (inventory_ui_manager.hidden_anchors, *inventory_ui_manager.items_holder_initial_anchors + (*inventory_ui_manager.hidden_anchors - *inventory_ui_manager.initial_anchors))
         } else {
-          (inventory_ui_manager.initial_anchors, *inventory_ui_manager.items_holder_initial_anchors)
+            (inventory_ui_manager.initial_anchors, *inventory_ui_manager.items_holder_initial_anchors)
         };
 
         if let Some(mut tween) = inventory_ui_manager.tween.take() {

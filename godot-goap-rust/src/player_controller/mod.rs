@@ -1,2 +1,2 @@
 mod player_camera_controller;
-mod player_frob_controler;
+pub mod player_frob_controller;

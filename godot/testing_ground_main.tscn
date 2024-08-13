@@ -1,6 +1,5 @@
-[gd_scene load_steps=8 format=3 uid="uid://0407y73st0sl"]
+[gd_scene load_steps=7 format=3 uid="uid://0407y73st0sl"]
 
-[ext_resource type="Script" path="res://game_viewport_container.gd" id="1_828rd"]
 [ext_resource type="PackedScene" uid="uid://t0ys0mdppkhu" path="res://src/interface/hud/player_hud.tscn" id="1_a0rkr"]
 [ext_resource type="PackedScene" uid="uid://d0bf2uc5t4h08" path="res://src/levels/testing_grounds.tscn" id="1_helgn"]
 [ext_resource type="Script" path="res://testpanel.gd" id="2_g4o3d"]
@@ -47,7 +46,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 focus_mode = 2
-script = ExtResource("1_828rd")
 metadata/_edit_lock_ = true
 
 [node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]

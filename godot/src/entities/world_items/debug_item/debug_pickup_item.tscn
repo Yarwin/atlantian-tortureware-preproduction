@@ -1,11 +1,11 @@
 [gd_scene load_steps=8 format=3 uid="uid://dyd1eq0asf4id"]
 
-[ext_resource type="ItemResource" uid="uid://b575j7gip5c3t" path="res://src/entities/world_items/debug_item/debug_item_resource.tres" id="1_nye7c"]
+[ext_resource type="ItemResource" uid="uid://oyv8e11fd1bm" path="res://src/items/debug/debug_item_1_resource.tres" id="1_5puwk"]
 [ext_resource type="ActReactResource" uid="uid://yysbnvqe4nht" path="res://src/entities/world_items/meta/item_pickup_metaproperties.tres" id="1_oj5dn"]
 
 [sub_resource type="ItemToSpawn" id="ItemToSpawn_bfg58"]
 amount = 1
-item_data = ExtResource("1_nye7c")
+item_data = ExtResource("1_5puwk")
 
 [sub_resource type="BoxMesh" id="BoxMesh_l655w"]
 size = Vector3(0.2, 0.2, 0.5)

@@ -1,0 +1,7 @@
+[gd_resource type="InventoryItemData" load_steps=2 format=3 uid="uid://vaalqy3fyf6f"]
+
+[ext_resource type="Texture2D" uid="uid://buhyld2qi8t1k" path="res://assets/sprites/items/trench_club_sprite.png" id="1_y653u"]
+
+[resource]
+rectangular_grid_size = Vector2i(1, 3)
+texture = ExtResource("1_y653u")

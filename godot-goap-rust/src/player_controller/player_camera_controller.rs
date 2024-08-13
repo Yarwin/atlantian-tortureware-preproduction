@@ -5,11 +5,7 @@ use godot::prelude::*;
 use crate::character_controler::character_controller_3d::CharacterController3D;
 use godot::classes::input::MouseMode;
 use godot::global::{fmod, lerpf, sin};
-use crate::act_react::act_react_executor::ActReactExecutor;
-use crate::act_react::act_react_resource::ActReactResource;
-use crate::act_react::react_area_3d::ActReactArea3D;
 use crate::godot_api::gamesys::{GameSys, GameSystem};
-use crate::godot_api::godot_inventory::InventoryAgent;
 
 
 #[derive(Debug, Default)]
@@ -27,11 +23,6 @@ pub struct CameraData {
 pub struct PlayerCameraController3D {
     #[init(node = "../Head/Camera3D/InterfaceShapeCast")]
     pub interface_shape_cast: OnReady<Gd<ShapeCast3D>>,
-    #[export]
-    inventories: Array<Gd<InventoryAgent>>,
-    inventories_ids: Option<Array<u32>>,
-    #[export]
-    pub interface_act_react: Option<Gd<ActReactResource>>,
     #[export]
     pub head: Option<Gd<Node3D>>,
     #[export]
@@ -54,18 +45,6 @@ pub struct PlayerCameraController3D {
 }
 
 impl PlayerCameraController3D {
-    fn get_inventories_ids(&mut self) -> Array<u32> {
-        return if let Some(inventories_ids) = self.inventories_ids.as_ref() {
-            inventories_ids.clone()
-        } else {
-            let mut new_array: Array<u32> = Array::new();
-            for inventory_agent_id in self.inventories.iter_shared().map(|a| a.bind().id) {
-                new_array.push(inventory_agent_id);
-            }
-            self.inventories_ids = Some(new_array.clone());
-            new_array
-        }
-    }
     fn engage_mouselook(&mut self) {
         if Input::singleton().get_mouse_mode() == MouseMode::CAPTURED {
             GameSys::singleton().emit_signal("hud_visibility_changed".into(), &[false.to_variant()]);
@@ -151,22 +130,6 @@ impl INode for PlayerCameraController3D {
         }
         if let Some(camera) = self.camera.as_mut() {
             camera.set_position(self.original_camera_pos + bob * self.immersion_scale);
-        }
-        if Input::singleton().is_action_just_pressed("frob".into()) {
-            let actor = self.base().clone();
-            let Some(acts) = self.interface_act_react.clone() else {return;};
-            if self.interface_shape_cast.is_colliding() {
-                if let Some(Ok(react_area)) = self.interface_shape_cast.get_collider(0).map(|o| o.try_cast::<ActReactArea3D>()) {
-                    let inventories_ids = self.get_inventories_ids().clone();
-                    let context = dict! {
-                        "inventories": inventories_ids,
-                        "actor": actor,
-                        "reactor": react_area.bind().target.clone(),
-                    };
-                    ActReactExecutor::singleton().bind_mut().react(acts, react_area.bind().act_react.clone().unwrap(), context);
-                }
-
-            }
         }
 
     }

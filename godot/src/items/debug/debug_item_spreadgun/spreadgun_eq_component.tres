@@ -1,0 +1,7 @@
+[gd_resource type="SpreadGunResource" load_steps=2 format=3 uid="uid://c1coiuwia1nuv"]
+
+[ext_resource type="PackedScene" uid="uid://b80ylq53kvqv6" path="res://src/items/debug/debug_item_spreadgun/spreadgun_equipped.tscn" id="1_1tr7f"]
+
+[resource]
+ammo_count = 6
+gun_scene = ExtResource("1_1tr7f")

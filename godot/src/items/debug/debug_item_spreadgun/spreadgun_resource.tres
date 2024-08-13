@@ -1,0 +1,9 @@
+[gd_resource type="ItemResource" load_steps=3 format=3 uid="uid://dq42vsn2s0un"]
+
+[ext_resource type="SpreadGunResource" uid="uid://c1coiuwia1nuv" path="res://src/items/debug/debug_item_spreadgun/spreadgun_eq_component.tres" id="1_c38dx"]
+[ext_resource type="InventoryItemData" uid="uid://vaalqy3fyf6f" path="res://src/items/debug/debug_item_spreadgun/spreadgun_inventory.tres" id="2_fca8e"]
+
+[resource]
+name = &"spreadgun"
+inventory = ExtResource("2_fca8e")
+equipment = ExtResource("1_c38dx")

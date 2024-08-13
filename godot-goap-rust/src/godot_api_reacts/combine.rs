@@ -33,7 +33,7 @@ impl CombineInventoryItemGameEffect {
 #[godot_api]
 impl IResource for CombineInventoryItemGameEffect {
     fn init(base: Base<Self::Base>) -> Self {
-        register_effect_builder::<Self>("CombineInventoryItemGameEffect".into());
+        register_effect_builder::<Self>(Self::class_name().to_gstring());
         CombineInventoryItemGameEffect {
             on_combine: Dictionary::new(),
             base
@@ -50,11 +50,6 @@ impl CombineInventoryItemGameEffect {
             return true
         }
         false
-    }
-
-    #[func]
-    pub fn builder_name(&self) -> StringName {
-        "CombineInventoryItemGameEffect".into()
     }
 }
 

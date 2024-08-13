@@ -15,17 +15,8 @@ pub struct PrintMessageGameEffect {
 #[godot_api]
 impl IResource for PrintMessageGameEffect {
     fn init(base: Base<Self::Base>) -> Self {
-        register_effect_builder::<Self>("PrintMessageGameEffect".into());
+        register_effect_builder::<Self>(Self::class_name().to_gstring());
         PrintMessageGameEffect{ message: Default::default(), base }
-    }
-}
-
-
-#[godot_api]
-impl PrintMessageGameEffect {
-    #[func]
-    pub fn builder_name(&self) -> StringName {
-        "PrintMessageGameEffect".into()
     }
 }
 

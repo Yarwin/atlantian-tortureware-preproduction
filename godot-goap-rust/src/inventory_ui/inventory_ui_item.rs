@@ -5,6 +5,7 @@ use godot::global::MouseButton;
 use godot::prelude::*;
 use crate::act_react::act_react_resource::ActReactResource;
 use crate::godot_api::{CONNECT_DEFERRED};
+use crate::godot_api::gamesys::GameSys;
 use crate::godot_api::item_object::Item;
 use crate::inventory_ui::inventory_ui_controller::InventoryUIManager;
 use crate::inventory_ui::inventory_ui_grid::InventoryUIGrid;
@@ -39,7 +40,6 @@ pub struct InventoryUIItem {
     cooldown: f64,
     #[init(default = SystemTime::now() )]
     last_cooldown: SystemTime,
-    pub is_held: bool,
     is_waiting_for_resize: bool,
     base: Base<Control>,
 }
@@ -49,7 +49,7 @@ pub struct InventoryUIItem {
 impl IControl for InventoryUIItem {
     fn gui_input(&mut self, event: Gd<InputEvent>) {
         // bail if no item or if item is being held
-        if self.item.is_none() || self.is_held {
+        if self.item.is_none() {
             return;
         }
         let Ok(mouse_button_event) = event.try_cast::<InputEventMouseButton>() else {return;};
@@ -83,6 +83,10 @@ impl IControl for InventoryUIItem {
         ui_items_manager.connect("inventory_frob_started".into(), on_frob_started);
         let on_frob_finished = self.base().callable("on_frob_finished");
         ui_items_manager.connect("inventory_frob_finished".into(), on_frob_finished);
+        let on_new_item_put_into_slot = self.base().callable("on_new_item_put_into_slot");
+        GameSys::singleton().connect("new_item_put_into_slot".into(), on_new_item_put_into_slot);
+        let on_item_removed_from_slot = self.base().callable("on_item_removed_from_slot");
+        GameSys::singleton().connect("item_removed_from_slot".into(), on_item_removed_from_slot);
     }
 
 }
@@ -94,6 +98,20 @@ impl InventoryUIItem {
     fn item_frobbed(inventory_item: Gd<InventoryUIItem>);
     #[signal]
     fn item_pressed(inventory_item: Gd<InventoryUIItem>);
+
+    #[func]
+    fn on_new_item_put_into_slot(&mut self, slot: u32, item: Gd<Item>) {
+        if self.item.as_ref().map(|i| *i == item).unwrap_or(false) {
+            self.slot_label.set_text(GString::from(format!("{slot}")));
+        }
+    }
+
+    #[func]
+    fn on_item_removed_from_slot(&mut self, _slot: u32, item: Gd<Item>) {
+        if self.item.as_ref().map(|i| *i == item).unwrap_or(false) {
+            self.slot_label.set_text(GString::default());
+        }
+    }
 
     #[func]
     fn on_frob_started(&mut self, other_act_react: Gd<ActReactResource>) {
@@ -118,7 +136,6 @@ impl InventoryUIItem {
 
     #[func]
     fn held_item(&mut self) {
-        self.is_held = !self.is_held;
         self.base_mut().set_z_index(3);
     }
 
@@ -148,7 +165,6 @@ impl InventoryUIItem {
         self.base_mut().set_mouse_filter(MouseFilter::PASS);
         self.base_mut().set_z_index(0);
         self.last_cooldown = SystemTime::now();
-        self.is_held = false;
         self.is_waiting_for_resize = false;
         let item = self.item.as_ref().expect("no item?!").bind();
         let inventory_item = item.inventory.as_ref().unwrap();
