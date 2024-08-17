@@ -34,9 +34,15 @@ impl ActReactExecutor {
     }
 
     #[func]
+    pub fn react_single(&mut self, mut act: Gd<Resource>, mut reactor: Gd<ActReactResource>, context: Dictionary) {
+        let mut reactor_bind = reactor.bind_mut();
+        self.create_reacts_for_act(act, &mut reactor_bind, &context)
+    }
+
+    #[func]
     pub fn process_effects(&mut self) {
         // utterly dumb hack to satisfy the compiler
-        let Some(mut to_execute) = self.to_execute.take() else {return;};
+        let Some(mut to_execute) = self.to_execute.take() else {panic!("no event queue!")};
         for mut effect in to_execute.drain(..) {
             match effect.execute() {
                 EffectResult::Free => {
@@ -48,6 +54,7 @@ impl ActReactExecutor {
                     let callable = Callable::from_object_method(&(self.base().clone()), "revert");
                     timer.connect_ex("timeout".into(), callable).flags(CONNECT_ONE_SHOT + CONNECT_DEFERRED).done();
                 }
+                // shouldn't it return an error or something???
                 EffectResult::Failed => {
                     godot_print!("effect failed");
                     effect.free();
@@ -68,26 +75,32 @@ impl ActReactExecutor {
 }
 
 impl ActReactExecutor {
-    fn add_effect(&mut self, effect: GameEffectProcessor) {
+    pub fn add_effect(&mut self, effect: GameEffectProcessor) {
         let to_execute = self.to_execute.as_mut().unwrap();
         to_execute.push_back(effect);
     }
 
-    pub fn create_effects(&mut self, actor: &mut GdMut<ActReactResource>, reactor: &mut GdMut<ActReactResource>, context: &Dictionary) {
-        for mut act in actor.emits.iter_shared() {
-            let stimuli: Stimuli = act.get("stim_type".into()).to::<Stimuli>();
-            let act_context = act.call("get_context".into(), &[]).to::<Dictionary>();
+    fn create_reacts_for_act(&mut self, mut act: Gd<Resource>, reactor: &mut GdMut<ActReactResource>, context: &Dictionary) {
+        let stimuli: Stimuli = act.get("stim_type".into()).to::<Stimuli>();
+        let act_context = act.call("get_context".into(), &[]).to::<Dictionary>();
+        for react in reactor[stimuli].iter_shared() {
+            let command_init_fn = effects_registry()[&react.get_class()];
 
-            for react in reactor[stimuli].iter_shared() {
-                let command_init_fn = effects_registry()[&react.get_class()];
-
-                let effect = (command_init_fn)(react.clone(), &act_context, context, |effect, a_context, world_context |
-                    {
-                        effect.build(a_context, world_context)
-                    }
-                );
-                self.add_effect(effect);
+            let effect = (command_init_fn)(react.clone(), &act_context, context, |effect, a_context, world_context |
+                {
+                    effect.build(a_context, world_context)
+                }
+            );
+            if let Some(e) = effect {
+                self.add_effect(e);
             }
+        }
+
+    }
+
+    pub fn create_effects(&mut self, actor: &mut GdMut<ActReactResource>, reactor: &mut GdMut<ActReactResource>, context: &Dictionary) {
+        for act in actor.emits.iter_shared() {
+            self.create_reacts_for_act(act, reactor, context);
         }
     }
 }

@@ -8,7 +8,11 @@ pub struct ActDamageBash {
     #[init(default = Stimuli::DamageBash)]
     stim_type: Stimuli,
     #[export]
-    pub strength: f64
+    pub strength: f32,
+    /// determines strength of the force applied to world objects
+    #[export]
+    #[init(default = 1.0)]
+    pub force: f32
 }
 
 
@@ -17,7 +21,8 @@ impl ActDamageBash {
     #[func]
     fn get_context(&self) -> Dictionary {
         dict! {
-            "strength": self.strength
+            "strength": self.strength,
+            "force": self.force
         }
     }
 }

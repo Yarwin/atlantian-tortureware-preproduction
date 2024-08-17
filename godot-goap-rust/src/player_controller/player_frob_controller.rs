@@ -3,12 +3,16 @@ use godot::classes::{InputEvent, InputEventKey, ShapeCast3D};
 use godot::prelude::*;
 use crate::act_react::act_react_executor::ActReactExecutor;
 use crate::act_react::act_react_resource::ActReactResource;
+use crate::act_react::game_effect_builder::effects_registry;
 use crate::act_react::react_area_3d::ActReactArea3D;
 use crate::equipment::equip_component::{Equipment, EquipmentComponent};
 use crate::godot_api::{CONNECT_DEFERRED, CONNECT_ONE_SHOT};
 use crate::godot_api::gamesys::{GameSys, GameSystem};
 use crate::godot_api::godot_inventory::InventoryAgent;
 use crate::godot_api::item_object::Item;
+use crate::godot_api_reacts::fly::FlyGameEffect;
+use crate::godot_entities::rigid_reactive_body3d::WorldObject;
+use crate::player_controller::grab_node::GrabNode;
 
 #[derive(Default, Debug)]
 pub struct EquippedItems {
@@ -66,8 +70,12 @@ pub struct PlayerController {
     camera: OnReady<Gd<Camera3D>>,
     #[init(node = "../Head/EqHolder")]
     eq_holder: OnReady<Gd<Node3D>>,
+    #[init(node = "../Head/Camera3D/GrabNode")]
+    pub grab_node: OnReady<Gd<GrabNode>>,
     #[export]
     inventories: Array<Gd<InventoryAgent>>,
+    #[export]
+    throw_effect: Option<Gd<FlyGameEffect>>,
     inventories_ids: Option<Array<u32>>,
     #[export]
     interface_act_react: Option<Gd<ActReactResource>>,
@@ -98,6 +106,10 @@ impl PlayerController {
 impl INode for PlayerController {
     fn physics_process(&mut self, _delta: f64) {
         if Input::singleton().is_action_just_pressed("frob".into()) {
+            if self.grab_node.bind().attached.is_some() {
+                self.grab_node.bind_mut().detach();
+                return;
+            }
             let actor = self.base().clone();
             let Some(acts) = self.interface_act_react.clone() else {return;};
             self.interface_shape_cast.force_shapecast_update();
@@ -124,13 +136,35 @@ impl INode for PlayerController {
     fn unhandled_input(&mut self, event: Gd<InputEvent>) {
         // is action just pressed?
         if event.is_pressed() && !event.is_echo() && event.is_action("activate".into()) {
+            if self.grab_node.bind().attached.is_some() {
+                let reactor = self.grab_node.bind().attached.clone().unwrap();
+                self.grab_node.bind_mut().detach();
+                if let Some(fly_effect) = self.throw_effect.as_mut() {
+                    let context = dict! {
+                        "direction": self.camera.get_global_basis().col_c(),
+                        "reactor": reactor
+                    };
+                    let command_init_fn = effects_registry()[&fly_effect.get_class()];
+                    let effect = (command_init_fn)(fly_effect.clone().upcast::<Resource>(),
+                                                   &Dictionary::new(), &context, |effect, a_context, world_context |
+                        {
+                            effect.build(a_context, world_context)
+                        }
+                    );
+                    ActReactExecutor::singleton().bind_mut().add_effect(effect.unwrap());
+                }
+                self.base().get_viewport().unwrap().set_input_as_handled();
+                return;
+            }
             if let Some(eq_component) = self.equipment_component.as_mut() {
                 eq_component.activate();
+                self.base().get_viewport().unwrap().set_input_as_handled();
             }
         }
         if !event.is_pressed() && !event.is_echo() && event.is_action("activate".into()) {
             if let Some(eq_component) = self.equipment_component.as_mut() {
                 eq_component.deactivate();
+                self.base().get_viewport().unwrap().set_input_as_handled();
             }
         }
     }
@@ -162,11 +196,12 @@ impl INode for PlayerController {
                         {
                             let mut item_bind = new_item.bind_mut();
                             let Some(eq_component) = item_bind.equip.as_mut() else { return; };
-                            let mut eq_component = eq_component.initialize_equipment_scene();
+                            let (mut eq_component, ui) = eq_component.initialize_equipment_scene();
                             drop(item_bind);
                             eq_component.initialize(new_item.clone());
                             self.eq_holder.add_child(&eq_component.base);
                             self.equipment_component = Some(eq_component);
+                            GameSys::singleton().emit_signal("new_gun_for_ui_display".into(), &[ui.to_variant()]);
                         }
                         self.active_item = Some(new_item);
                         return;
@@ -230,11 +265,12 @@ impl PlayerController {
         let Some(mut new_item) = self.active_item.take() else {return;};
         let mut item_bind = new_item.bind_mut();
         let Some(eq_component) = item_bind.equip.as_mut() else { return; };
-        let mut eq_component = eq_component.initialize_equipment_scene();
+        let (mut eq_component, ui) = eq_component.initialize_equipment_scene();
         drop(item_bind);
         eq_component.initialize(new_item.clone());
         self.eq_holder.add_child(&eq_component.base);
         self.equipment_component = Some(eq_component);
+        GameSys::singleton().emit_signal("new_gun_for_ui_display".into(), &[ui.to_variant()]);
         self.active_item = Some(new_item);
     }
 }

@@ -4,7 +4,7 @@ use crate::act_react::game_effect_builder::{GameEffectInitializer, register_effe
 
 
 #[derive(GodotClass, Debug)]
-#[class(base=Resource)]
+#[class(init, base=Resource)]
 pub struct PrintMessageGameEffect {
     #[export]
     pub message: GString,
@@ -14,19 +14,19 @@ pub struct PrintMessageGameEffect {
 
 #[godot_api]
 impl IResource for PrintMessageGameEffect {
-    fn init(base: Base<Self::Base>) -> Self {
-        register_effect_builder::<Self>(Self::class_name().to_gstring());
-        PrintMessageGameEffect{ message: Default::default(), base }
-    }
+    // fn init(base: Base<Self::Base>) -> Self {
+    //     register_effect_builder::<Self>(Self::class_name().to_gstring());
+    //     PrintMessageGameEffect{ message: Default::default(), base }
+    // }
 }
 
 impl GameEffectInitializer for PrintMessageGameEffect {
-    fn build(&self, _act: &Dictionary, _context: &Dictionary) -> GameEffectProcessor {
+    fn build(&self, act_context: &Dictionary, context: &Dictionary) -> Option<GameEffectProcessor> {
         let print_message = PrintMessage {
             message: self.message.clone()
         };
         let obj = Gd::from_object(print_message);
-        GameEffectProcessor::new(obj)
+        Some(GameEffectProcessor::new(obj))
     }
 }
 

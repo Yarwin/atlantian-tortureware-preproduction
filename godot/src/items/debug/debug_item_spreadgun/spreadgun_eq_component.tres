@@ -1,7 +1,14 @@
-[gd_resource type="SpreadGunResource" load_steps=2 format=3 uid="uid://c1coiuwia1nuv"]
+[gd_resource type="SpreadGunResource" load_steps=4 format=3 uid="uid://c1coiuwia1nuv"]
 
 [ext_resource type="PackedScene" uid="uid://b80ylq53kvqv6" path="res://src/items/debug/debug_item_spreadgun/spreadgun_equipped.tscn" id="1_1tr7f"]
+[ext_resource type="SpreadGunAmmo" uid="uid://dbmuy4h4lr6ue" path="res://src/items/debug/debug_item_spreadgun/new_spread_gun_ammo.tres" id="1_ssqol"]
+[ext_resource type="PackedScene" uid="uid://ccqscoaompjvk" path="res://src/items/debug/debug_item_spreadgun/spreadgun_ui_display.tscn" id="3_bjvtq"]
 
 [resource]
+mag_size = 7
 ammo_count = 6
 gun_scene = ExtResource("1_1tr7f")
+ui_scene = ExtResource("3_bjvtq")
+accepted_ammo = Array[SpreadGunAmmo]([ExtResource("1_ssqol")])
+current_ammo = ExtResource("1_ssqol")
+gun_name = "Debug SpreadGun"

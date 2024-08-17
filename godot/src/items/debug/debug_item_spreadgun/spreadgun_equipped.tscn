@@ -1,23 +1,7 @@
-[gd_scene load_steps=6 format=3 uid="uid://b80ylq53kvqv6"]
+[gd_scene load_steps=7 format=3 uid="uid://b80ylq53kvqv6"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_pu1ts"]
 size = Vector3(0.15, 0.15, 0.6)
-
-[sub_resource type="Animation" id="Animation_ic7ij"]
-resource_name = "prepare"
-length = 0.53
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("anchor:rotation")
-tracks/0/interp = 2
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.5),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Vector3(-0.523599, 0, 0), Vector3(0, 0, 0)]
-}
 
 [sub_resource type="Animation" id="Animation_u7idq"]
 length = 0.001
@@ -44,6 +28,49 @@ tracks/1/keys = {
 "transitions": PackedFloat32Array(1),
 "update": 0,
 "values": [Vector3(0, 0, 0.289032)]
+}
+
+[sub_resource type="Animation" id="Animation_ic7ij"]
+resource_name = "prepare"
+length = 0.53
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("anchor:rotation")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector3(-0.523599, 0, 0), Vector3(0, 0, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_icopk"]
+resource_name = "reload"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("anchor:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5, 1),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0.289032), Vector3(0, -0.27, 0.35), Vector3(0, 0, 0.289032)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("anchor:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.5, 1),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(0.392699, 0, 0), Vector3(0, 0, 0)]
 }
 
 [sub_resource type="Animation" id="Animation_lcw3j"]
@@ -78,10 +105,12 @@ tracks/1/keys = {
 _data = {
 "RESET": SubResource("Animation_u7idq"),
 "prepare": SubResource("Animation_ic7ij"),
+"reload": SubResource("Animation_icopk"),
 "shoot": SubResource("Animation_lcw3j")
 }
 
 [node name="SpreadgunEquipped" type="SpreadGun"]
+ray_length = 128.0
 
 [node name="anchor" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.289032)
@@ -90,6 +119,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.289032)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.289)
 mesh = SubResource("BoxMesh_pu1ts")
 skeleton = NodePath("../..")
+
+[node name="Muzzle" type="Marker3D" parent="anchor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.588959)
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {

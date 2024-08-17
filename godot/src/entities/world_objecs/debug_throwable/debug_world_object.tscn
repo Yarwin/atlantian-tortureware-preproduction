@@ -1,0 +1,54 @@
+[gd_scene load_steps=11 format=3 uid="uid://ctid7gp5i86x7"]
+
+[ext_resource type="GrabGameEffect" uid="uid://xgppo68y5e2n" path="res://src/entities/world_objecs/debug_throwable/act_react/new_grab_game_effect.tres" id="1_cpl2p"]
+[ext_resource type="Script" path="res://src/entities/world_objecs/debug_throwable/debug_act_react_area_3d.gd" id="2_u0cd5"]
+[ext_resource type="FlyGameEffect" uid="uid://b5sry3c3b2hrd" path="res://src/entities/world_objecs/debug_throwable/act_react/new_fly_game_effect.tres" id="3_aakh4"]
+
+[sub_resource type="ActReactResource" id="ActReactResource_t5t28"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qw6oy"]
+albedo_color = Color(0.692378, 0.14695, 0.348301, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_no0qy"]
+material = SubResource("StandardMaterial3D_qw6oy")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ma82c"]
+
+[sub_resource type="ActReactResource" id="ActReactResource_3c754"]
+damage_bash = Array[Resource]([ExtResource("3_aakh4")])
+player_frob = Array[Resource]([ExtResource("1_cpl2p")])
+
+[sub_resource type="ActReactResource" id="ActReactResource_ypewy"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_h45my"]
+radius = 0.712361
+
+[node name="DebugWorldObject" type="WorldObject" node_paths=PackedStringArray("act_react_area", "mesh")]
+contact_velocity = 12.0
+contact_velocity_effects = SubResource("ActReactResource_t5t28")
+act_react_area = NodePath("ActReactArea3D")
+mesh = NodePath("MeshInstance3D")
+collision_layer = 9
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_no0qy")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_ma82c")
+
+[node name="ActReactArea3D" type="ActReactArea3D" parent="." node_paths=PackedStringArray("target")]
+target = NodePath("..")
+act_react = SubResource("ActReactResource_3c754")
+collision_layer = 64
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_u0cd5")
+while_grabbed_act_react = SubResource("ActReactResource_ypewy")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ActReactArea3D"]
+shape = SubResource("SphereShape3D_h45my")
+
+[connection signal="contact_velocity_achieved" from="." to="ActReactArea3D" method="_on_debug_world_object_contact_velocity_achieved"]
+[connection signal="contact_velocity_left" from="." to="ActReactArea3D" method="_on_debug_world_object_contact_velocity_left"]
+[connection signal="grabbed" from="." to="ActReactArea3D" method="_on_debug_world_object_grabbed"]
+[connection signal="released" from="." to="ActReactArea3D" method="_on_debug_world_object_released"]

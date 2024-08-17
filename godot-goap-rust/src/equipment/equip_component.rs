@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use godot::classes::Control;
 use godot::prelude::*;
 use godot::obj::Bounds;
 use godot::obj::bounds::DeclUser;
@@ -138,6 +139,9 @@ impl Equipment for EquipmentComponent {
     fn deactivate(&mut self) {
         unsafe { ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| { e.deactivate() }) }
     }
+    fn reload(&mut self) {
+        unsafe { ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| { e.reload() }) }
+    }
 }
 
 
@@ -151,7 +155,7 @@ pub fn build_item_equipment_component(base: Gd<Resource>) -> Box<dyn ItemEquipme
 
 pub trait ItemEquipmentComponent {
     /// initializes given packed scene and returns Node ready to be attached to the scene tree
-    fn initialize_equipment_scene(&mut self) -> EquipmentComponent;
+    fn initialize_equipment_scene(&mut self) -> (EquipmentComponent, Option<Gd<Control>>);
 }
 
 
@@ -163,4 +167,5 @@ pub trait Equipment {
     fn activate(&mut self) {}
     /// called when action button is released.
     fn deactivate(&mut self) {}
+    fn reload(&mut self) {}
 }

@@ -5,7 +5,7 @@ use crate::act_react::game_effect_builder::{GameEffectInitializer, register_effe
 
 
 #[derive(GodotClass, Debug)]
-#[class(base=Resource)]
+#[class(init, base=Resource)]
 pub struct CallMethodGameEffect {
     #[export]
     pub method_name: StringName,
@@ -16,14 +16,14 @@ pub struct CallMethodGameEffect {
 
 #[godot_api]
 impl IResource for CallMethodGameEffect {
-    fn init(base: Base<Self::Base>) -> Self {
-        register_effect_builder::<Self>(Self::class_name().to_gstring());
-        CallMethodGameEffect { method_name: Default::default(), args: array![], base }
-    }
+    // fn init(base: Base<Self::Base>) -> Self {
+    //     register_effect_builder::<Self>(Self::class_name().to_gstring());
+    //     CallMethodGameEffect { method_name: Default::default(), args: array![], base }
+    // }
 }
 
 impl GameEffectInitializer for CallMethodGameEffect {
-    fn build(&self, _act: &Dictionary, context: &Dictionary) -> GameEffectProcessor {
+    fn build(&self, act_context: &Dictionary, context: &Dictionary) -> Option<GameEffectProcessor> {
         let Some(target) = context.get("reactor").map(|v| v.to::<Gd<Object>>()) else {panic!("tried to instantiate command without proper context!")};
         let effect = CallMethod {
             target: Some(target),
@@ -31,7 +31,7 @@ impl GameEffectInitializer for CallMethodGameEffect {
             method: self.method_name.clone()
         };
         let obj = Gd::from_object(effect);
-        GameEffectProcessor::new(obj)
+        Some(GameEffectProcessor::new(obj))
     }
 }
 

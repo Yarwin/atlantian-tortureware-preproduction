@@ -9,7 +9,7 @@ use crate::godot_api_reacts::print_message::PrintMessage;
 use crate::godot_api::gamesys::GameSystem;
 
 #[derive(GodotClass, Debug)]
-#[class(base=Resource)]
+#[class(init, base=Resource)]
 pub struct CombineInventoryItemGameEffect {
     /// dictionary that holds combiner StringNames as keys, and items to create as values
     #[export]
@@ -19,26 +19,19 @@ pub struct CombineInventoryItemGameEffect {
 
 
 impl CombineInventoryItemGameEffect {
-    fn on_failure(&self) -> GameEffectProcessor {
+    fn on_failure(&self) -> Option<GameEffectProcessor> {
         // return information about failure. Right now it just prints info in console
         // change it to sad fart sound in the future.
         let print_message = PrintMessage {
             message: GString::from("Can't combine!")
         };
         let obj = Gd::from_object(print_message);
-        GameEffectProcessor::new(obj)
+        Some(GameEffectProcessor::new(obj))
     }
 }
 
 #[godot_api]
 impl IResource for CombineInventoryItemGameEffect {
-    fn init(base: Base<Self::Base>) -> Self {
-        register_effect_builder::<Self>(Self::class_name().to_gstring());
-        CombineInventoryItemGameEffect {
-            on_combine: Dictionary::new(),
-            base
-        }
-    }
 }
 
 #[godot_api]
@@ -54,7 +47,7 @@ impl CombineInventoryItemGameEffect {
 }
 
 impl GameEffectInitializer for CombineInventoryItemGameEffect {
-    fn build(&self, act_context: &Dictionary, context: &Dictionary) -> GameEffectProcessor {
+    fn build(&self, act_context: &Dictionary, context: &Dictionary) -> Option<GameEffectProcessor> {
         let Some(actor) = context.get("actor").map(|v| v.to::<Gd<Item>>()) else {return self.on_failure()};
         let Some(reactor) = context.get("reactor").map(|v| v.to::<Gd<Item>>()) else {return self.on_failure()};
         let Some(inventories_ids) = context.get("inventories").map(|va| va.to::<Array<u32>>()) else {return self.on_failure()};
@@ -68,7 +61,8 @@ impl GameEffectInitializer for CombineInventoryItemGameEffect {
             inventories_ids,
             outcome: Some(combine_outcome),
         };
-        GameEffectProcessor::new(Gd::from_object(combine_items))
+        let obj = Gd::from_object(combine_items);
+        Some(GameEffectProcessor::new(obj))
     }
 }
 

@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://bm4va3c31l5eq"]
+
+[ext_resource type="Script" path="res://src/visuals/particles/hit_effects/shotgun_hit/shotgun_hit.gd" id="1_ccdr8"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uy2gw"]
+albedo_color = Color(0.92, 0.822327, 0.0828, 1)
+emission_enabled = true
+emission = Color(0.764706, 0.682353, 0.121569, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_w6w3j"]
+direction = Vector3(0, 0, 1)
+initial_velocity_min = 3.0
+initial_velocity_max = 5.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_qa5dy"]
+size = Vector3(0.015, 0.015, 0.035)
+
+[node name="ShotgunBullet" type="Node3D"]
+script = ExtResource("1_ccdr8")
+
+[node name="GPUParticles3D" type="GPUParticles3D" parent="."]
+material_override = SubResource("StandardMaterial3D_uy2gw")
+emitting = false
+one_shot = true
+explosiveness = 1.0
+process_material = SubResource("ParticleProcessMaterial_w6w3j")
+draw_pass_1 = SubResource("BoxMesh_qa5dy")
+
+[connection signal="finished" from="GPUParticles3D" to="." method="_on_gpu_particles_3d_finished"]

@@ -1,4 +1,4 @@
-use godot::classes::Engine;
+use godot::classes::{Control, Engine};
 use godot::obj::{bounds, Bounds, NewAlloc};
 use godot::prelude::*;
 use crate::godot_api::item_object::Item;
@@ -13,11 +13,9 @@ pub struct GameSys {
 
 #[godot_api]
 impl INode for GameSys {
-
     fn enter_tree(&mut self) {
         Engine::singleton().register_singleton(Self::singleton_name(), self.base().clone().upcast::<Object>());
     }
-
     fn exit_tree(&mut self) {
         Engine::singleton().unregister_singleton(Self::singleton_name());
     }
@@ -31,6 +29,10 @@ impl GameSys {
     fn item_removed_from_slot(slot: u32, item: Gd<Item>);
     #[signal]
     fn hud_visibility_changed(hidden: bool);
+    #[signal]
+    fn new_hitscan_collision_registered(place: Vector3, normal: Vector3);
+    #[signal]
+    fn new_gun_for_ui_display(gun_ui: Gd<Control>);
 }
 
 impl GameSys {

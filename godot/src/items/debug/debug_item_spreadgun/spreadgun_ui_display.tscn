@@ -1,0 +1,146 @@
+[gd_scene format=3 uid="uid://ccqscoaompjvk"]
+
+[node name="GunUiDisplay" type="GunDisplay"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -702.0
+offset_bottom = -198.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GunName" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.15
+offset_left = -41.5
+offset_right = 41.5
+grow_horizontal = 2
+text = "Gun Name"
+
+[node name="GunUISprite" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.15
+anchor_right = 1.0
+anchor_bottom = 0.6
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Control" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.6
+anchor_right = 0.88
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Control"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Control" type="Control" parent="Control/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="FireMode" type="Label" parent="Control/HBoxContainer/Control"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -38.0
+offset_top = -23.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "SEMI"
+horizontal_alignment = 2
+
+[node name="Control2" type="Control" parent="Control/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ChangeAmmoType" type="Button" parent="Control/HBoxContainer/Control2"]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -38.0
+grow_horizontal = 0
+grow_vertical = 2
+text = "AM.
+"
+
+[node name="Control3" type="Control" parent="Control/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AmmoCount" type="Label" parent="Control/HBoxContainer/Control3"]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 20.0
+grow_vertical = 2
+theme_override_font_sizes/font_size = 35
+text = "8"
+horizontal_alignment = 2
+vertical_alignment = 2
+justification_flags = 0
+max_lines_visible = 1
+visible_characters = 2
+visible_characters_behavior = 3
+visible_ratio = 2.0
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Control"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Control" type="Control" parent="Control/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+
+[node name="AmmoName" type="Label" parent="Control/HBoxContainer2/Control"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -23.0
+offset_right = 92.0
+grow_vertical = 0
+text = "Ammo Type"
+
+[node name="Control2" type="Control" parent="Control/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AmmoCountInInventory" type="Label" parent="Control/HBoxContainer2/Control2"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -19.0
+offset_top = -23.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "99"
+horizontal_alignment = 2
+
+[node name="GunStatusLabel" type="Label" parent="."]
+clip_contents = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 0.3
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 97.0
+rotation = 1.5708

@@ -1,10 +1,13 @@
-[gd_scene load_steps=14 format=3 uid="uid://b4tvyguynxs6f"]
+[gd_scene load_steps=15 format=3 uid="uid://b4tvyguynxs6f"]
 
 [ext_resource type="Script" path="res://src/entities/debug_player/debug_player.gd" id="1_evmxd"]
 [ext_resource type="ActFrob" uid="uid://be1sdts8lk5mf" path="res://src/entities/debug_player/actreact/act_debug_frob.tres" id="2_dwpq8"]
 [ext_resource type="ActPlayerFrob" uid="uid://wvt3hqsi78ga" path="res://src/entities/debug_player/actreact/act_debug_player_frob.tres" id="3_1d3xj"]
 [ext_resource type="ItemResource" uid="uid://oyv8e11fd1bm" path="res://src/items/debug/debug_item_1_resource.tres" id="3_vgf5h"]
 [ext_resource type="ItemResource" uid="uid://dq42vsn2s0un" path="res://src/items/debug/debug_item_spreadgun/spreadgun_resource.tres" id="5_5qd5u"]
+
+[sub_resource type="FlyGameEffect" id="FlyGameEffect_51vg6"]
+force = 5.0
 
 [sub_resource type="ActReactResource" id="ActReactResource_5eot1"]
 emits = Array[Resource]([ExtResource("2_dwpq8"), ExtResource("3_1d3xj")])
@@ -37,7 +40,7 @@ item_data = ExtResource("3_vgf5h")
 amount = 1
 item_data = ExtResource("5_5qd5u")
 
-[node name="DebugPlayer" type="CharacterController3D" node_paths=PackedStringArray("collision_shape")]
+[node name="DebugPlayer" type="CharacterController3D" node_paths=PackedStringArray("collision_shape") groups=["player"]]
 collision_shape = NodePath("CollisionShape3D")
 deceleration = 0.75
 speed = 6.0
@@ -45,8 +48,9 @@ acceleration = 0.75
 gravity_scale = 1.0
 script = ExtResource("1_evmxd")
 
-[node name="PlayerController" type="PlayerController" parent="." node_paths=PackedStringArray("inventories")]
+[node name="PlayerController" type="PlayerController" parent="." node_paths=PackedStringArray("inventories") groups=["player_controller"]]
 inventories = [NodePath("../InventoryAgent"), NodePath("../InventoryAgent2"), NodePath("../InventoryAgent3")]
+throw_effect = SubResource("FlyGameEffect_51vg6")
 interface_act_react = SubResource("ActReactResource_5eot1")
 
 [node name="PlayerCameraController3D" type="PlayerCameraController3D" parent="." node_paths=PackedStringArray("head", "camera", "character_controller")]
@@ -70,6 +74,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.67233, 0)
 physics_interpolation_mode = 1
 current = true
 fov = 90.0
+
+[node name="GrabNode" type="GrabNode" parent="Head/Camera3D"]
+
+[node name="Joint" type="JoltConeTwistJoint3D" parent="Head/Camera3D/GrabNode"]
+swing_limit_enabled = true
+swing_limit_span = 0.0698132
+twist_limit_enabled = true
+swing_motor_max_torque = 12.0
+node_b = NodePath("../../../..")
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0.591942, 0.0221165)
+
+[node name="Marker3D" type="Marker3D" parent="Head/Camera3D/GrabNode"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)
 
 [node name="InterfaceShapeCast" type="ShapeCast3D" parent="Head/Camera3D"]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, -1.2435)

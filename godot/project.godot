@@ -49,6 +49,8 @@ player_inventory_center=""
 player_inventory_right=""
 player_inventory=""
 InventoryGridUI=""
+player=""
+player_controller=""
 
 [input]
 
@@ -118,6 +120,11 @@ activate={
 , Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"button_index":8,"pressure":0.0,"pressed":false,"script":null)
 ]
 }
+reolad={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":82,"key_label":0,"unicode":114,"location":0,"echo":false,"script":null)
+]
+}
 
 [layer_names]
 
@@ -131,6 +138,7 @@ activate={
 
 [physics]
 
+3d/physics_engine="JoltPhysics3D"
 common/physics_interpolation=true
 
 [rendering]

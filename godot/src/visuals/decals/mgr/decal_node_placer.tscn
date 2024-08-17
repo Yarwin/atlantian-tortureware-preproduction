@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://kml6bjmr41ra"]
+
+[ext_resource type="Script" path="res://src/visuals/decals/mgr/decal_node_placer.gd" id="1_7aex7"]
+[ext_resource type="PackedScene" uid="uid://dagvsxb1f3xiv" path="res://src/visuals/decals/bullet_hole_1/bullet_hole.tscn" id="2_ntdms"]
+
+[node name="DecalNodePlacer" type="Node3D"]
+script = ExtResource("1_7aex7")
+hitscan_decal = ExtResource("2_ntdms")

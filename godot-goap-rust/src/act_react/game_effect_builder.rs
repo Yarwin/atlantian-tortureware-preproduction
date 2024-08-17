@@ -9,7 +9,7 @@ use crate::act_react::game_effect::{GameEffectProcessor};
 // todo – it can be actually pushed to Godot Singleton, similarly to godot's ClassDB. No need to dabble with unsafe when you can outsource risk and blame someone else for any and all of your mistakes
 
 
-pub type GameEffectInit = fn(Gd<Resource>, &Dictionary, &Dictionary, fn(&dyn GameEffectInitializer, &Dictionary, &Dictionary) -> GameEffectProcessor) -> GameEffectProcessor;
+pub type GameEffectInit = fn(Gd<Resource>, &Dictionary, &Dictionary, fn(&dyn GameEffectInitializer, &Dictionary, &Dictionary) -> Option<GameEffectProcessor>) -> Option<GameEffectProcessor>;
 static mut EFFECTS_REGISTRY: Option<HashMap<GString, GameEffectInit>> = None;
 
 
@@ -46,5 +46,5 @@ pub fn register_effect_builder<T>(name: GString)
 
 
 pub trait GameEffectInitializer: Debug {
-    fn build(&self, act_context: &Dictionary, context: &Dictionary) -> GameEffectProcessor;
+    fn build(&self, act_context: &Dictionary, context: &Dictionary) -> Option<GameEffectProcessor>;
 }

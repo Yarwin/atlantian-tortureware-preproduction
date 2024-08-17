@@ -1,5 +1,6 @@
-[gd_scene load_steps=58 format=4 uid="uid://d0bf2uc5t4h08"]
+[gd_scene load_steps=59 format=4 uid="uid://d0bf2uc5t4h08"]
 
+[ext_resource type="PackedScene" uid="uid://kml6bjmr41ra" path="res://src/visuals/decals/mgr/decal_node_placer.tscn" id="1_a0vl2"]
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_it88m"]
 [ext_resource type="Resource" uid="uid://bf3ov0bdmdrs8" path="res://src/trenchbroom/config/map_setting.tres" id="3_ps11r"]
 [ext_resource type="PackedScene" uid="uid://qaegqhcgvgj" path="res://src/entities/fishoid/Fishoid.tscn" id="4_3lnw6"]
@@ -12,10 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://b4tvyguynxs6f" path="res://src/entities/debug_player/debug_player.tscn" id="10_75pgr"]
 [ext_resource type="ItemResource" uid="uid://oyv8e11fd1bm" path="res://src/items/debug/debug_item_1_resource.tres" id="11_sgqhp"]
 [ext_resource type="ItemResource" uid="uid://cuglenwh0g7uf" path="res://src/items/debug/debug_item_2_resource.tres" id="12_382ac"]
-
-[sub_resource type="GDScript" id="GDScript_rjhqx"]
-script/source = "extends Node
-"
+[ext_resource type="PackedScene" uid="uid://ctid7gp5i86x7" path="res://src/entities/world_objecs/debug_throwable/debug_world_object.tscn" id="14_0ij2f"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1pmtb"]
 sky_top_color = Color(0.438972, 0.409407, 0.661129, 1)
@@ -306,8 +304,8 @@ item_data = ExtResource("12_382ac")
 [node name="Node" type="Node3D"]
 metadata/_edit_lock_ = true
 
-[node name="Node" type="Node" parent="."]
-script = SubResource("GDScript_rjhqx")
+[node name="DecalNodePlacer" parent="." node_paths=PackedStringArray("world_node") instance=ExtResource("1_a0vl2")]
+world_node = NodePath("../NavigationRegion3D/FuncGodotMap")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_spn3t")
@@ -375,6 +373,7 @@ collision_layer = 13
 collision_mask = 0
 
 [node name="entity_0_mesh_instance" type="MeshInstance3D" parent="NavigationRegion3D/FuncGodotMap/entity_0_worldspawn"]
+layers = 3
 mesh = SubResource("ArrayMesh_th61y")
 
 [node name="entity_0_occluder_instance" type="OccluderInstance3D" parent="NavigationRegion3D/FuncGodotMap/entity_0_worldspawn"]
@@ -428,6 +427,7 @@ collision_layer = 13
 collision_mask = 0
 
 [node name="entity_1_mesh_instance" type="MeshInstance3D" parent="NavigationRegion3D/FuncGodotMap/entity_1_func_detail"]
+layers = 3
 mesh = SubResource("ArrayMesh_ek7ns")
 
 [node name="entity_1_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_1_func_detail"]
@@ -439,6 +439,7 @@ collision_layer = 13
 collision_mask = 0
 
 [node name="entity_2_mesh_instance" type="MeshInstance3D" parent="NavigationRegion3D/FuncGodotMap/entity_2_func_detail"]
+layers = 3
 mesh = SubResource("ArrayMesh_wn8cx")
 
 [node name="entity_2_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_2_func_detail"]
@@ -450,6 +451,7 @@ collision_layer = 13
 collision_mask = 0
 
 [node name="entity_3_mesh_instance" type="MeshInstance3D" parent="NavigationRegion3D/FuncGodotMap/entity_3_func_detail"]
+layers = 3
 mesh = SubResource("ArrayMesh_r7gos")
 
 [node name="entity_3_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_3_func_detail"]
@@ -461,6 +463,7 @@ collision_layer = 13
 collision_mask = 0
 
 [node name="entity_4_mesh_instance" type="MeshInstance3D" parent="NavigationRegion3D/FuncGodotMap/entity_4_func_detail"]
+layers = 3
 mesh = SubResource("ArrayMesh_mhdpt")
 
 [node name="entity_4_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_4_func_detail"]
@@ -472,6 +475,7 @@ collision_layer = 13
 collision_mask = 0
 
 [node name="entity_5_mesh_instance" type="MeshInstance3D" parent="NavigationRegion3D/FuncGodotMap/entity_5_func_detail"]
+layers = 3
 mesh = SubResource("ArrayMesh_cihh7")
 
 [node name="entity_5_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_5_func_detail"]
@@ -483,6 +487,7 @@ collision_layer = 13
 collision_mask = 0
 
 [node name="entity_6_mesh_instance" type="MeshInstance3D" parent="NavigationRegion3D/FuncGodotMap/entity_6_func_detail"]
+layers = 3
 mesh = SubResource("ArrayMesh_44q4g")
 
 [node name="entity_6_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_6_func_detail"]
@@ -494,6 +499,7 @@ collision_layer = 13
 collision_mask = 0
 
 [node name="entity_7_mesh_instance" type="MeshInstance3D" parent="NavigationRegion3D/FuncGodotMap/entity_7_func_detail"]
+layers = 3
 mesh = SubResource("ArrayMesh_swuty")
 
 [node name="entity_7_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_7_func_detail"]
@@ -505,6 +511,7 @@ collision_layer = 13
 collision_mask = 0
 
 [node name="entity_8_mesh_instance" type="MeshInstance3D" parent="NavigationRegion3D/FuncGodotMap/entity_8_func_detail"]
+layers = 3
 mesh = SubResource("ArrayMesh_7tki7")
 
 [node name="entity_8_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_8_func_detail"]
@@ -518,6 +525,7 @@ script = ExtResource("5_xwr30")
 target_name = &"Joe"
 
 [node name="entity_9_mesh_instance" type="MeshInstance3D" parent="NavigationRegion3D/FuncGodotMap/entity_9_func_button"]
+layers = 3
 mesh = SubResource("ArrayMesh_exqdv")
 
 [node name="entity_9_brush_0_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_9_func_button"]
@@ -531,6 +539,7 @@ amount = 4.0
 axis = Vector3(-1, 0, 0)
 
 [node name="entity_10_mesh_instance" type="MeshInstance3D" parent="NavigationRegion3D/FuncGodotMap/entity_10_func_mover"]
+layers = 3
 mesh = SubResource("ArrayMesh_1p8bg")
 
 [node name="entity_10_brush_0_collision_shape" type="CollisionShape3D" parent="NavigationRegion3D/FuncGodotMap/entity_10_func_mover"]
@@ -570,3 +579,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.3407, 0.8675, -1.73158)
 [node name="OtherDebugPickupItem" parent="." instance=ExtResource("10_3aifm")]
 item_to_spawn = SubResource("ItemToSpawn_rlpud")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.3407, 0.8675, -1.73158)
+
+[node name="DebugWorldObject" parent="." instance=ExtResource("14_0ij2f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.0603, 1.39986, -0.602376)

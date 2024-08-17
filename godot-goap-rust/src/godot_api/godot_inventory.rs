@@ -59,6 +59,9 @@ impl InventoryAgent {
     #[signal]
     fn new_item_created(item: Gd<Item>);
 
+    #[signal]
+    fn stack_updated(item: Gd<Item>);
+
     #[func]
     pub fn get_items(&self) -> Array<Gd<Item>> {
         InventoryManager::singleton().bind().get_items(self.id)

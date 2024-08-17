@@ -78,6 +78,11 @@ pub struct InventoryManager {
 
 #[godot_api]
 impl InventoryManager {
+    #[func]
+    pub fn get_inventory_agent(&self, inventory_idx: u32) -> Option<Gd<InventoryAgent>> {
+        self.inventory_agents.get(&inventory_idx).map(|ia| ia.clone())
+    }
+
     #[signal]
     fn post_init();
 
@@ -292,29 +297,10 @@ impl InventoryManager {
                     }
                 };
             }
-
-            // bail if no change
-            return Ok(item);
         }
 
         let result = { inventory.try_insert_item_at(item, position_idx)};
         self.update_item_and_return_result(result, inventory_id)
-
-        // match result {
-        //     Ok(mut item) => {
-        //         let previous_inventory = item.bind().inventory.as_ref().unwrap().current_inventory_id;
-        //         let inventory_changed = previous_inventory.map(|p_id| p_id != inventory_id).unwrap_or(false);
-        //         if inventory_changed {
-        //             if let Some(inv) = self.inventories.get_mut(previous_inventory.as_ref().unwrap()) {
-        //                 inv.remove_item(item.bind().id);
-        //             }
-        //             item.emit_signal("inventory_switched".into(), &[inventory_id.to_variant()]);
-        //         }
-        //         item.bind_mut().inventory.as_mut().unwrap().current_inventory_id = Some(inventory_id);
-        //         Ok(item)
-        //     },
-        //     Err(e) => {Err(e)}
-        // }
     }
 
     fn initialize_inventories(&mut self) {

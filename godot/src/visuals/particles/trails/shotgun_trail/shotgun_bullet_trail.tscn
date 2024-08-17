@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3 uid="uid://c2rjj2ug6mcnx"]
+
+[ext_resource type="Script" path="res://src/visuals/particles/trails/shotgun_trail/shotgun_bullet_trail.gd" id="1_qgo66"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ih23b"]
+direction = Vector3(0, 0, -1)
+spread = 2.093
+initial_velocity_min = 120.0
+initial_velocity_max = 120.0
+gravity = Vector3(0, 0, 0)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_w70af"]
+albedo_color = Color(0.818601, 0.601057, 3.85046e-07, 1)
+emission_enabled = true
+emission = Color(0.819608, 0.6, 0, 1)
+emission_energy_multiplier = 4.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_as6fq"]
+material = SubResource("StandardMaterial3D_w70af")
+size = Vector3(0.01, 0.01, 0.09)
+
+[node name="GPUParticles3D" type="GPUParticles3D"]
+emitting = false
+amount = 1
+lifetime = 0.59
+one_shot = true
+process_material = SubResource("ParticleProcessMaterial_ih23b")
+draw_pass_1 = SubResource("BoxMesh_as6fq")
+script = ExtResource("1_qgo66")
+
+[connection signal="finished" from="." to="." method="_on_finished"]
