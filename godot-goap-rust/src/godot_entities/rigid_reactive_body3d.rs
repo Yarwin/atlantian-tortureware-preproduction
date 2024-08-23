@@ -1,4 +1,4 @@
-use godot::classes::{Engine, IRigidBody3D, PhysicsDirectBodyState3D, RigidBody3D, Tween};
+use godot::classes::{IRigidBody3D, PhysicsDirectBodyState3D, RigidBody3D, Tween};
 use godot::classes::tween::TransitionType;
 use godot::prelude::*;
 use crate::act_react::act_react_resource::ActReactResource;
@@ -8,6 +8,8 @@ use crate::act_react::react_area_3d::ActReactArea3D;
 #[derive(GodotClass)]
 #[class(init, base=RigidBody3D)]
 pub struct WorldObject {
+    #[export]
+    pub name: GString,
     #[var]
     #[init(default = false)]
     pub is_contact_velocity_achieved: bool,
@@ -22,6 +24,7 @@ pub struct WorldObject {
     #[export]
     pub mesh: Option<Gd<Node3D>>,
     pub tween: Option<Gd<Tween>>,
+    pub target_linear_vel: Vector3,
     base: Base<RigidBody3D>
 }
 
@@ -39,6 +42,17 @@ impl WorldObject {
     fn contact_velocity_left();
 
     #[func]
+    fn get_name_display(&self) -> GString {
+        self.name.clone()
+    }
+
+    #[func]
+    fn set_grab_linear_velocity(&mut self, velocity: Vector3) {
+        if !self.is_grabbed{ return;}
+        self.target_linear_vel = velocity;
+    }
+
+    #[func]
     fn grab(&mut self) {
         if self.is_grabbed {return;}
         self.is_contact_velocity_achieved = false;
@@ -54,6 +68,7 @@ impl WorldObject {
         self.base_mut().set_lock_rotation_enabled(false);
         self.base_mut().emit_signal("released".into(), &[]);
     }
+
     #[func]
     fn make_transparent_default(&mut self) {
         self.make_transparent();
@@ -65,8 +80,8 @@ impl WorldObject {
             if let Some(mut tween) = self.tween.take() {
                 tween.kill();
             }
-            let mut tween = self.base().get_tree().unwrap().create_tween();
-            tween.unwrap().tween_property(mesh, "transparency".into(), 0.15.to_variant(), 1.0).unwrap().set_trans(TransitionType::EXPO);;
+            let tween = self.base().get_tree().unwrap().create_tween();
+            tween.unwrap().tween_property(mesh, "transparency".into(), 0.15.to_variant(), 1.0).unwrap().set_trans(TransitionType::EXPO);
         }
     }
 
@@ -81,7 +96,7 @@ impl WorldObject {
             if let Some(mut tween) = self.tween.take() {
                 tween.kill();
             }
-            let mut tween = self.base().get_tree().unwrap().create_tween();
+            let tween = self.base().get_tree().unwrap().create_tween();
             tween.unwrap().tween_property(mesh, "transparency".into(), 0.0.to_variant(), 1.0).unwrap().set_trans(TransitionType::EXPO);
         }
     }
@@ -89,9 +104,13 @@ impl WorldObject {
 
 #[godot_api]
 impl IRigidBody3D for WorldObject {
-    fn integrate_forces(&mut self, state: Gd<PhysicsDirectBodyState3D>) {
+    fn integrate_forces(&mut self, mut state: Gd<PhysicsDirectBodyState3D>) {
         // don't propagate events if grabbed
-        if self.is_grabbed {return;}
+        if self.is_grabbed && !self.target_linear_vel.is_zero_approx() {
+            state.set_linear_velocity(self.target_linear_vel);
+            self.target_linear_vel = Vector3::ZERO;
+            return;
+        }
         if !self.is_contact_velocity_achieved && state.get_linear_velocity().length() > self.contact_velocity {
             self.is_contact_velocity_achieved = true;
             self.base_mut().emit_signal("contact_velocity_achieved".into(), &[]);

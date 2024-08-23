@@ -1,7 +1,7 @@
 use godot::prelude::GodotClass;
 pub mod equip_component;
 mod spreadgun;
-mod gun_ui;
+pub mod gun_ui;
 
 
 pub fn register_equipment_dispatch() {

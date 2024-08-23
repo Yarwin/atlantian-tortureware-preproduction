@@ -32,6 +32,7 @@ folder_colors={
 "res://addons/": "gray",
 "res://assets/": "yellow",
 "res://gdext/": "gray",
+"res://src/interface/": "green",
 "res://src/items/": "yellow",
 "res://src/levels/": "teal",
 "res://src/trenchbroom/": "orange"
@@ -138,6 +139,7 @@ reolad={
 
 [physics]
 
+common/physics_ticks_per_second=50
 3d/physics_engine="JoltPhysics3D"
 common/physics_interpolation=true
 

@@ -1,1 +1,1 @@
-mod mfd_main;
+pub mod mfd_main;

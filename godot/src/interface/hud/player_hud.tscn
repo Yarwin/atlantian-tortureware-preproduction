@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://t0ys0mdppkhu"]
+[gd_scene load_steps=6 format=3 uid="uid://t0ys0mdppkhu"]
 
 [ext_resource type="Texture2D" uid="uid://d0j3333cmbnwh" path="res://assets/sprites/ui/inventory/frame.png" id="1_hls88"]
 [ext_resource type="Script" path="res://src/interface/hud/player_hud.gd" id="1_nfd7g"]
 [ext_resource type="PackedScene" uid="uid://dh2gosoaxl6gt" path="res://src/interface/hud/multi_function_display.tscn" id="2_0qi7e"]
 [ext_resource type="PackedScene" uid="uid://dpxjflejy405l" path="res://src/interface/inventory/grid_holder.tscn" id="3_hla68"]
+[ext_resource type="PackedScene" uid="uid://bf5q5islujj2v" path="res://src/interface/hud/interaction_prompt.tscn" id="5_0gv8g"]
 
 [node name="PlayerHud" type="Control"]
 layout_mode = 3
@@ -19,6 +20,7 @@ metadata/_edit_lock_ = true
 [node name="PlayerStuff" type="CanvasLayer" parent="."]
 
 [node name="MultiFunctionDisplay" parent="PlayerStuff" instance=ExtResource("2_0qi7e")]
+grow_vertical = 1
 
 [node name="InventoryUIItemsManager" type="InventoryUIManager" parent="PlayerStuff" node_paths=PackedStringArray("inventories")]
 inventories = [NodePath("NinePatchRect/MarginContainer/HBoxContainer/GridHolder"), NodePath("NinePatchRect/MarginContainer/HBoxContainer/GridHolder2"), NodePath("NinePatchRect/MarginContainer/HBoxContainer/GridHolder3")]
@@ -100,4 +102,17 @@ size_flags_vertical = 3
 mouse_filter = 2
 metadata/_edit_lock_ = true
 
-[node name="MFDisplay" type="CanvasLayer" parent="."]
+[node name="WorldItemsDisplay" type="CanvasLayer" parent="."]
+
+[node name="Control" type="Control" parent="WorldItemsDisplay"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="InteractionPrompt" parent="WorldItemsDisplay/Control" instance=ExtResource("5_0gv8g")]
+visible = false
+layout_mode = 1

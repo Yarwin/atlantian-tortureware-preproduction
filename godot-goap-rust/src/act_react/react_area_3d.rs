@@ -7,8 +7,6 @@ use godot::global::PropertyHint;
 use godot::register::property::PropertyHintInfo;
 use crate::godot_api::gamesys::GameSystem;
 
-const FROB_PHYSICS_MASK: u32 = 128;
-
 
 bitflags! {
     #[derive(Default)]
@@ -106,6 +104,14 @@ impl IArea3D for ActReactArea3D {
 
 #[godot_api]
 impl ActReactArea3D {
+    pub fn get_name(&mut self) -> GString {
+        if let Some(target) = self.target.as_mut() {
+            if target.has_method("get_name_display".into()) {
+                return target.call("get_name_display".into(), &[]).to::<GString>();
+            }
+        }
+        GString::default()
+    }
     #[func(gd_self, virtual)]
     fn post_ready(_s: Gd<Self>) {
         godot_print!("running virtual function…");

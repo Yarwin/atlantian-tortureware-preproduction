@@ -80,7 +80,7 @@ pub struct InventoryManager {
 impl InventoryManager {
     #[func]
     pub fn get_inventory_agent(&self, inventory_idx: u32) -> Option<Gd<InventoryAgent>> {
-        self.inventory_agents.get(&inventory_idx).map(|ia| ia.clone())
+        self.inventory_agents.get(&inventory_idx).cloned()
     }
 
     #[signal]

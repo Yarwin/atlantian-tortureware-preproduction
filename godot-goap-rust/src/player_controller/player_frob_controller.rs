@@ -1,18 +1,16 @@
 use std::ops::{Index, IndexMut};
-use godot::classes::{InputEvent, InputEventKey, ShapeCast3D};
+use std::time::SystemTime;
+use godot::classes::{CollisionObject3D, InputEvent, InputEventKey, RigidBody3D, ShapeCast3D};
 use godot::prelude::*;
-use crate::act_react::act_react_executor::ActReactExecutor;
 use crate::act_react::act_react_resource::ActReactResource;
-use crate::act_react::game_effect_builder::effects_registry;
-use crate::act_react::react_area_3d::ActReactArea3D;
-use crate::equipment::equip_component::{Equipment, EquipmentComponent};
-use crate::godot_api::{CONNECT_DEFERRED, CONNECT_ONE_SHOT};
+use crate::equipment::equip_component::EquipmentComponent;
+use crate::godot_api::CONNECT_DEFERRED;
 use crate::godot_api::gamesys::{GameSys, GameSystem};
 use crate::godot_api::godot_inventory::InventoryAgent;
 use crate::godot_api::item_object::Item;
 use crate::godot_api_reacts::fly::FlyGameEffect;
-use crate::godot_entities::rigid_reactive_body3d::WorldObject;
 use crate::player_controller::grab_node::GrabNode;
+use crate::player_controller::player_frob_state_machine::{DefaultState, PlayerEvent, PlayerState};
 
 #[derive(Default, Debug)]
 pub struct EquippedItems {
@@ -65,29 +63,39 @@ impl FromGodot for EquippedItems {
 #[class(init, base=Node)]
 pub struct PlayerController {
     #[init(node = "../Head/Camera3D/InterfaceShapeCast")]
-    interface_shape_cast: OnReady<Gd<ShapeCast3D>>,
+    pub(crate) interface_shape_cast: OnReady<Gd<ShapeCast3D>>,
     #[init(node = "../Head/Camera3D")]
-    camera: OnReady<Gd<Camera3D>>,
+    pub(crate) camera: OnReady<Gd<Camera3D>>,
     #[init(node = "../Head/EqHolder")]
-    eq_holder: OnReady<Gd<Node3D>>,
+    pub(crate) eq_holder: OnReady<Gd<Node3D>>,
     #[init(node = "../Head/Camera3D/GrabNode")]
     pub grab_node: OnReady<Gd<GrabNode>>,
     #[export]
-    inventories: Array<Gd<InventoryAgent>>,
+    pub(crate) inventories: Array<Gd<InventoryAgent>>,
     #[export]
-    throw_effect: Option<Gd<FlyGameEffect>>,
-    inventories_ids: Option<Array<u32>>,
+    pub(crate) throw_effect: Option<Gd<FlyGameEffect>>,
+    pub(crate) inventories_ids: Option<Array<u32>>,
     #[export]
-    interface_act_react: Option<Gd<ActReactResource>>,
-    equipped_items: EquippedItems,
-    active_item: Option<Gd<Item>>,
-    equipment_component: Option<EquipmentComponent>,
+    pub(crate) interface_act_react: Option<Gd<ActReactResource>>,
+    pub(crate) equipped_items: EquippedItems,
+    pub(crate) active_item: Option<Gd<Item>>,
+    pub(crate) equipment_component: Option<EquipmentComponent>,
+    #[init(default = SystemTime::now() )]
+    pub(crate) last_shapecast_update: SystemTime,
+    #[init(default = 0.25 )]
+    #[export]
+    shapecast_update_time: f64,
+    #[init(default = 0.5 )]
+    #[export]
+    pub(crate) default_to_frob_time: f64,
+    state: Option<Box<dyn PlayerState>>,
+    pub is_frobbing: bool,
     base: Base<Node>
 }
 
 
 impl PlayerController {
-    fn get_inventories_ids(&mut self) -> Array<u32> {
+    pub(crate) fn get_inventories_ids(&mut self) -> Array<u32> {
         return if let Some(inventories_ids) = self.inventories_ids.as_ref() {
             inventories_ids.clone()
         } else {
@@ -105,25 +113,22 @@ impl PlayerController {
 #[godot_api]
 impl INode for PlayerController {
     fn physics_process(&mut self, _delta: f64) {
+        if self.is_frobbing {
+            let state = self.state.take().unwrap_or(DefaultState::new_boxed());
+            self.state = Some(state.handle_event(self, PlayerEvent::FrobEvent));
+        }
+
         if Input::singleton().is_action_just_pressed("frob".into()) {
-            if self.grab_node.bind().attached.is_some() {
-                self.grab_node.bind_mut().detach();
-                return;
-            }
-            let actor = self.base().clone();
-            let Some(acts) = self.interface_act_react.clone() else {return;};
-            self.interface_shape_cast.force_shapecast_update();
-            if self.interface_shape_cast.is_colliding() {
-                if let Some(Ok(react_area)) = self.interface_shape_cast.get_collider(0).map(|o| o.try_cast::<ActReactArea3D>()) {
-                    let inventories_ids = self.get_inventories_ids().clone();
-                    let context = dict! {
-                        "inventories": inventories_ids,
-                        "actor": actor,
-                        "reactor": react_area.bind().target.clone(),
-                    };
-                    ActReactExecutor::singleton().bind_mut().react(acts, react_area.bind().act_react.clone().unwrap(), context);
-                }
-            }
+            let state = self.state.take().unwrap_or(DefaultState::new_boxed());
+            self.state = Some(state.handle_event(self, PlayerEvent::FrobEvent));
+        } else if Input::singleton().is_action_just_released("frob".into()) {
+            let state = self.state.take().unwrap_or(DefaultState::new_boxed());
+            self.state = Some(state.handle_event(self, PlayerEvent::FrobStopEvent))
+        }
+        if self.last_shapecast_update.elapsed().unwrap().as_secs_f64() > self.shapecast_update_time {
+            self.last_shapecast_update = SystemTime::now();
+            let state = self.state.take().unwrap_or(DefaultState::new_boxed());
+            self.state = Some(state.handle_event(self, PlayerEvent::ShapeCastUpdateEvent));
         }
     }
 
@@ -132,40 +137,27 @@ impl INode for PlayerController {
         GameSys::singleton().connect("new_item_put_into_slot".into(), on_new_item_put_into_slot);
         let on_item_removed_from_slot = self.base().callable("on_item_removed_from_slot");
         GameSys::singleton().connect("item_removed_from_slot".into(), on_item_removed_from_slot);
+        let on_item_grabbed = self.base().callable("on_item_grabbed");
+        self.grab_node.connect("object_grabbed".into(), on_item_grabbed);
+        let on_grabbed_released = self.base().callable("on_grabbed_released");
+        self.grab_node.connect_ex("object_released".into(), on_grabbed_released).flags(CONNECT_DEFERRED).done();
+        if let Some(parent) = self.base().get_parent().map(|p| p.cast::<CollisionObject3D>()) {
+            self.interface_shape_cast.add_exception(parent);
+        }
+        // handle load/save
+        if self.active_item.is_none() {
+            self.state = Some(DefaultState::new_boxed())
+        }
     }
+
     fn unhandled_input(&mut self, event: Gd<InputEvent>) {
         // is action just pressed?
         if event.is_pressed() && !event.is_echo() && event.is_action("activate".into()) {
-            if self.grab_node.bind().attached.is_some() {
-                let reactor = self.grab_node.bind().attached.clone().unwrap();
-                self.grab_node.bind_mut().detach();
-                if let Some(fly_effect) = self.throw_effect.as_mut() {
-                    let context = dict! {
-                        "direction": self.camera.get_global_basis().col_c(),
-                        "reactor": reactor
-                    };
-                    let command_init_fn = effects_registry()[&fly_effect.get_class()];
-                    let effect = (command_init_fn)(fly_effect.clone().upcast::<Resource>(),
-                                                   &Dictionary::new(), &context, |effect, a_context, world_context |
-                        {
-                            effect.build(a_context, world_context)
-                        }
-                    );
-                    ActReactExecutor::singleton().bind_mut().add_effect(effect.unwrap());
-                }
-                self.base().get_viewport().unwrap().set_input_as_handled();
-                return;
-            }
-            if let Some(eq_component) = self.equipment_component.as_mut() {
-                eq_component.activate();
-                self.base().get_viewport().unwrap().set_input_as_handled();
-            }
-        }
-        if !event.is_pressed() && !event.is_echo() && event.is_action("activate".into()) {
-            if let Some(eq_component) = self.equipment_component.as_mut() {
-                eq_component.deactivate();
-                self.base().get_viewport().unwrap().set_input_as_handled();
-            }
+            let state = self.state.take().unwrap_or(DefaultState::new_boxed());
+            self.state = Some(state.handle_event(self, PlayerEvent::ActivateEvent));
+        } else if !event.is_pressed() && !event.is_echo() && event.is_action("activate".into()) {
+            let state = self.state.take().unwrap_or(DefaultState::new_boxed());
+            self.state = Some(state.handle_event(self, PlayerEvent::DeactivateEvent));
         }
     }
 
@@ -177,50 +169,41 @@ impl INode for PlayerController {
             for i in 0..6 {
                 let action_name = format!("slot_{}", i+1);
                 if e.is_action(StringName::from(action_name)) {
-                    let slot_item = self.equipped_items[i].clone();
-                    let active_item = self.active_item.take();
-
-                    if let Some(mut new_item) = slot_item {
-                        if let Some(mut prev_item) = active_item {
-                            if prev_item == new_item {
-                                self.active_item = Some(prev_item);
-                                return;
-                            }
-                            let Some(mut eq_component) = self.equipment_component.take() else {panic!("active item without eq component!")};
-                            eq_component.take_off();
-                            let on_item_taken_off = self.base().callable("on_old_item_taken_off");
-                            prev_item.connect_ex("taken_off".into(), on_item_taken_off).flags(CONNECT_ONE_SHOT + CONNECT_DEFERRED).done();
-                            self.active_item = Some(new_item);
-                            return;
-                        }
-                        {
-                            let mut item_bind = new_item.bind_mut();
-                            let Some(eq_component) = item_bind.equip.as_mut() else { return; };
-                            let (mut eq_component, ui) = eq_component.initialize_equipment_scene();
-                            drop(item_bind);
-                            eq_component.initialize(new_item.clone());
-                            self.eq_holder.add_child(&eq_component.base);
-                            self.equipment_component = Some(eq_component);
-                            GameSys::singleton().emit_signal("new_gun_for_ui_display".into(), &[ui.to_variant()]);
-                        }
-                        self.active_item = Some(new_item);
-                        return;
-                    }
-
-                    let Some(mut eq_component) = self.equipment_component.take() else {return;};
-                    eq_component.take_off();
-                    return
+                    let state = self.state.take().unwrap_or(DefaultState::new_boxed());
+                    self.state = Some(state.handle_event(self, PlayerEvent::SlotSelected(i)));
                 }
             }
         }
     }
-
-
 }
 
 
 #[godot_api]
 impl PlayerController {
+    #[func]
+    fn on_shapecasted_freed(&mut self) {
+        let state = self.state.take().unwrap_or(DefaultState::new_boxed());
+        self.state = Some(state.handle_event(self, PlayerEvent::ShapeCastObjectFreed));
+    }
+
+    #[func]
+    fn on_item_grabbed(&mut self, object: Gd<RigidBody3D>) {
+        let state = self.state.take().unwrap_or(DefaultState::new_boxed());
+        self.state = Some(state.handle_event(self, PlayerEvent::Grabbed(object)));
+    }
+
+    #[func]
+    fn on_grabbed_freed(&mut self) {
+        let state = self.state.take().unwrap_or(DefaultState::new_boxed());
+        self.state = Some(state.handle_event(self, PlayerEvent::ColliderFreed));
+    }
+
+    #[func]
+    fn on_grabbed_released(&mut self) {
+        let state = self.state.take().unwrap_or(DefaultState::new_boxed());
+        self.state = Some(state.handle_event(self, PlayerEvent::GrabbedReleased));
+    }
+
     #[func(gd_self)]
     fn on_new_item_put_into_slot(mut this: Gd<Self>, slot: u32, item: Gd<Item>) {
         let slot_idx = slot - 1;
@@ -262,15 +245,7 @@ impl PlayerController {
 
     #[func]
     fn on_old_item_taken_off(&mut self) {
-        let Some(mut new_item) = self.active_item.take() else {return;};
-        let mut item_bind = new_item.bind_mut();
-        let Some(eq_component) = item_bind.equip.as_mut() else { return; };
-        let (mut eq_component, ui) = eq_component.initialize_equipment_scene();
-        drop(item_bind);
-        eq_component.initialize(new_item.clone());
-        self.eq_holder.add_child(&eq_component.base);
-        self.equipment_component = Some(eq_component);
-        GameSys::singleton().emit_signal("new_gun_for_ui_display".into(), &[ui.to_variant()]);
-        self.active_item = Some(new_item);
+        let state = self.state.take().unwrap_or(DefaultState::new_boxed());
+        state.handle_event(self, PlayerEvent::OldItemTakenOff);
     }
 }

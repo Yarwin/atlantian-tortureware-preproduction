@@ -1,7 +1,7 @@
 use godot::classes::Resource;
 use godot::prelude::*;
 use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
-use crate::act_react::game_effect_builder::{GameEffectInitializer, register_effect_builder};
+use crate::act_react::game_effect_builder::GameEffectInitializer;
 
 
 #[derive(GodotClass, Debug)]
@@ -11,19 +11,24 @@ pub struct CallMethodGameEffect {
     pub method_name: StringName,
     #[export]
     args: Array<Variant>,
+    #[export]
+    method_display: GString,
     base: Base<Resource>
 }
 
 #[godot_api]
-impl IResource for CallMethodGameEffect {
-    // fn init(base: Base<Self::Base>) -> Self {
-    //     register_effect_builder::<Self>(Self::class_name().to_gstring());
-    //     CallMethodGameEffect { method_name: Default::default(), args: array![], base }
-    // }
+impl CallMethodGameEffect {
+    #[func]
+    fn get_react_display(&self) -> GString {
+        if self.method_display.is_empty() {
+            return GString::from("Use");
+        }
+        self.method_display.clone()
+    }
 }
 
 impl GameEffectInitializer for CallMethodGameEffect {
-    fn build(&self, act_context: &Dictionary, context: &Dictionary) -> Option<GameEffectProcessor> {
+    fn build(&self, _act_context: &Dictionary, context: &Dictionary) -> Option<GameEffectProcessor> {
         let Some(target) = context.get("reactor").map(|v| v.to::<Gd<Object>>()) else {panic!("tried to instantiate command without proper context!")};
         let effect = CallMethod {
             target: Some(target),

@@ -1,7 +1,7 @@
 use godot::prelude::*;
 use godot::classes::{Resource};
 use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
-use crate::act_react::game_effect_builder::{GameEffectInitializer, register_effect_builder};
+use crate::act_react::game_effect_builder::GameEffectInitializer;
 use crate::godot_api::gamesys::GameSystem;
 use crate::godot_api::inventory_manager::InventoryManager;
 use crate::godot_api::item_object::Item;
@@ -12,6 +12,15 @@ use crate::inventory::inventory_item::StackResult;
 #[class(init, base=Resource)]
 pub struct PickupItemGameEffect {
     base: Base<Resource>
+}
+
+
+#[godot_api]
+impl PickupItemGameEffect {
+    #[func]
+    fn get_react_display(&self) -> GString {
+        GString::from("Pickup item")
+    }
 }
 
 

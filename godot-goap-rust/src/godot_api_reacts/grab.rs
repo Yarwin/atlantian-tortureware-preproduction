@@ -11,6 +11,14 @@ pub(crate) struct GrabGameEffect {
     base: Base<Resource>
 }
 
+#[godot_api]
+impl GrabGameEffect {
+    #[func]
+    fn get_react_display(&self) -> GString {
+        GString::from("Grab")
+    }
+}
+
 impl GrabGameEffect {
     fn get_grabber(from: &Variant) -> Option<Gd<GrabNode>> {
         match from.try_to::<Gd<GrabNode>>() {
@@ -28,9 +36,8 @@ impl GrabGameEffect {
 }
 
 impl GameEffectInitializer for GrabGameEffect {
-    fn build(&self, act_context: &Dictionary, context: &Dictionary) -> Option<GameEffectProcessor> {
+    fn build(&self, _act_context: &Dictionary, context: &Dictionary) -> Option<GameEffectProcessor> {
         let Some(grabber) = context.get("actor") else {panic!("no actor!")};
-
         let Some(grabbed) = context.get("reactor").map(|v| v.to::<Gd<Node3D>>()) else {panic!("no reactor!")};
         let effect = Grab {
             grabber,

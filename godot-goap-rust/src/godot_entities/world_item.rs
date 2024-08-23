@@ -34,6 +34,23 @@ impl IRigidBody3D for WorldItem {
 #[godot_api]
 impl WorldItem {
     #[func]
+    fn get_name_display(&self) -> GString {
+        let mut item_name: String = String::default();
+        if let Some(item_to_spawn) = self.item_to_spawn.as_ref() {
+            let item_bind = item_to_spawn.bind();
+            let Some(item_resource) = item_bind.item_data.as_ref() else {return GString::default()};
+            item_name = item_resource.bind().name.to_string();
+        }
+        let Some(item) = self.item.as_ref() else {return return GString::from(item_name)};
+        let item_bind = item.bind();
+        let Some(inventory_component) = item_bind.inventory.as_ref() else {return GString::from(item_name)};
+        if inventory_component.stack > 1 {
+            return GString::from(format!("{} {item_name}", inventory_component.stack));
+        }
+        GString::from(item_name)
+    }
+
+    #[func]
     fn on_item_picked_up(&mut self, _: u32) {
         self.base_mut().queue_free();
     }

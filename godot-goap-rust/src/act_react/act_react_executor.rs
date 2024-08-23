@@ -34,7 +34,7 @@ impl ActReactExecutor {
     }
 
     #[func]
-    pub fn react_single(&mut self, mut act: Gd<Resource>, mut reactor: Gd<ActReactResource>, context: Dictionary) {
+    pub fn react_single(&mut self, act: Gd<Resource>, mut reactor: Gd<ActReactResource>, context: Dictionary) {
         let mut reactor_bind = reactor.bind_mut();
         self.create_reacts_for_act(act, &mut reactor_bind, &context)
     }

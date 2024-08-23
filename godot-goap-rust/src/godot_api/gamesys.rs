@@ -1,7 +1,9 @@
-use godot::classes::{Control, Engine};
+use godot::classes::Engine;
 use godot::obj::{bounds, Bounds, NewAlloc};
 use godot::prelude::*;
+use crate::equipment::equip_component::EquipmentComponent;
 use crate::godot_api::item_object::Item;
+use crate::multi_function_display::mfd_main::DisplayType;
 
 
 /// A node responsible to manage communications between different game systems.
@@ -32,7 +34,15 @@ impl GameSys {
     #[signal]
     fn new_hitscan_collision_registered(place: Vector3, normal: Vector3);
     #[signal]
-    fn new_gun_for_ui_display(gun_ui: Gd<Control>);
+    fn new_ui_item_equipped(item: EquipmentComponent, ui_display: DisplayType);
+    #[signal]
+    fn ui_item_taken_off();
+    #[signal]
+    fn frob_prompt_updated(description: GString, progress: f64, name: GString);
+    #[signal]
+    fn frob_progress_updated(progress: f64);
+    #[signal]
+    fn frob_description_deactivated();
 }
 
 impl GameSys {

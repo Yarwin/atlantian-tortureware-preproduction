@@ -1,6 +1,7 @@
 use std::ops::Index;
 use godot::prelude::*;
 use crate::act_react::stimulis::Stimuli;
+use crate::act_react::stimulis::Stimuli::PlayerFrob;
 
 
 /// todo – automate it with some kind of macro
@@ -63,6 +64,18 @@ pub struct ActReactResource {
 }
 
 impl ActReactResource {
+    pub fn get_playerfrob_display(&self) -> GString {
+        if let Some(mut act_with_display) = self[PlayerFrob].iter_shared().find(|a| a.has_method("get_react_display".into())) {
+            return act_with_display.call("get_react_display".into(), &[]).to::<GString>();
+        } else {
+            for meta in self.metaproperties.iter_shared() {
+                if let Some(mut act_with_display) = meta.bind()[PlayerFrob].iter_shared().find(|a| a.has_method("get_react_display".into())) {
+                    return act_with_display.call("get_react_display".into(), &[]).to::<GString>();
+                }
+            }
+        }
+        GString::default()
+    }
     pub fn is_reacting(&self, other: Gd<ActReactResource>) -> bool {
         for mut act in other.bind().emits.iter_shared() {
             let stimuli: Stimuli = act.get("stim_type".into()).to::<Stimuli>();

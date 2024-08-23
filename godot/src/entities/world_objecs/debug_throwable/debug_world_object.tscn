@@ -20,15 +20,17 @@ player_frob = Array[Resource]([ExtResource("1_cpl2p")])
 
 [sub_resource type="ActReactResource" id="ActReactResource_ypewy"]
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_h45my"]
-radius = 0.712361
+[sub_resource type="BoxShape3D" id="BoxShape3D_glsau"]
+size = Vector3(1.1, 1.1, 1.1)
 
 [node name="DebugWorldObject" type="WorldObject" node_paths=PackedStringArray("act_react_area", "mesh")]
+name = "Debug World Object"
 contact_velocity = 12.0
 contact_velocity_effects = SubResource("ActReactResource_t5t28")
 act_react_area = NodePath("ActReactArea3D")
 mesh = NodePath("MeshInstance3D")
 collision_layer = 9
+mass = 2.0
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_no0qy")
@@ -46,7 +48,7 @@ script = ExtResource("2_u0cd5")
 while_grabbed_act_react = SubResource("ActReactResource_ypewy")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="ActReactArea3D"]
-shape = SubResource("SphereShape3D_h45my")
+shape = SubResource("BoxShape3D_glsau")
 
 [connection signal="contact_velocity_achieved" from="." to="ActReactArea3D" method="_on_debug_world_object_contact_velocity_achieved"]
 [connection signal="contact_velocity_left" from="." to="ActReactArea3D" method="_on_debug_world_object_contact_velocity_left"]

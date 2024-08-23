@@ -4,16 +4,19 @@ use godot::prelude::*;
 use godot::obj::Bounds;
 use godot::obj::bounds::DeclUser;
 use crate::godot_api::item_object::Item;
+use crate::multi_function_display::mfd_main::DisplayType;
 
 
 type EqDispatchSelf = fn(Gd<Node3D>, fn(&mut dyn Equipment));
 type EqDispatchItem = fn(Gd<Node3D>, Gd<Item>, fn(&mut dyn Equipment, Gd<Item>));
+type EqDispatchControl = fn(Gd<Node3D>, Gd<Control>, fn(&mut dyn Equipment, Gd<Control>));
 
 /// a struct that keeps Fn pointers required to dispatch calls to &mut dyn Equipment
 #[derive(Debug)]
 pub struct EqDispatch {
     dispatch_self: EqDispatchSelf,
-    dispatch_item: EqDispatchItem
+    dispatch_item: EqDispatchItem,
+    dispatch_control: EqDispatchControl,
 }
 
 impl EqDispatch {
@@ -23,14 +26,19 @@ impl EqDispatch {
     {
         Self {
             dispatch_self: |base, closure| {
-                    let mut instance = base.cast::<T>();
-                    let mut guard: GdMut<T> = instance.bind_mut();
-                    closure(&mut *guard)
-                },
+                let mut instance = base.cast::<T>();
+                let mut guard: GdMut<T> = instance.bind_mut();
+                closure(&mut *guard)
+            },
             dispatch_item: |base, item, closure| {
                 let mut instance = base.cast::<T>();
                 let mut guard: GdMut<T> = instance.bind_mut();
                 closure(&mut *guard, item)
+            },
+            dispatch_control: |base, control, closure| {
+                let mut instance = base.cast::<T>();
+                let mut guard: GdMut<T> = instance.bind_mut();
+                closure(&mut *guard, control)
             },
         }
     }
@@ -98,10 +106,24 @@ pub fn register_item_equipment_component<T>(name: GString)
 }
 
 /// a wrapper for Equipment 3Dnode responsible for dispatching all the calls
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EquipmentComponent {
     pub base: Gd<Node3D>,
     dispatch: *const EqDispatch
+}
+
+impl GodotConvert for EquipmentComponent { type Via = Gd<Node3D>; }
+
+impl ToGodot for EquipmentComponent {
+    fn to_godot(&self) -> Self::Via {
+        self.base.to_godot()
+    }
+}
+
+impl FromGodot for EquipmentComponent {
+    fn try_from_godot(via: Self::Via) -> Result<Self, ConvertError> {
+        Ok(Self::new(via))
+    }
 }
 
 impl Eq for EquipmentComponent {}
@@ -114,13 +136,11 @@ impl PartialEq for EquipmentComponent {
 
 impl EquipmentComponent {
     pub fn new(base: Gd<Node3D>) -> Self {
-        unsafe {
-            let dispatch = &equipment_component_registry()[&base.get_class()] as *const EqDispatch;
+        let dispatch = &equipment_component_registry()[&base.get_class()] as *const EqDispatch;
 
         Self {
             base: base.clone(),
             dispatch
-        }
         }
     }
 }
@@ -142,6 +162,16 @@ impl Equipment for EquipmentComponent {
     fn reload(&mut self) {
         unsafe { ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| { e.reload() }) }
     }
+    fn point_down(&mut self) {
+        unsafe { ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| { e.point_down() }) }
+    }
+    fn point_up(&mut self) {
+        unsafe { ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| { e.point_up() }) }
+    }
+
+    fn connect_component_to_ui(&mut self, ui: Gd<Control>) {
+        unsafe { ((*self.dispatch).dispatch_control)(self.base.clone(), ui, |e: &mut dyn Equipment, ui: Gd<Control>| { e.connect_component_to_ui(ui) }) }
+    }
 }
 
 
@@ -155,7 +185,7 @@ pub fn build_item_equipment_component(base: Gd<Resource>) -> Box<dyn ItemEquipme
 
 pub trait ItemEquipmentComponent {
     /// initializes given packed scene and returns Node ready to be attached to the scene tree
-    fn initialize_equipment_scene(&mut self) -> (EquipmentComponent, Option<Gd<Control>>);
+    fn initialize_equipment_scene(&mut self) -> (EquipmentComponent, DisplayType);
 }
 
 
@@ -168,4 +198,10 @@ pub trait Equipment {
     /// called when action button is released.
     fn deactivate(&mut self) {}
     fn reload(&mut self) {}
+    /// called when equipment should be inactive, but still in scene
+    fn point_down(&mut self) {}
+    /// called when equipment was inactive, but should be activated
+    fn point_up(&mut self) {}
+
+    fn connect_component_to_ui(&mut self, ui: Gd<Control>);
 }

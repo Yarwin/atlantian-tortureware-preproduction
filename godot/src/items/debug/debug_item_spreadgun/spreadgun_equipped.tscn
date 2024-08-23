@@ -1,6 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://b80ylq53kvqv6"]
+[gd_scene load_steps=9 format=3 uid="uid://b80ylq53kvqv6"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6vtnq"]
+albedo_color = Color(1, 0.15, 0.15, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_pu1ts"]
+material = SubResource("StandardMaterial3D_6vtnq")
 size = Vector3(0.15, 0.15, 0.6)
 
 [sub_resource type="Animation" id="Animation_u7idq"]
@@ -28,6 +32,34 @@ tracks/1/keys = {
 "transitions": PackedFloat32Array(1),
 "update": 0,
 "values": [Vector3(0, 0, 0.289032)]
+}
+
+[sub_resource type="Animation" id="Animation_7d1l0"]
+resource_name = "point_down"
+length = 0.2
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("anchor:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0.289032), Vector3(0, 0, 0.275)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("anchor:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(-0.366519, 0, 0)]
 }
 
 [sub_resource type="Animation" id="Animation_ic7ij"]
@@ -104,6 +136,7 @@ tracks/1/keys = {
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_1s8s8"]
 _data = {
 "RESET": SubResource("Animation_u7idq"),
+"point_down": SubResource("Animation_7d1l0"),
 "prepare": SubResource("Animation_ic7ij"),
 "reload": SubResource("Animation_icopk"),
 "shoot": SubResource("Animation_lcw3j")

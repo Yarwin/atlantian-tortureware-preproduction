@@ -1,7 +1,7 @@
 use godot::classes::Resource;
 use godot::prelude::*;
 use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
-use crate::act_react::game_effect_builder::{GameEffectInitializer, register_effect_builder};
+use crate::act_react::game_effect_builder::GameEffectInitializer;
 use crate::godot_api::godot_inventory::ItemToSpawn;
 use crate::godot_api::inventory_manager::InventoryManager;
 use crate::godot_api::item_object::{Item};

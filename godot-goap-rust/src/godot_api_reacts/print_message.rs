@@ -1,6 +1,6 @@
 use godot::prelude::*;
 use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
-use crate::act_react::game_effect_builder::{GameEffectInitializer, register_effect_builder};
+use crate::act_react::game_effect_builder::GameEffectInitializer;
 
 
 #[derive(GodotClass, Debug)]
@@ -21,7 +21,7 @@ impl IResource for PrintMessageGameEffect {
 }
 
 impl GameEffectInitializer for PrintMessageGameEffect {
-    fn build(&self, act_context: &Dictionary, context: &Dictionary) -> Option<GameEffectProcessor> {
+    fn build(&self, _act_context: &Dictionary, _context: &Dictionary) -> Option<GameEffectProcessor> {
         let print_message = PrintMessage {
             message: self.message.clone()
         };

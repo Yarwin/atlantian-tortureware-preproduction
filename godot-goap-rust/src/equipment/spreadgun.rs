@@ -4,7 +4,7 @@ use crate::act_react::act_react_executor::ActReactExecutor;
 use crate::act_react::act_react_resource::ActReactResource;
 use crate::act_react::react_area_3d::ActReactArea3D;
 use crate::character_controler::character_controller_3d::CharacterController3D;
-use crate::equipment::equip_component::{Equipment, EquipmentComponent, EquipmentComponentResource, ItemEquipmentComponent, register_equipment_component, register_item_equipment_component};
+use crate::equipment::equip_component::{Equipment, EquipmentComponent, EquipmentComponentResource, ItemEquipmentComponent};
 use crate::equipment::gun_ui::GunDisplay;
 use crate::godot_api::{CONNECT_DEFERRED, CONNECT_ONE_SHOT};
 use crate::godot_api::gamesys::{GameSys, GameSystem};
@@ -13,6 +13,7 @@ use crate::godot_api::inventory_manager::InventoryManager;
 use crate::godot_api::item_object::{Item, ItemResource};
 use crate::godot_entities::rigid_reactive_body3d::WorldObject;
 use crate::godot_entities::static_reactive_body_3d::StaticReactiveBody3D;
+use crate::multi_function_display::mfd_main::DisplayType;
 use crate::player_controller::player_frob_controller::PlayerController;
 
 #[derive(GodotClass)]
@@ -36,7 +37,7 @@ pub(crate) struct SpreadGunAmmo {
 impl SpreadGunAmmo {
     #[func(virtual)]
     pub fn get_spread(&self) -> Array<Vector2> {
-        return array![
+        array![
             Vector2::new(0.01, 0.01),
             Vector2::new(-0.01, -0.01),
             Vector2::new(0.01, -0.01),
@@ -95,23 +96,23 @@ pub struct SpreadGunItemComponent {
 }
 
 impl ItemEquipmentComponent for SpreadGunItemComponent {
-    fn initialize_equipment_scene(&mut self) -> (EquipmentComponent, Option<Gd<Control>>) {
+    fn initialize_equipment_scene(&mut self) -> (EquipmentComponent, DisplayType) {
         let mut gun_scene = self.data.bind().gun_scene.as_ref().unwrap().instantiate().unwrap().cast::<SpreadGun>();
         unsafe {
             gun_scene.bind_mut().eq_component = Some(self as *mut SpreadGunItemComponent);
         }
-        let mut ui_scene = self.data.bind().ui_scene.as_ref().unwrap().instantiate().unwrap().cast::<GunDisplay>();
-        unsafe {
-            ui_scene.bind_mut().eq_component = Some(self as *mut SpreadGunItemComponent);
-        }
-        let on_shoot = ui_scene.callable("on_shoot");
-        gun_scene.connect("shoot".into(), on_shoot);
-        let on_reloaded = ui_scene.callable("on_reloaded");
-        gun_scene.connect("reloaded".into(), on_reloaded);
-        let on_status_changed = ui_scene.callable("on_gun_status_changed");
-        gun_scene.connect("gun_status_changed".into(), on_status_changed);
+        // let mut ui_scene = self.data.bind().ui_scene.as_ref().unwrap().instantiate().unwrap().cast::<GunDisplay>();
+        // unsafe {
+        //     ui_scene.bind_mut().eq_component = Some(self as *mut SpreadGunItemComponent);
+        // }
+        // let on_shoot = ui_scene.callable("on_shoot");
+        // gun_scene.connect("shoot".into(), on_shoot);
+        // let on_reloaded = ui_scene.callable("on_reloaded");
+        // gun_scene.connect("reloaded".into(), on_reloaded);
+        // let on_status_changed = ui_scene.callable("on_gun_status_changed");
+        // gun_scene.connect("gun_status_changed".into(), on_status_changed);
 
-        (EquipmentComponent::new(gun_scene.upcast::<Node3D>()), Some(ui_scene.upcast::<Control>()))
+        (EquipmentComponent::new(gun_scene.upcast::<Node3D>()), DisplayType::SpreadGunDisplay)
     }
 }
 
@@ -212,7 +213,7 @@ impl SpreadGun {
         };
 
         if let Ok(reactive_body) = collider.try_to::<Gd<StaticReactiveBody3D>>() {
-            let act_react = reactive_body.bind().act_react.as_ref().map(|r| r.clone())?;
+            let act_react = reactive_body.bind().act_react.clone()?;
             let mut context = create_context(self, collision.clone());
             context.set("reactor", reactive_body.clone());
             Some((ammo.bind().bullet_act_react.clone().unwrap(), act_react, context))
@@ -301,6 +302,9 @@ impl SpreadGun {
     #[signal]
     fn gun_status_changed(new_status: GString);
 
+    #[signal]
+    fn taken_off();
+
     #[func]
     fn reset_status(&mut self, _a_name: StringName) {
         self.base_mut().emit_signal("gun_status_changed".into(), &[GString::default().to_variant()]);
@@ -319,7 +323,17 @@ impl SpreadGun {
     #[func]
     fn on_takeoff_animation_finished(&mut self, _a_name: Variant) {
         self.item.take().unwrap().emit_signal("taken_off".into(), &[]);
+        self.base_mut().emit_signal("taken_off".into(), &[]);
+        GameSys::singleton().emit_signal("ui_item_taken_off".into(), &[]);
         self.base_mut().queue_free();
+    }
+
+    #[func]
+    fn take_off(&mut self) {
+        self.base_mut().emit_signal("gun_status_changed".into(), &["taking off".to_variant()]);
+        let on_animation_finished = self.base().callable("on_takeoff_animation_finished");
+        self.animation_player.connect_ex("animation_finished".into(), on_animation_finished).flags(CONNECT_ONE_SHOT + CONNECT_DEFERRED).done();
+        self.animation_player.play_backwards_ex().name("prepare".into()).done();
     }
 }
 
@@ -331,10 +345,19 @@ impl Equipment for SpreadGun {
     }
 
     fn take_off(&mut self) {
-        self.base_mut().emit_signal("gun_status_changed".into(), &["taking off".to_variant()]);
-        let on_animation_finished = self.base().callable("on_takeoff_animation_finished");
-        self.animation_player.connect_ex("animation_finished".into(), on_animation_finished).flags(CONNECT_ONE_SHOT + CONNECT_DEFERRED).done();
-        self.animation_player.play_backwards_ex().name("prepare".into()).done();
+        if self.animation_player.is_playing() {
+            // take off after animation stops playing
+            let callable = Callable::from_fn("take_off", |args: &[&Variant]| {
+                let mut iter = args.iter();
+                let (Some(_animation_name), Some(base)) = (iter.next(), iter.next()) else {return Err(());};
+                let Ok(mut spreadgun) = base.try_to::<Gd<SpreadGun>>() else {return Err(());};
+                spreadgun.bind_mut().take_off();
+                Ok(Variant::nil())
+            }).bindv(varray![self.base().clone().to_variant()]);
+            self.animation_player.connect_ex("animation_finished".into(), callable).flags(CONNECT_DEFERRED + CONNECT_ONE_SHOT).done();
+            return;
+        }
+        self.take_off();
     }
 
     fn activate(&mut self) {
@@ -355,5 +378,30 @@ impl Equipment for SpreadGun {
 
     fn reload(&mut self) {
         self.reload();
+    }
+
+    fn point_down(&mut self) {
+        self.animation_player.play_ex().name("point_down".into()).done();
+    }
+
+    fn point_up(&mut self) {
+        self.animation_player.play_backwards_ex().name("point_down".into()).done();
+    }
+
+    fn connect_component_to_ui(&mut self, gun_ui: Gd<Control>) {
+        let on_shoot = gun_ui.callable("on_shoot");
+        self.base_mut().connect("shoot".into(), on_shoot);
+        let on_reloaded = gun_ui.callable("on_reloaded");
+        self.base_mut().connect("reloaded".into(), on_reloaded);
+        let on_status_changed = gun_ui.callable("on_gun_status_changed");
+        self.base_mut().connect("gun_status_changed".into(), on_status_changed);
+        let on_gun_taken_off = gun_ui.callable("on_gun_taken_off");
+        self.base_mut().connect("taken_off".into(), on_gun_taken_off);
+
+        let mut gun_display = gun_ui.cast::<GunDisplay>();
+        unsafe {
+            gun_display.bind_mut().eq_component = Some(self.eq_component.unwrap() as *mut SpreadGunItemComponent);
+        }
+        gun_display.bind_mut().init_with_component();
     }
 }
