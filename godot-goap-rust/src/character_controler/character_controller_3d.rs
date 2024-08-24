@@ -18,6 +18,8 @@ pub struct CharacterController3D {
     /// default gravity multiplier
     #[export]
     gravity_scale: f32,
+    #[export]
+    jump_force: f32,
     /// a direction with a desired speed multiplier
     #[var]
     direction: Vector3,
@@ -28,8 +30,18 @@ pub struct CharacterController3D {
 
 impl CharacterController3D {
     pub fn get_motion_params(&self) -> MovementParameters {
+        let jump_force = if let Some(previous_movement) = self.movement_data.as_ref() {
+            if previous_movement.grounded && !self.direction.y.is_zero_approx() {
+                self.jump_force * self.direction.y
+            } else {
+                0.0
+            }
+        } else {
+            0.0
+        };
         MovementParameters {
-            direction: self.direction,
+            direction: self.direction * Vector3::new(1.0, 0.0, 1.0),
+            jump_force,
             body: self.base().clone().upcast::<PhysicsBody3D>(),
             collision_shape: self.collision_shape.as_ref().unwrap().clone(),
             // check if caching an array and cloning it wouldn't be better choice than creating new array every single time
@@ -50,5 +62,7 @@ impl CharacterController3D {
     pub fn process_movement(&mut self, delta: f64) {
         let motion_params = self.get_motion_params();
         self.movement_data = process_movement(delta as f32, motion_params, self.movement_data.take());
+        let velocity = self.movement_data.as_ref().map(|md| md.velocity).unwrap_or(Vector3::ZERO);
+        self.base_mut().set_velocity(velocity);
     }
 }

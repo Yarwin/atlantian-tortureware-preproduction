@@ -1,11 +1,11 @@
 [gd_resource type="SpreadGunAmmo" load_steps=5 format=3 uid="uid://dbmuy4h4lr6ue"]
 
 [ext_resource type="ItemResource" uid="uid://oyv8e11fd1bm" path="res://src/items/debug/debug_item_1_resource.tres" id="1_bjalx"]
-[ext_resource type="ActDamageBash" uid="uid://cgtkiovkjvprl" path="res://src/items/debug/debug_item_spreadgun/new_act_damage_bash.tres" id="2_r4fee"]
+[ext_resource type="ActDamageStandard" uid="uid://cgtkiovkjvprl" path="res://src/items/debug/debug_item_spreadgun/new_act_damage_standard.tres" id="2_oim0m"]
 [ext_resource type="PackedScene" uid="uid://c2rjj2ug6mcnx" path="res://src/visuals/particles/trails/shotgun_trail/shotgun_bullet_trail.tscn" id="3_xha1o"]
 
 [sub_resource type="ActReactResource" id="ActReactResource_rj3x8"]
-emits = Array[Resource]([ExtResource("2_r4fee")])
+emits = Array[Resource]([ExtResource("2_oim0m")])
 
 [resource]
 accepted_ammo = ExtResource("1_bjalx")

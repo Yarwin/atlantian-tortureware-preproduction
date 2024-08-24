@@ -77,9 +77,12 @@ fn update_shapecast(player_frob_controller: &mut PlayerController, frob_data: &m
             frobbed.disconnect("tree_exiting".into(), on_shapecasted_freed.clone());
         }
         react_area.connect_ex("tree_exiting".into(), on_shapecasted_freed).flags(CONNECT_ONE_SHOT).done();
-        let name: GString = react_area.bind_mut().get_name();
+        if !message.is_empty() {
+            let name: GString = react_area.bind_mut().get_name();
+            GameSys::singleton().emit_signal("frob_prompt_updated".into(), &[message.to_variant(), progress.to_variant(), name.to_variant()]);
+        }
+        // cache colliding react area even if it has no interactions
         frob_info.frobbed = Some(react_area);
-        GameSys::singleton().emit_signal("frob_prompt_updated".into(), &[message.to_variant(), progress.to_variant(), name.to_variant()]);
     } else if frob_info.frobbed.is_some() {
         let mut frob_option = Some(frob_info);
         stop_frobbing_and_disconnect(player_frob_controller, &mut frob_option);
@@ -346,8 +349,14 @@ impl PlayerState for WeaponState {
         match event {
             PlayerEvent::ColliderFreed
             | PlayerEvent::GrabbedReleased
-            | PlayerEvent::ItemDropped
-            | PlayerEvent::OldItemTakenOff => {},
+            | PlayerEvent::ItemDropped => {},
+            PlayerEvent::OldItemTakenOff => {
+                if player_frob_controller.active_item.is_none() {
+                    return self
+                }
+                let new_item = player_frob_controller.active_item.take().unwrap();
+                return equip_item(player_frob_controller, new_item, self.frob_info.take());
+            }
             PlayerEvent::ShapeCastUpdateEvent => update_shapecast(player_frob_controller, &mut self.frob_info),
             PlayerEvent::ShapeCastObjectFreed => {
                 let Some(frob_data) = self.frob_info.as_mut() else {return self};

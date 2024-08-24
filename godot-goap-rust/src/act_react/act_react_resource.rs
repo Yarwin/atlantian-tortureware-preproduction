@@ -1,7 +1,6 @@
 use std::ops::Index;
 use godot::prelude::*;
 use crate::act_react::stimulis::Stimuli;
-use crate::act_react::stimulis::Stimuli::PlayerFrob;
 
 
 /// todo – automate it with some kind of macro
@@ -26,11 +25,7 @@ pub struct ActReactResource {
     #[export]
     pub combine: Array<Gd<Resource>>,
     #[export]
-    pub damage_bash: Array<Gd<Resource>>,
-    #[export]
-    pub damage_pierce: Array<Gd<Resource>>,
-    #[export]
-    pub damage_slash: Array<Gd<Resource>>,
+    pub damage_standard: Array<Gd<Resource>>,
     #[export]
     pub electrify: Array<Gd<Resource>>,
     #[export]
@@ -50,9 +45,13 @@ pub struct ActReactResource {
     #[export]
     pub poison: Array<Gd<Resource>>,
     #[export]
+    pub parry: Array<Gd<Resource>>,
+    #[export]
     pub repair: Array<Gd<Resource>>,
     #[export]
     pub slime: Array<Gd<Resource>>,
+    #[export]
+    pub splash_damage: Array<Gd<Resource>>,
     #[export]
     pub stun: Array<Gd<Resource>>,
     #[export]
@@ -65,11 +64,11 @@ pub struct ActReactResource {
 
 impl ActReactResource {
     pub fn get_playerfrob_display(&self) -> GString {
-        if let Some(mut act_with_display) = self[PlayerFrob].iter_shared().find(|a| a.has_method("get_react_display".into())) {
+        if let Some(mut act_with_display) = self[Stimuli::PlayerFrob].iter_shared().find(|a| a.has_method("get_react_display".into())) {
             return act_with_display.call("get_react_display".into(), &[]).to::<GString>();
         } else {
             for meta in self.metaproperties.iter_shared() {
-                if let Some(mut act_with_display) = meta.bind()[PlayerFrob].iter_shared().find(|a| a.has_method("get_react_display".into())) {
+                if let Some(mut act_with_display) = meta.bind()[Stimuli::PlayerFrob].iter_shared().find(|a| a.has_method("get_react_display".into())) {
                     return act_with_display.call("get_react_display".into(), &[]).to::<GString>();
                 }
             }
@@ -101,25 +100,26 @@ impl Index<Stimuli> for ActReactResource {
 
     fn index(&self, index: Stimuli) -> &Self::Output {
         match index {
-            Stimuli::Cold => {&self.cold}
-            Stimuli::Combine => {&self.combine}
-            Stimuli::DamageBash => {&self.damage_bash }
-            Stimuli::DamagePierce => {&self.damage_pierce }
-            Stimuli::DamageSlash => {&self.damage_slash }
-            Stimuli::Electrify => {&self.electrify}
-            Stimuli::Fire => {&self.fire}
-            Stimuli::Frob => {&self.frob}
-            Stimuli::Grab => {&self.grab}
-            Stimuli::Heat => {&self.heat}
-            Stimuli::Kick => {&self.kick}
-            Stimuli::Pain => {&self.pain}
-            Stimuli::PlayerFrob => {&self.player_frob}
-            Stimuli::Poison => {&self.poison}
-            Stimuli::Repair => {&self.repair}
-            Stimuli::Slime => {&self.slime}
-            Stimuli::Stun => {&self.stun}
-            Stimuli::Toxic => {&self.toxic}
-            Stimuli::Water => {&self.water}
+            Stimuli::Cold => &self.cold,
+            Stimuli::Combine => &self.combine,
+            Stimuli::DamageStandard => &self.damage_standard,
+            Stimuli::Electrify => &self.electrify,
+            Stimuli::Fire => &self.fire,
+            Stimuli::Frob => &self.frob,
+            Stimuli::Grab => &self.grab,
+            Stimuli::Heat => &self.heat,
+            Stimuli::Kick => &self.kick,
+            Stimuli::Pain => &self.pain,
+            Stimuli::PlayerFrob => &self.player_frob,
+            Stimuli::Poison => &self.poison,
+            Stimuli::Parry => &self.parry,
+            Stimuli::Repair => &self.repair,
+            Stimuli::Slime => &self.slime,
+            Stimuli::SplashDamage => &self.splash_damage,
+            Stimuli::Stun => &self.stun,
+            Stimuli::Toxic => &self.toxic,
+            Stimuli::Water => &self.water,
+            Stimuli::MAX => unreachable!()
         }
     }
 }

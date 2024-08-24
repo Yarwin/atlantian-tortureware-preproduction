@@ -46,37 +46,6 @@ pub struct GodotAIManager {
 #[godot_api]
 impl IObject for GodotAIManager {}
 
-// #[godot_api]
-// impl INode for GodotAIManager {
-//
-//     fn enter_tree(&mut self) {
-//         Engine::singleton()
-//             .register_singleton(GodotAIManager::name(), self.base().clone().upcast::<Object>());
-//     }
-//
-//     fn exit_tree(&mut self) {
-//         Engine::singleton().unregister_singleton(GodotAIManager::name());
-//         if let Some(sender) = self.sender.take() {
-//             let _ = sender.send(ThinkerPlanEvent::Terminate);
-//         }
-//         if let Some(thread) = self.thread.take() {
-//             let _ = thread.join();
-//         }
-//     }
-//
-//     /// starts a Thinker/planner thread and registers all the API consumers
-//     fn ready(&mut self) {
-//         let (process_sender, process_receiver) = mpsc::channel();
-//         let (update_sender, update_receiver) = mpsc::channel();
-//         self.sender = Some(process_sender);
-//         self.receiver = Some(update_receiver);
-//         // spawns a new thread ready to accept events
-//         self.thread = Some(thread::spawn(|| {
-//             process_plan(process_receiver, update_sender);
-//         }));
-//         self.base_mut().call_deferred("post_ready".into(), &[]);
-//     }
-// }
 
 #[godot_api]
 impl GodotAIManager {

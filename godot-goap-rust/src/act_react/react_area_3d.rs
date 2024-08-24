@@ -70,7 +70,7 @@ pub struct ActReactArea3D {
     #[export(flags = (Contact = 1, Continuous = 2) )]
     propagation_mode: PropagationMode,
     #[export]
-    pub target: Option<Gd<Node3D>>,
+    pub target: Option<Gd<Node>>,
     #[export]
     pub act_react: Option<Gd<ActReactResource>>,
     base: Base<Area3D>
@@ -125,10 +125,13 @@ impl ActReactArea3D {
             .get_singleton("ActReactExecutor".into())
             .unwrap()
             .cast::<ActReactExecutor>();
-        let reactor = self.target.clone().unwrap_or(self.base().clone().upcast::<Node3D>());
-        let context = dict! {
+        let reactor = self.target.clone().unwrap_or(self.base().clone().upcast::<Node>());
+        let mut context = dict! {
             "reactor": reactor
         };
+        if let Some(a) = actor.bind().target.as_ref().map(|a| a.clone()) {
+            let _ = context.insert("actor", a);
+        }
         act_react_executor.bind_mut().react(act, react, context);
     }
 
@@ -136,6 +139,6 @@ impl ActReactArea3D {
     pub fn react(&self, act: Gd<ActReactResource>, actor_context: Dictionary) {
         let Some(react) = self.act_react.clone() else {return;};
         let mut act_react_executor = ActReactExecutor::singleton();
-        act_react_executor.bind_mut().react(act, react, dict!{});
+        act_react_executor.bind_mut().react(act, react, actor_context);
     }
 }

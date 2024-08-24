@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://d1xergqwe0pgj"]
+
+[ext_resource type="Script" path="res://src/visuals/particles/hit_effects/blood_splatter/blood_splatter_manager.gd" id="1_cv8el"]
+
+[node name="BloodSplatterManager" type="Node3D"]
+script = ExtResource("1_cv8el")

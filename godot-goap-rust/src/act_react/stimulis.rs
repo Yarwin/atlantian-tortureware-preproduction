@@ -3,13 +3,12 @@ use godot::prelude::*;
 #[derive(
     Default, Export, Var, GodotConvert, Debug, Clone, Eq, PartialEq, Copy
 )]
+#[repr(usize)]
 #[godot(via = i32)]
 pub enum Stimuli {
     Cold,
     Combine,
-    DamageBash,
-    DamagePierce,
-    DamageSlash,
+    DamageStandard,
     Electrify,
     Fire,
     #[default]
@@ -20,9 +19,12 @@ pub enum Stimuli {
     Pain,
     PlayerFrob,
     Poison,
+    Parry,
     Repair,
     Slime,
+    SplashDamage,
     Stun,
     Toxic,
     Water,
+    MAX
 }

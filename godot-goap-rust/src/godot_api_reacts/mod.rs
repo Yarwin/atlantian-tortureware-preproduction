@@ -10,6 +10,7 @@ mod combine;
 mod pickup;
 mod grab;
 pub mod fly;
+mod apply_damage;
 
 
 pub fn register_reacts_dispatch() {
@@ -19,4 +20,5 @@ pub fn register_reacts_dispatch() {
     register_effect_builder::<print_message::PrintMessageGameEffect>(print_message::PrintMessageGameEffect::class_name().to_gstring());
     register_effect_builder::<grab::GrabGameEffect>(grab::GrabGameEffect::class_name().to_gstring());
     register_effect_builder::<fly::FlyGameEffect>(fly::FlyGameEffect::class_name().to_gstring());
+    register_effect_builder::<apply_damage::ApplyDamageGameEffect>(apply_damage::ApplyDamageGameEffect::class_name().to_gstring());
 }

@@ -246,6 +246,6 @@ impl PlayerController {
     #[func]
     fn on_old_item_taken_off(&mut self) {
         let state = self.state.take().unwrap_or(DefaultState::new_boxed());
-        state.handle_event(self, PlayerEvent::OldItemTakenOff);
+        self.state = Some(state.handle_event(self, PlayerEvent::OldItemTakenOff));
     }
 }

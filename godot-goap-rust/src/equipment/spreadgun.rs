@@ -227,7 +227,7 @@ impl SpreadGun {
         } else if let Ok(act_react_area) = collider.try_to::<Gd<ActReactArea3D>>() {
             let act_react = act_react_area.bind().act_react.clone()?;
             let mut context = create_context(self, collision.clone());
-            context.set("reactor", act_react_area.bind().target.clone().unwrap_or(act_react_area.clone().upcast::<Node3D>()));
+            context.set("reactor", act_react_area.bind().target.clone().unwrap_or(act_react_area.clone().upcast::<Node>()));
             Some((ammo.bind().bullet_act_react.clone().unwrap(), act_react, context))
         } else {
             None

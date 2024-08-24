@@ -24,6 +24,7 @@ enum MovementType {
 #[derive(Debug)]
 pub struct MovementParameters {
     pub(crate) direction: Vector3,
+    pub(crate) jump_force: f32,
     pub(crate) body: Gd<PhysicsBody3D>,
     pub(crate) collision_shape: Gd<CollisionShape3D>,
     pub(crate) excluded_bodies: Option<Array<Rid>>,
@@ -44,7 +45,7 @@ pub fn process_movement(delta: f32, args: MovementParameters,  previous_movement
         let previous_direction = if previous_velocity.is_zero_approx() {
             Vector3::ZERO
         } else {
-            previous_velocity.normalized()
+            previous_velocity.normalized() * Vector3::new(1.0, 0.0, 1.0)
         };
         desired_motion = previous_direction * current_speed;
     }  else {
@@ -53,7 +54,11 @@ pub fn process_movement(delta: f32, args: MovementParameters,  previous_movement
     }
     if let Some(previous_mov) = previous_movement.as_ref() {
         if !previous_mov.grounded {
-            desired_motion += Vector3::DOWN * (ProjectSettings::singleton().get_setting("physics/3d/default_gravity".into()).to::<f32>() * args.gravity_scale)
+            desired_motion += Vector3::DOWN * (previous_mov.velocity.y + ProjectSettings::singleton().get_setting("physics/3d/default_gravity".into()).to::<f32>() * args.gravity_scale * delta);
+        } else if previous_mov.grounded && !args.jump_force.is_zero_approx() {
+            desired_motion += Vector3::UP * args.jump_force;
+        } else if previous_mov.grounded && previous_mov.velocity.y < 0. {
+                desired_motion.y = 0.0;
         }
     }
 

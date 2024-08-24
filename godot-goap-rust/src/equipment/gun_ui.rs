@@ -115,7 +115,6 @@ impl GunDisplay {
         self.eq_component = None;
         self.current_ammo = None;
         if let Some(mut tween) = self.status_tween.take() {
-            godot_print!("tween is kill");
             tween.kill();
         }
         self.gun_status_label.set_text(GString::default());

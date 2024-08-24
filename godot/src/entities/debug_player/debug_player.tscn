@@ -45,7 +45,9 @@ deceleration = 0.75
 speed = 6.0
 acceleration = 0.75
 gravity_scale = 1.0
+jump_force = 4.0
 script = ExtResource("1_evmxd")
+jump_gravity_scale = 0.85
 
 [node name="PlayerController" type="PlayerController" parent="." node_paths=PackedStringArray("inventories") groups=["player_controller"]]
 inventories = [NodePath("../InventoryAgent"), NodePath("../InventoryAgent2"), NodePath("../InventoryAgent3")]

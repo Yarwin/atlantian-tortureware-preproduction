@@ -70,11 +70,11 @@ pub enum Event {
 }
 
 #[derive(Debug, EnumDiscriminants)]
-#[strum_discriminants(name(WMStimuliType))]
+#[strum_discriminants(name(WMAIStimuliType))]
 pub enum AIStimuli {
     /// visible character stimuli
     Character(InstanceId, Option<Vector3>),
-    Damage { amount: f64, direction: Vector3 },
+    Damage { amount: f64, direction: Vector3, damager: InstanceId },
 }
 
 impl Eq for AIStimuli {}
@@ -145,9 +145,9 @@ impl WorkingMemoryFact {
                     let WMProperty::Event(e) = &self.f_type else {return false};
                     if WMEventType::from(e) != *e_type {return false}
                 }
-                FactQueryCheck::Stimuli(s_type) => {
+                FactQueryCheck::AIStimuli(s_type) => {
                     let WMProperty::AIStimuli(s) = &self.f_type else {return false};
-                    if WMStimuliType::from(s) != *s_type {return false}
+                    if WMAIStimuliType::from(s) != *s_type {return false}
                 }
                 FactQueryCheck::Match(wmfact_type) => {
                     if wmfact_type != &self.f_type {
@@ -165,6 +165,7 @@ pub struct WorkingMemory {
     clean_threshold: usize,
     facts_list: VecDeque<WorkingMemoryFact>,
     /// a queue that holds a list of facts to remove/replace
+    /// todo - use binary heap instead?
     to_remove: VecDeque<usize>,
 }
 
@@ -295,7 +296,7 @@ impl WorkingMemory {
 
 pub enum FactQueryCheck {
     Match(WMProperty),
-    Stimuli(WMStimuliType),
+    AIStimuli(WMAIStimuliType),
     Node(WMNodeType),
     TaskType(WMTaskType),
     Knowledge(WMKnowledgeType),

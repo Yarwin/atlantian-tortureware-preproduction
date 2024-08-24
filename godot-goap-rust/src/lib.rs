@@ -19,6 +19,7 @@ mod utils;
 mod inventory_ui;
 mod equipment;
 mod multi_function_display;
+mod receiver;
 
 use godot::prelude::*;
 
