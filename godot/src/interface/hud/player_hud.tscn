@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://t0ys0mdppkhu"]
+[gd_scene load_steps=7 format=3 uid="uid://t0ys0mdppkhu"]
 
 [ext_resource type="Texture2D" uid="uid://d0j3333cmbnwh" path="res://assets/sprites/ui/inventory/frame.png" id="1_hls88"]
 [ext_resource type="Script" path="res://src/interface/hud/player_hud.gd" id="1_nfd7g"]
 [ext_resource type="PackedScene" uid="uid://dh2gosoaxl6gt" path="res://src/interface/hud/multi_function_display.tscn" id="2_0qi7e"]
 [ext_resource type="PackedScene" uid="uid://dpxjflejy405l" path="res://src/interface/inventory/grid_holder.tscn" id="3_hla68"]
 [ext_resource type="PackedScene" uid="uid://bf5q5islujj2v" path="res://src/interface/hud/interaction_prompt.tscn" id="5_0gv8g"]
+[ext_resource type="Script" path="res://src/interface/hud/log_display.gd" id="5_j1j5e"]
 
 [node name="PlayerHud" type="Control"]
 layout_mode = 3
@@ -87,6 +88,40 @@ inventory_group = &"player_inventory_right"
 item_holder = NodePath("../../../../../../CanvasLayer/ItemHolder")
 layout_mode = 2
 
+[node name="LogDisplay" type="Control" parent="PlayerStuff"]
+layout_mode = 3
+anchor_left = 0.3
+anchor_top = 0.025
+anchor_right = 0.7
+anchor_bottom = 0.25
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("5_j1j5e")
+
+[node name="Label" type="Label" parent="PlayerStuff/LogDisplay"]
+visible = false
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="Label2" type="Label" parent="PlayerStuff/LogDisplay"]
+visible = false
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="Label3" type="Label" parent="PlayerStuff/LogDisplay"]
+visible = false
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="Label4" type="Label" parent="PlayerStuff/LogDisplay"]
+visible = false
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 layer = 2
 
@@ -114,5 +149,9 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="InteractionPrompt" parent="WorldItemsDisplay/Control" instance=ExtResource("5_0gv8g")]
-visible = false
 layout_mode = 1
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0

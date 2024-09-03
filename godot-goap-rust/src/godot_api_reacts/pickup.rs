@@ -2,7 +2,7 @@ use godot::prelude::*;
 use godot::classes::{Resource};
 use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
 use crate::act_react::game_effect_builder::GameEffectInitializer;
-use crate::godot_api::gamesys::GameSystem;
+use crate::godot_api::gamesys::{GameSys, GameSystem};
 use crate::godot_api::inventory_manager::InventoryManager;
 use crate::godot_api::item_object::Item;
 use crate::inventory::inventory_item::StackResult;
@@ -48,7 +48,7 @@ pub struct PickupItem {
 }
 
 impl PickupItem {
-    fn try_stack_item(&mut self, item: Gd<Item>) -> Result<EffectResult, Gd<Item>> {
+    fn try_stack_item(&mut self, item: Gd<Item>, success_message: &String) -> Result<EffectResult, Gd<Item>> {
         let mut inventory_manager = InventoryManager::singleton();
         let potential_inventory_data = {
             let item_bind = item.bind();
@@ -60,6 +60,7 @@ impl PickupItem {
                 None
             }
         };
+
         let Some(stack_item_data) = potential_inventory_data else {return Err(item)};
 
         for inventory_id in self.inventories_ids.iter_shared() {
@@ -78,6 +79,7 @@ impl PickupItem {
                         if let Some(inventory_agent) = inventory_agent.as_mut() {
                             inventory_agent.emit_signal("stack_updated".into(), &[other_item.to_variant()]);
                         }
+
                         return Ok(EffectResult::Free);
                     }
                 }
@@ -102,10 +104,46 @@ impl PickupItem {
 impl GameEffect for PickupItem {
     fn execute(&mut self) -> EffectResult {
         let mut item = self.item.take().unwrap();
-        match self.try_stack_item(item) {
-            Ok(result) => return result,
+        let initial_stack = {
+            let item_bind = item.bind();
+            item_bind.inventory.as_ref().unwrap().stack
+        };
+        let generate_message = |item: &Gd<Item>, stack: u32| {
+            let item_bind = item.bind();
+            let item_name = item_bind.item_resource.as_ref().unwrap().bind().name.to_string();
+            if stack > 1 {
+                format!("Picked up {stack} {}", item_name)
+            } else {
+                format!("Picked up {}", item_name)
+            }
+        };
+        let success_message = generate_message(&item, initial_stack);
+        match self.try_stack_item(item, &success_message) {
+            Ok(result) => {
+                if result == EffectResult::Free {
+                    GameSys::singleton().emit_signal("new_log_message".into(), &[success_message.to_variant()]);
+                }
+                return result;
+            },
             Err(i) => {item = i}
         }
-        self.try_place_item(item).unwrap_or(EffectResult::Free)
+        match self.try_place_item(item) {
+            Ok(e) => {
+                GameSys::singleton().emit_signal("new_log_message".into(), &[success_message.to_variant()]);
+                e
+            },
+            Err(i) => {
+                let stack_diff = {
+                    let item_bind = i.bind();
+                    initial_stack - item_bind.inventory.as_ref().unwrap().stack
+                };
+
+                if stack_diff != 0 {
+                    let partial_success_message = generate_message(&i, stack_diff);
+                    GameSys::singleton().emit_signal("new_log_message".into(), &[partial_success_message.to_variant()]);
+                }
+                EffectResult::Free
+            }
+        }
     }
 }

@@ -2,7 +2,7 @@ use godot::prelude::*;
 use crate::inventory::inventory_item_data::InventoryItemData;
 
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum StackResult {
     WrongType,
     NoChange,

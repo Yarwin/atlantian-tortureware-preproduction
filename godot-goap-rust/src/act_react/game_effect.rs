@@ -13,6 +13,19 @@ pub enum EffectResult {
     Failed,
 }
 
+impl PartialEq for EffectResult {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (EffectResult::Free, EffectResult::Free) => true,
+            (EffectResult::Revert(_), EffectResult::Revert(_)) => true,
+            (EffectResult::Failed, EffectResult::Failed) => true,
+            (_, _) => false
+        }
+    }
+}
+
+impl Eq for EffectResult {}
+
 pub type GameEffectDispatch = fn(Gd<Object>, fn(&mut dyn GameEffect) -> EffectResult) -> EffectResult;
 
 #[derive(Debug)]

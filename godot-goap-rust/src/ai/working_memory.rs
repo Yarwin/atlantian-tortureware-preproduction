@@ -1,12 +1,14 @@
 use godot::prelude::*;
 use std::collections::VecDeque;
 use std::time::SystemTime;
+use serde::{Deserialize, Serialize};
 use strum_macros::EnumDiscriminants;
+use crate::receiver::damage_receptor_component::ReceivedDamage;
 
 /// AIWorking memory is a central place to store the AI's observations about the world.
 /// AISensors and AIGoals publish and retrieve data to/from AIWorkingMemory to make decisions.
 
-#[derive(Debug, EnumDiscriminants)]
+#[derive(Debug, EnumDiscriminants, Clone)]
 #[strum_discriminants(name(WMKnowledgeType))]
 pub enum Knowledge {
     Invalid,
@@ -26,23 +28,25 @@ impl PartialEq for Knowledge {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
+#[derive(Debug, PartialEq, Eq, EnumDiscriminants, Clone)]
 #[strum_discriminants(name(WMDesireType))]
+#[strum_discriminants(derive(Serialize, Deserialize))]
 pub enum Desire {
     Invalid,
     Stun,
     Stagger,
     Surprise,
+    Death
 }
 
-#[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
+#[derive(Debug, PartialEq, Eq, EnumDiscriminants, Clone)]
 #[strum_discriminants(name(WMTaskType))]
 pub enum Task {
     Cover,
     Advance,
 }
 
-#[derive(Debug, EnumDiscriminants)]
+#[derive(Debug, EnumDiscriminants, Clone)]
 #[strum_discriminants(name(WMNodeType))]
 pub enum Node {
     Patrol {
@@ -63,18 +67,18 @@ impl PartialEq for Node {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
+#[derive(Clone, Debug, PartialEq, Eq, EnumDiscriminants)]
 #[strum_discriminants(name(WMEventType))]
 pub enum Event {
     AnimationCompleted(String)
 }
 
-#[derive(Debug, EnumDiscriminants)]
+#[derive(Clone, Debug, EnumDiscriminants)]
 #[strum_discriminants(name(WMAIStimuliType))]
 pub enum AIStimuli {
     /// visible character stimuli
     Character(InstanceId, Option<Vector3>),
-    Damage { amount: f64, direction: Vector3, damager: InstanceId },
+    Damage(ReceivedDamage),
 }
 
 impl Eq for AIStimuli {}
@@ -93,7 +97,7 @@ impl PartialEq for AIStimuli {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, EnumDiscriminants)]
+#[derive(Clone, Debug, PartialEq, Eq, EnumDiscriminants)]
 #[strum_discriminants(name(WorkingMemoryFactTypeKey))]
 pub enum WMProperty {
     AIStimuli(AIStimuli),
@@ -294,6 +298,7 @@ impl WorkingMemory {
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum FactQueryCheck {
     Match(WMProperty),
     AIStimuli(WMAIStimuliType),
@@ -304,7 +309,7 @@ pub enum FactQueryCheck {
     Event(WMEventType)
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct FactQuery {
     pub checks: Vec<FactQueryCheck>,
 }

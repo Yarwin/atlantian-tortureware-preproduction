@@ -156,10 +156,12 @@ pub fn rotate(
     };
     let ground_offset = (character.get_global_transform().origin * Vector3::UP).y;
     let lateral_plane = Plane::new(Vector3::UP, ground_offset);
+    let target_projected = lateral_plane.project(target);
+    if target_projected.is_zero_approx() {return;}
     let look_at_transform =
         character
             .get_transform()
-            .looking_at(lateral_plane.project(target), Vector3::UP, true);
+            .looking_at(target_projected, Vector3::UP, true);
     let new_transform = character
         .get_transform()
         .interpolate_with(&look_at_transform, rotation_speed * delta as f32);

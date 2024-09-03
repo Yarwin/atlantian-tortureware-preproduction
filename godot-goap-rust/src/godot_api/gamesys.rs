@@ -43,6 +43,10 @@ impl GameSys {
     fn frob_progress_updated(progress: f64);
     #[signal]
     fn frob_description_deactivated();
+    #[signal]
+    fn new_log_message(message: GString);
+    #[signal]
+    fn new_debug_info(info: GString);
 }
 
 impl GameSys {

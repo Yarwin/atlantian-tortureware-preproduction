@@ -42,5 +42,10 @@ AnimationsData(
         name: "Idle",
         mode: Timed(0.5)
     ),
+    hurt: AnimationProps(
+        tree_name: "Hurt",
+        name: "Hurt",
+        mode: OneShot
+    )
     
 )

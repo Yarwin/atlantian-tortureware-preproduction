@@ -30,6 +30,6 @@ func activate_splatter(pos: Vector3, normal: Vector3):
 	splatter.restart()
 
 
-func _on_damage_taken(damage: float, pos: Vector3, normal: Vector3):
+func _on_damage_taken(_damage: float, pos: Vector3, normal: Vector3):
 	self.activate_splatter(pos, normal)
 	

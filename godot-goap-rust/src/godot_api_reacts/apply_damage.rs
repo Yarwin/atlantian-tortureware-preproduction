@@ -10,8 +10,13 @@ pub struct ApplyDamageGameEffect {
     #[export(range = (0.0, 2.0))]
     #[init(default = 1.0)]
     vulnerability: f64,
+    #[export(range = (0.0, 2.0))]
+    #[init(default = 1.0)]
+    pain_vulnerability: f64,
     #[export]
     flat_reduction: f64,
+    #[export]
+    flat_pain_reduction: f64,
     base: Base<Resource>
 }
 
@@ -23,6 +28,7 @@ impl GameEffectInitializer for ApplyDamageGameEffect {
         new.extend_dictionary(context.clone(), true);
         let Ok(mut damage) = ReceivedDamage::try_from_godot(new) else {return None};
         damage.strength = damage.strength * self.vulnerability - self.flat_reduction;
+        damage.pain = damage.pain * self.pain_vulnerability - self.flat_pain_reduction;
         let effect = ApplyDamage {
             reactor: Some(reactor),
             damage: Some(damage)

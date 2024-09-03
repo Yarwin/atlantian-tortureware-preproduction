@@ -19,12 +19,24 @@ pub struct ItemResource {
 #[class(init, base=Object)]
 pub struct Item {
     pub id: u32,
+    pub item_resource: Option<Gd<ItemResource>>,
     // responsible for managing inventory interactions
     pub inventory: Option<InventoryItem>,
     // responsible for managing equipment data (ammo count and whatnot) & creating equipment scenes for the player
     pub equip: Option<Box<dyn ItemEquipmentComponent>>,
     #[base]
     pub(crate) base: Base<Object>
+}
+
+impl Item {
+    pub fn get_item_display(&self) -> GString {
+        let item_name = self.item_resource.as_ref().unwrap().bind().name.to_string();
+        let Some(inventory_component) = self.inventory.as_ref() else {return GString::from(item_name)};
+        if inventory_component.stack > 1 {
+            return GString::from(format!("{} {item_name}", inventory_component.stack));
+        }
+        GString::from(item_name)
+    }
 }
 
 

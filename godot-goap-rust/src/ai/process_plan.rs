@@ -268,15 +268,18 @@ fn process_goal_and_plan(event: ThinkerPlanEvent) {
         world_state,
         working_memory,
     };
+    let should_invalidate = thinker_process_view.blackboard.invalidate_plan;
+    let current_goal = thinker_process_view.blackboard.current_goal;
     let current_action = thinker_process_view.blackboard.current_action();
     let action_arguments = action_arguments!(thinker_process_view);
-    let should_check_for_new_goal = current_action
+    let should_check_for_new_goal = should_invalidate || (current_action
         .map(|index| thinker_process_view.actions[index].is_action_interruptible(&action_arguments))
-        .unwrap_or(true) || thinker_process_view.blackboard.invalidate_plan;
+        .unwrap_or(true) && current_goal.map(|index| thinker_process_view.goals[index].is_interruptible).unwrap_or(true));
     if should_check_for_new_goal {
         if let Some((new_p, new_g)) = update_plan(&mut thinker_process_view) {
             activate_plan(&mut thinker_process_view, new_p, new_g);
         }
+        thinker_process_view.blackboard.invalidate_plan = false;
     }
 
     let current_action: Option<usize> = thinker_process_view.blackboard.current_action();

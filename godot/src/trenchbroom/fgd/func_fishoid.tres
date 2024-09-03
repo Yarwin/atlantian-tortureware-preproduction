@@ -20,7 +20,7 @@ class_properties = {}
 class_property_descriptions = {}
 meta_properties = {
 "color": Color(0.8, 0.8, 0.8, 1),
-"model": "{\"path\": \"models/fishoid/Fishoid.glb\", \"scale\": 1 }",
+"model": "{\"path\": \"trenchbroom_models/fishoid/Fishoid.glb\", \"scale\": 32 }",
 "size": AABB(-16, -32, -16, 16, 32, 16)
 }
 node_class = ""

@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="GodotGoap"
+config/name="Atlantian Tortureware"
 run/main_scene="res://testing_ground_main.tscn"
 config/use_custom_user_dir=true
 config/custom_user_dir_name="func_godot"
@@ -31,6 +31,7 @@ enabled=PackedStringArray("res://addons/func_godot/plugin.cfg")
 folder_colors={
 "res://addons/": "gray",
 "res://assets/": "yellow",
+"res://data/": "red",
 "res://gdext/": "gray",
 "res://src/interface/": "green",
 "res://src/items/": "yellow",

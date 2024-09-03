@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_it88m"]
 [ext_resource type="Resource" uid="uid://bf3ov0bdmdrs8" path="res://src/trenchbroom/config/map_setting.tres" id="3_ps11r"]
 [ext_resource type="PackedScene" uid="uid://qaegqhcgvgj" path="res://src/entities/fishoid/Fishoid.tscn" id="4_3lnw6"]
-[ext_resource type="Material" uid="uid://cyo7sagj5hk5u" path="res://assets/3D/textures/floor_stone_2/floor_stone_2.tres" id="4_wwdct"]
+[ext_resource type="Material" uid="uid://dq5vnqjcnwi7f" path="res://assets/3D/textures/floor_stone_2/floor_stone_2.tres" id="4_wwdct"]
 [ext_resource type="PackedScene" uid="uid://dotbqppqecvi3" path="res://src/ai/ai_nodes/patrol_node.tscn" id="5_qegyv"]
 [ext_resource type="Script" path="res://src/entities/map_entities/func_button/func_button.gd" id="5_xwr30"]
 [ext_resource type="Texture2D" uid="uid://cyg2snr1w5xw5" path="res://addons/func_godot/textures/default_texture.png" id="6_t8p6o"]
@@ -301,7 +301,7 @@ item_data = ExtResource("11_sgqhp")
 amount = 4
 item_data = ExtResource("12_382ac")
 
-[node name="Node" type="Node3D"]
+[node name="World" type="Node3D"]
 metadata/_edit_lock_ = true
 
 [node name="DecalNodePlacer" parent="." node_paths=PackedStringArray("world_node") instance=ExtResource("1_a0vl2")]
@@ -316,48 +316,6 @@ light_color = Color(1, 0.941878, 0.661889, 1)
 light_energy = 0.75
 light_indirect_energy = 0.75
 shadow_enabled = true
-
-[node name="AINodes" type="Node3D" parent="."]
-
-[node name="PatrolNode1" parent="AINodes" node_paths=PackedStringArray("dependency", "orientation_node") instance=ExtResource("5_qegyv")]
-dependency = NodePath("../PatrolNode2")
-orientation_node = NodePath("Marker3D")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.3747, 0, -10.011)
-
-[node name="Marker3D" type="Marker3D" parent="AINodes/PatrolNode1"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.35777, 0, -0.960464)
-
-[node name="PatrolNode2" parent="AINodes" node_paths=PackedStringArray("dependency", "orientation_node") instance=ExtResource("5_qegyv")]
-dependency = NodePath("../PatrolNode6")
-orientation_node = NodePath("Marker3D")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.8638, 0, 10.8893)
-
-[node name="Marker3D" type="Marker3D" parent="AINodes/PatrolNode2"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.452125, 0, -5.03518)
-
-[node name="PatrolNode6" parent="AINodes" node_paths=PackedStringArray("dependency", "orientation_node") instance=ExtResource("5_qegyv")]
-dependency = NodePath("../PatrolNode3")
-orientation_node = NodePath("PatrolOrient6")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.56003, 0, 10.1347)
-
-[node name="PatrolOrient6" type="Marker3D" parent="AINodes/PatrolNode6"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.25838, 0, 0.589765)
-
-[node name="PatrolNode3" parent="AINodes" node_paths=PackedStringArray("dependency", "orientation_node") instance=ExtResource("5_qegyv")]
-dependency = NodePath("../PatrolNode4")
-orientation_node = NodePath("PatrolOrient4")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.17286, 0, -10.4503)
-
-[node name="PatrolOrient4" type="Marker3D" parent="AINodes/PatrolNode3"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.67249, 0, 0)
-
-[node name="PatrolNode4" parent="AINodes" node_paths=PackedStringArray("dependency", "orientation_node") instance=ExtResource("5_qegyv")]
-dependency = NodePath("../PatrolNode1")
-orientation_node = NodePath("PatrolOrient5")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.0663, 0, -3.56886)
-
-[node name="PatrolOrient5" type="Marker3D" parent="AINodes/PatrolNode4"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.03737, 0, 5.36075)
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_q63ym")
@@ -551,34 +509,78 @@ transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -5, 1.
 [node name="entity_12_Fishoid" parent="NavigationRegion3D/FuncGodotMap" instance=ExtResource("4_3lnw6")]
 transform = Transform3D(0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 9.5, 1.1875, -8.5)
 
-[node name="DebugPlayer" parent="." instance=ExtResource("10_75pgr")]
+[node name="Entities" type="Node3D" parent="."]
+
+[node name="DebugPlayer" parent="Entities" instance=ExtResource("10_75pgr")]
 speed = 4.5
 acceleration = 0.25
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.3636, 0.6875, 0.519017)
 
-[node name="DebugPickupItem" parent="." instance=ExtResource("10_3aifm")]
+[node name="DebugPickupItem" parent="Entities" instance=ExtResource("10_3aifm")]
 item_to_spawn = SubResource("ItemToSpawn_bxlrd")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.1943, 0.8675, -1.73158)
 
-[node name="DebugPickupItem2" parent="." instance=ExtResource("10_3aifm")]
+[node name="DebugPickupItem2" parent="Entities" instance=ExtResource("10_3aifm")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.1175, 2.16609, -1.73158)
 
-[node name="DebugPickupItem5" parent="." instance=ExtResource("10_3aifm")]
+[node name="DebugPickupItem5" parent="Entities" instance=ExtResource("10_3aifm")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.1212, 0.8675, -1.73158)
 
-[node name="DebugPickupItem6" parent="." instance=ExtResource("10_3aifm")]
+[node name="DebugPickupItem6" parent="Entities" instance=ExtResource("10_3aifm")]
 item_to_spawn = SubResource("ItemToSpawn_5tofa")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.5174, 0.8675, -1.73158)
 
-[node name="DebugPickupItem3" parent="." instance=ExtResource("10_3aifm")]
+[node name="DebugPickupItem3" parent="Entities" instance=ExtResource("10_3aifm")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.0947, 0.8675, -1.73158)
 
-[node name="DebugPickupItem4" parent="." instance=ExtResource("10_3aifm")]
+[node name="DebugPickupItem4" parent="Entities" instance=ExtResource("10_3aifm")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.3407, 0.8675, -1.73158)
 
-[node name="OtherDebugPickupItem" parent="." instance=ExtResource("10_3aifm")]
+[node name="OtherDebugPickupItem" parent="Entities" instance=ExtResource("10_3aifm")]
 item_to_spawn = SubResource("ItemToSpawn_rlpud")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.3407, 0.8675, -1.73158)
 
-[node name="DebugWorldObject" parent="." instance=ExtResource("14_0ij2f")]
+[node name="DebugWorldObject" parent="Entities" instance=ExtResource("14_0ij2f")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.0603, 1.39986, -0.602376)
+
+[node name="AINodes" type="Node3D" parent="Entities"]
+
+[node name="PatrolNode1" parent="Entities/AINodes" node_paths=PackedStringArray("dependency", "orientation_node") instance=ExtResource("5_qegyv")]
+dependency = NodePath("../PatrolNode2")
+orientation_node = NodePath("Marker3D")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.3747, 0, -10.011)
+
+[node name="Marker3D" type="Marker3D" parent="Entities/AINodes/PatrolNode1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.35777, 0, -0.960464)
+
+[node name="PatrolNode2" parent="Entities/AINodes" node_paths=PackedStringArray("dependency", "orientation_node") instance=ExtResource("5_qegyv")]
+dependency = NodePath("../PatrolNode6")
+orientation_node = NodePath("Marker3D")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.8638, 0, 10.8893)
+
+[node name="Marker3D" type="Marker3D" parent="Entities/AINodes/PatrolNode2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.452125, 0, -5.03518)
+
+[node name="PatrolNode6" parent="Entities/AINodes" node_paths=PackedStringArray("dependency", "orientation_node") instance=ExtResource("5_qegyv")]
+dependency = NodePath("../PatrolNode3")
+orientation_node = NodePath("PatrolOrient6")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.56003, 0, 10.1347)
+
+[node name="PatrolOrient6" type="Marker3D" parent="Entities/AINodes/PatrolNode6"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.25838, 0, 0.589765)
+
+[node name="PatrolNode3" parent="Entities/AINodes" node_paths=PackedStringArray("dependency", "orientation_node") instance=ExtResource("5_qegyv")]
+dependency = NodePath("../PatrolNode4")
+orientation_node = NodePath("PatrolOrient4")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.17286, 0, -10.4503)
+
+[node name="PatrolOrient4" type="Marker3D" parent="Entities/AINodes/PatrolNode3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.67249, 0, 0)
+
+[node name="PatrolNode4" parent="Entities/AINodes" node_paths=PackedStringArray("dependency", "orientation_node") instance=ExtResource("5_qegyv")]
+dependency = NodePath("../PatrolNode1")
+orientation_node = NodePath("PatrolOrient5")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.0663, 0, -3.56886)
+
+[node name="PatrolOrient5" type="Marker3D" parent="Entities/AINodes/PatrolNode4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.03737, 0, 5.36075)

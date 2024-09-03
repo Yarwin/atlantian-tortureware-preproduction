@@ -129,7 +129,7 @@ impl ActReactArea3D {
         let mut context = dict! {
             "reactor": reactor
         };
-        if let Some(a) = actor.bind().target.as_ref().map(|a| a.clone()) {
+        if let Some(a) = actor.bind().target.clone() {
             let _ = context.insert("actor", a);
         }
         act_react_executor.bind_mut().react(act, react, context);

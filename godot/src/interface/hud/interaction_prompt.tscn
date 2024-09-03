@@ -1,6 +1,14 @@
-[gd_scene load_steps=3 format=3 uid="uid://bf5q5islujj2v"]
+[gd_scene load_steps=6 format=3 uid="uid://bf5q5islujj2v"]
 
 [ext_resource type="Script" path="res://src/interface/hud/interaction_prompt.gd" id="1_0y15f"]
+[ext_resource type="Shader" path="res://src/interface/hud/interaction_prompt.gdshader" id="2_yb2dk"]
+[ext_resource type="Texture2D" uid="uid://d0lpnlqvaqpkl" path="res://assets/sprites/ui/buttons/circle_progress_texture.png" id="3_mi7tn"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7sk8h"]
+shader = ExtResource("2_yb2dk")
+shader_parameter/primary_color = Color(0.121162, 0.577525, 0.920559, 1)
+shader_parameter/unfilled_color = Color(0.0325, 0.105, 0.25, 0.141176)
+shader_parameter/value = 0.0
 
 [sub_resource type="LabelSettings" id="LabelSettings_tvn28"]
 outline_size = 4
@@ -19,37 +27,25 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_0y15f")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
-anchors_preset = -1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer"]
+[node name="TextureRect" type="TextureRect" parent="MarginContainer"]
+texture_repeat = 2
+material = SubResource("ShaderMaterial_7sk8h")
 layout_mode = 2
 mouse_filter = 2
+texture = ExtResource("3_mi7tn")
+expand_mode = 5
+stretch_mode = 4
 
-[node name="VBoxContainer" type="HBoxContainer" parent="HBoxContainer/MarginContainer"]
-layout_mode = 2
-mouse_filter = 2
-alignment = 1
-
-[node name="VSeparator" type="VSeparator" parent="HBoxContainer/MarginContainer/VBoxContainer"]
-layout_mode = 2
-mouse_filter = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/MarginContainer/VBoxContainer"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="HBoxContainer/MarginContainer/VBoxContainer/VBoxContainer"]
-layout_mode = 2
-text = "Name"
-
-[node name="HBoxContainer" type="HBoxContainer" parent="HBoxContainer/MarginContainer/VBoxContainer/VBoxContainer"]
-layout_mode = 2
-mouse_filter = 2
-
-[node name="UseLabel" type="Label" parent="HBoxContainer/MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer"]
+[node name="UseLabel" type="Label" parent="MarginContainer"]
 custom_minimum_size = Vector2(0, 32)
 layout_direction = 2
 layout_mode = 2
@@ -59,18 +55,19 @@ horizontal_alignment = 1
 vertical_alignment = 1
 uppercase = true
 
-[node name="TextureRect" type="ColorRect" parent="HBoxContainer/MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer/UseLabel"]
-layout_mode = 1
-anchors_preset = -1
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(1, 1, 1, 0.584314)
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 8
+mouse_filter = 2
 
-[node name="FrobInfo" type="Label" parent="HBoxContainer/MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer"]
+[node name="FrobInfo" type="Label" parent="MarginContainer/HBoxContainer"]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
-text = "[F]"
+theme_override_font_sizes/font_size = 11
+text = "ContexAction"
 vertical_alignment = 1
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Name"

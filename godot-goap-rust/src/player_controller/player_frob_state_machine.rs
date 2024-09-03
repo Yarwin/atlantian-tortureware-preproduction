@@ -66,10 +66,10 @@ fn update_shapecast(player_frob_controller: &mut PlayerController, frob_data: &m
             .as_ref()
             .map(
                 |time|
-                    1.0_f64.min(time.elapsed().unwrap().as_secs_f64() / player_frob_controller.default_to_frob_time)
+                    1.0_f64.min(time.elapsed().expect("no elapsed time?!").as_secs_f64() / player_frob_controller.default_to_frob_time)
             ).unwrap_or(0.0);
         let area_bind = react_area.bind();
-        let message = area_bind.act_react.as_ref().unwrap().bind().get_playerfrob_display();
+        let message = area_bind.act_react.as_ref().expect("no act react for given area?!").bind().get_playerfrob_display();
         drop(area_bind);
 
         let on_shapecasted_freed = player_frob_controller.base().callable("on_shapecasted_freed");
@@ -92,13 +92,7 @@ fn update_shapecast(player_frob_controller: &mut PlayerController, frob_data: &m
     *frob_data = Some(frob_info);
 }
 
-fn stop_frobbing(player_frob_controller: &mut PlayerController, frob_info: &mut Option<FrobInfo>) {
-    if let Some(frob_info) = frob_info.as_mut() {
-        frob_info.frobbed_since = None;
-    }
-    player_frob_controller.is_frobbing = false;
-    GameSys::singleton().emit_signal("frob_description_deactivated".into(), &[]);
-}
+
 
 
 fn disconnect_frobbed(player_frob_controller: &mut PlayerController, frobbed: Option<Gd<ActReactArea3D>>) {
@@ -117,24 +111,31 @@ fn stop_frobbing_and_disconnect(player_frob_controller: &mut PlayerController, f
     GameSys::singleton().emit_signal("frob_description_deactivated".into(), &[]);
 }
 
+fn stop_frobbing(player_frob_controller: &mut PlayerController, frob_info: &mut Option<FrobInfo>) {
+    stop_frobbing_and_disconnect(player_frob_controller, frob_info);
+    GameSys::singleton().emit_signal("frob_description_deactivated".into(), &[]);
+}
+
 fn frob(player_frob_controller: &mut PlayerController, frob_info: &mut Option<FrobInfo>) {
+    let Some(frob_data) = frob_info.as_mut() else { return; };
     player_frob_controller.is_frobbing = true;
-    if let Some(frob_info) = frob_info.as_mut() {
-        if frob_info.frobbed.is_none() {
-            frob_info.frobbed_since = None;
-            return;
-        }
-        let frob_time = frob_info.frobbed_since.take().unwrap_or(SystemTime::now());
-        let elapsed = frob_time.elapsed().unwrap().as_secs_f64();
-        frob_info.frobbed_since = Some(frob_time);
-        if elapsed < player_frob_controller.default_to_frob_time {
-            let progress = 1.0_f64.min(elapsed / player_frob_controller.default_to_frob_time);
-            GameSys::singleton().emit_signal("frob_progress_updated".into(), &[progress.to_variant()]);
-            return;
-        }
+
+    if frob_data.frobbed.is_none() {
+        frob_data.frobbed_since = None;
+        return;
     }
 
-    let Some(react_area) = frob_info.as_ref().unwrap().frobbed.as_ref() else { return; };
+    let frob_time = frob_data.frobbed_since.take().unwrap_or(SystemTime::now());
+    let elapsed = frob_time.elapsed().expect("no time elapsed?!").as_secs_f64();
+    frob_data.frobbed_since = Some(frob_time);
+
+    if elapsed < player_frob_controller.default_to_frob_time {
+        let progress = 1.0_f64.min(elapsed / player_frob_controller.default_to_frob_time);
+        GameSys::singleton().emit_signal("frob_progress_updated".into(), &[progress.to_variant()]);
+        return;
+    }
+
+    let Some(react_area) = frob_data.frobbed.as_ref() else { return; };
     let Some(acts) = player_frob_controller.interface_act_react.clone() else { return };
     let actor = player_frob_controller.base().clone();
     let inventories_ids = player_frob_controller.get_inventories_ids().clone();
@@ -143,7 +144,7 @@ fn frob(player_frob_controller: &mut PlayerController, frob_info: &mut Option<Fr
                         "actor": actor,
                         "reactor": react_area.bind().target.clone(),
                     };
-    ActReactExecutor::singleton().bind_mut().react(acts, react_area.bind().act_react.clone().unwrap(), context);
+    ActReactExecutor::singleton().bind_mut().react(acts, react_area.bind().act_react.clone().expect("no act react for react area!?"), context);
 
     stop_frobbing_and_disconnect(player_frob_controller, frob_info);
     player_frob_controller.is_frobbing = false;

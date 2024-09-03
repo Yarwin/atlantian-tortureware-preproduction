@@ -6,6 +6,7 @@ use crate::godot_api::item_object::{Item, ItemResource};
 
 #[derive(Default)]
 pub struct ItemBuilder<'a> {
+    pub item_resource: Gd<ItemResource>,
     pub inventory: Option<InventoryItem>,
     pub equipment: Option<Gd<Resource>>,
     amount: u32,
@@ -55,6 +56,7 @@ impl<'a> ItemBuilder<'a> {
         **self.current_item_id.as_mut().unwrap() += 1;
         Gd::<Item>::from_init_fn(|base| Item {
             id: *self.current_item_id.unwrap(),
+            item_resource: Some(self.item_resource.clone()),
             inventory: self.inventory.take(),
             equip: None,
             base
@@ -77,6 +79,7 @@ impl Iterator for ItemBuilder<'_> {
             self.amount = 0;
             Gd::<Item>::from_init_fn(|base| Item {
                 id: *self.current_item_id.take().unwrap(),
+                item_resource: None,
                 inventory: self.inventory.take(),
                 equip,
                 base
@@ -86,6 +89,7 @@ impl Iterator for ItemBuilder<'_> {
             self.amount -= max_stack;
             Gd::<Item>::from_init_fn(|base| Item {
                 id: **self.current_item_id.as_ref().unwrap(),
+                item_resource: None,
                 inventory: self.inventory.clone(),
                 equip,
                 base
@@ -99,6 +103,7 @@ impl From<&Gd<ItemResource>> for ItemBuilder<'_> {
     fn from(value: &Gd<ItemResource>) -> Self {
         let mut builder = ItemBuilder::new();
         let blueprint = value.bind();
+        builder.item_resource = value.clone();
         if let Some(data) = blueprint.inventory.as_ref() {
             builder.inventory = Some(InventoryItem::from(data.clone()));
         }

@@ -115,6 +115,11 @@ impl GodotAIManager {
         drop(guard)
     }
 
+    pub fn invalidate_plan(&mut self, thinker_id: u32) {
+        let Ok(mut guard) = self.thinkers[&thinker_id].shared.lock() else {panic!("mutex failed!")};
+        guard.blackboard.invalidate_plan = true;
+    }
+
     pub fn register_ainode(&mut self, ai_node: &mut GodotAINode) -> u32 {
         let id: u32 = assign_id(ai_node.ainode_id, &mut self.current_node_id);
         // unregister on exit

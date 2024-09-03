@@ -23,7 +23,11 @@
     ),
     GoalComponent(
         name: "Be Surprised By Enemy",
-        goal_type: BeSurprisedByEnemyGoal(),
+        is_interruptible: false,
+        goal_type: SatisfyDesireByPlayingAnimationGoal(
+            desire_type: Surprise,
+            animation_type: Surprised
+        ),
         priority: 50,
         desired_state: WorldState(anim_played: Truth(true)),
         required_state: WorldState()
@@ -76,5 +80,16 @@
         required_state: WorldState(
             has_target: Target(Character)
         )
+    ),
+    GoalComponent(
+        name: "Stagger",
+        is_interruptible: false,
+        goal_type: SatisfyDesireByPlayingAnimationGoal(
+            desire_type: Stagger,
+            animation_type: Hurt
+        ),
+        priority: 51,
+        desired_state: WorldState(anim_played: Truth(true)),
+        required_state: WorldState()
     ),
 ]

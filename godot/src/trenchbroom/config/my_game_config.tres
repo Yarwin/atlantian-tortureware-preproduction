@@ -3,14 +3,14 @@
 [ext_resource type="Resource" uid="uid://b4xhdj0e16lop" path="res://addons/func_godot/game_config/trenchbroom/tb_face_tag_clip.tres" id="1_dao3m"]
 [ext_resource type="Resource" uid="uid://ca7377sfgj074" path="res://addons/func_godot/game_config/trenchbroom/tb_face_tag_skip.tres" id="2_lpmsu"]
 [ext_resource type="Resource" uid="uid://pqkx78ajm8cg" path="res://src/trenchbroom/config/my_game_fgd_config.tres" id="3_4gc4l"]
-[ext_resource type="Texture2D" uid="uid://cp2as6ujvknyu" path="res://addons/func_godot/icon.png" id="4_lkof2"]
+[ext_resource type="Texture2D" uid="uid://cupfocvykiwgt" path="res://func_godot_icon.png" id="4_jurdv"]
 [ext_resource type="Script" path="res://addons/func_godot/src/trenchbroom/trenchbroom_game_config.gd" id="5_mjiya"]
 
 [resource]
 script = ExtResource("5_mjiya")
 export_file = false
 game_name = "FuncGodot"
-icon = ExtResource("4_lkof2")
+icon = ExtResource("4_jurdv")
 map_formats = Array[Dictionary]([{
 "format": "Valve",
 "initialmap": "initial_valve.map"

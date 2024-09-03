@@ -1,7 +1,8 @@
-[gd_scene load_steps=14 format=3 uid="uid://b4tvyguynxs6f"]
+[gd_scene load_steps=15 format=3 uid="uid://b4tvyguynxs6f"]
 
 [ext_resource type="Script" path="res://src/entities/debug_player/debug_player.gd" id="1_evmxd"]
 [ext_resource type="ActPlayerFrob" uid="uid://wvt3hqsi78ga" path="res://src/entities/debug_player/actreact/act_debug_player_frob.tres" id="3_1d3xj"]
+[ext_resource type="Script" path="res://src/entities/debug_player/debug_entity_picker.gd" id="3_b8qh4"]
 [ext_resource type="ItemResource" uid="uid://oyv8e11fd1bm" path="res://src/items/debug/debug_item_1_resource.tres" id="3_vgf5h"]
 [ext_resource type="ItemResource" uid="uid://dq42vsn2s0un" path="res://src/items/debug/debug_item_spreadgun/spreadgun_resource.tres" id="5_5qd5u"]
 
@@ -45,15 +46,15 @@ deceleration = 0.75
 speed = 6.0
 acceleration = 0.75
 gravity_scale = 1.0
-jump_force = 4.0
+jump_force = 5.0
 script = ExtResource("1_evmxd")
-jump_gravity_scale = 0.85
+jump_gravity_scale = 1.25
 
 [node name="PlayerController" type="PlayerController" parent="." node_paths=PackedStringArray("inventories") groups=["player_controller"]]
 inventories = [NodePath("../InventoryAgent"), NodePath("../InventoryAgent2"), NodePath("../InventoryAgent3")]
 throw_effect = SubResource("FlyGameEffect_51vg6")
 interface_act_react = SubResource("ActReactResource_5eot1")
-default_to_frob_time = 0.2
+default_to_frob_time = 0.33
 
 [node name="PlayerCameraController3D" type="PlayerCameraController3D" parent="." node_paths=PackedStringArray("head", "camera", "character_controller")]
 head = NodePath("../Head")
@@ -89,6 +90,15 @@ collision_mask = 65
 collide_with_areas = true
 debug_shape_custom_color = Color(0.811274, 0.161773, 0.249116, 1)
 
+[node name="DebugEntityPicker" type="RayCast3D" parent="Head/Camera3D"]
+enabled = false
+target_position = Vector3(0, 0, -10)
+script = ExtResource("3_b8qh4")
+
+[node name="Timer" type="Timer" parent="Head/Camera3D/DebugEntityPicker"]
+wait_time = 0.2
+autostart = true
+
 [node name="EqHolder" type="Node3D" parent="Head"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.381349, -0.439501)
 
@@ -116,3 +126,5 @@ items_to_spawn = Array[ItemToSpawn]([SubResource("ItemToSpawn_a113f"), SubResour
 
 [node name="InventoryAgent3" type="InventoryAgent" parent="." groups=["player_inventory", "player_inventory_right"]]
 size = Vector2i(2, 3)
+
+[connection signal="timeout" from="Head/Camera3D/DebugEntityPicker/Timer" to="Head/Camera3D/DebugEntityPicker" method="check_for_entity"]

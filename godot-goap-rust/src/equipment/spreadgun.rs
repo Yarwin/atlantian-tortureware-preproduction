@@ -101,17 +101,6 @@ impl ItemEquipmentComponent for SpreadGunItemComponent {
         unsafe {
             gun_scene.bind_mut().eq_component = Some(self as *mut SpreadGunItemComponent);
         }
-        // let mut ui_scene = self.data.bind().ui_scene.as_ref().unwrap().instantiate().unwrap().cast::<GunDisplay>();
-        // unsafe {
-        //     ui_scene.bind_mut().eq_component = Some(self as *mut SpreadGunItemComponent);
-        // }
-        // let on_shoot = ui_scene.callable("on_shoot");
-        // gun_scene.connect("shoot".into(), on_shoot);
-        // let on_reloaded = ui_scene.callable("on_reloaded");
-        // gun_scene.connect("reloaded".into(), on_reloaded);
-        // let on_status_changed = ui_scene.callable("on_gun_status_changed");
-        // gun_scene.connect("gun_status_changed".into(), on_status_changed);
-
         (EquipmentComponent::new(gun_scene.upcast::<Node3D>()), DisplayType::SpreadGunDisplay)
     }
 }
@@ -185,8 +174,7 @@ impl SpreadGun {
             .unwrap()
             .get_nodes_in_group("player_inventory".into())
             .iter_shared()
-            .map(
-                |n| n.cast::<InventoryAgent>().bind().id)
+            .map(|n| n.cast::<InventoryAgent>().bind().id)
             .collect();
 
         if eq_comp.current_ammo.is_some() {
@@ -258,8 +246,6 @@ impl SpreadGun {
         let viewport_size = self.base().get_viewport().unwrap().get_visible_rect();
         let screen_center = viewport_size.size / 2.0;
         let from = self.camera.project_ray_origin(screen_center);
-        // let from = self.camera.project_ray_normal();
-        // let dir = self.camera.
         let spreads = ammo.bind().get_spread();
         for spread in spreads.iter_shared() {
             let to = from + self.camera.project_ray_normal(screen_center + viewport_size.size * spread) * self.ray_length;
@@ -273,7 +259,6 @@ impl SpreadGun {
             self.apply_hitscan_collision(result, ammo);
         }
         self.base_mut().emit_signal("shoot".into(), &[]);
-        self.base_mut().emit_signal("gun_status_changed".into(), &["shooting".to_variant()]);
     }
 
 }
@@ -304,6 +289,11 @@ impl SpreadGun {
 
     #[signal]
     fn taken_off();
+
+    #[func]
+    fn primary_use(&mut self){
+        self.shoot();
+    }
 
     #[func]
     fn reset_status(&mut self, _a_name: StringName) {
@@ -370,10 +360,7 @@ impl Equipment for SpreadGun {
             return;
         }
         eq_comp.ammo_count -= 1;
-        let callable = self.base().callable("reset_status");
         self.animation_player.play_ex().name("shoot".into()).done();
-        self.animation_player.connect_ex("animation_finished".into(), callable).flags(CONNECT_ONE_SHOT).done();
-        self.shoot();
     }
 
     fn reload(&mut self) {

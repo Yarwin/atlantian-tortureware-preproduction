@@ -1,4 +1,5 @@
 use std::time::SystemTime;
+use godot::builtin::math::ApproxEq;
 use crate::ai::blackboard::SpeedMod;
 use crate::ai::world_state::{WSProperty, WorldStateProperty};
 use crate::thinker_states::types::{StateArguments, ThinkerState};
@@ -122,9 +123,12 @@ impl ThinkerState for GotoState {
         let ground_offset = (character.get_global_transform().origin * Vector3::UP).y;
         let lateral_plane = Plane::new(Vector3::UP, ground_offset);
         let next_path_position: Vector3 = nav_agent.get_next_path_position();
-        let direction: Vector3 = character
-            .get_global_position()
-            .direction_to(lateral_plane.project(next_path_position));
+        let next_path_position_on_lateral_plane = lateral_plane.project(next_path_position);
+        let char_globpos = character.get_global_position();
+        if next_path_position_on_lateral_plane.approx_eq(&char_globpos) {
+            return;
+        }
+        let direction: Vector3 = char_globpos.direction_to(next_path_position_on_lateral_plane);
         if direction.length_squared().is_zero_approx() {
             return;
         }

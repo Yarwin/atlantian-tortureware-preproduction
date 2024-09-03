@@ -17,6 +17,7 @@ pub enum AIWorldStateEvent {
     Damage,
     EnemyInPlaceForSurpriseAttack,
     Stunned,
+    Staggered,
     Surprised
 }
 
@@ -78,6 +79,7 @@ pub enum WorldStateProperty {
     DistanceToTarget,
     HasTarget,
     IsAreaSurveyed,
+    IsDead,
     IsIdling,
     IsInCombat,
     IsNavigationFinished,
@@ -103,6 +105,7 @@ pub struct WorldState {
     pub distance_to_target: Option<WSProperty>,
     pub has_target: Option<WSProperty>,
     pub is_area_surveyed: Option<WSProperty>,
+    pub is_dead: Option<WSProperty>,
     pub is_idling: Option<WSProperty>,
     pub is_in_combat: Option<WSProperty>,
     pub is_navigation_finished: Option<WSProperty>,
@@ -156,6 +159,7 @@ impl Index<WorldStateProperty> for WorldState {
             WorldStateProperty::IsIdling => &self.is_idling,
             WorldStateProperty::IsPositionValid => &self.is_position_valid,
             WorldStateProperty::IsAreaSurveyed => &self.is_area_surveyed,
+            WorldStateProperty::IsDead => &self.is_dead,
             WorldStateProperty::IsTargetAimingAtMe => &self.is_target_looking_at_me,
             WorldStateProperty::IsTargetLookingAtMe => &self.is_target_aiming_at_me,
             WorldStateProperty::IsTargetDead => &self.is_target_dead,
@@ -184,6 +188,7 @@ impl IndexMut<WorldStateProperty> for WorldState {
             WorldStateProperty::IsIdling => &mut self.is_idling,
             WorldStateProperty::IsPositionValid => &mut self.is_position_valid,
             WorldStateProperty::IsAreaSurveyed => &mut self.is_area_surveyed,
+            WorldStateProperty::IsDead => &mut self.is_dead,
             WorldStateProperty::IsTargetAimingAtMe => &mut self.is_target_looking_at_me,
             WorldStateProperty::IsTargetLookingAtMe => &mut self.is_target_aiming_at_me,
             WorldStateProperty::IsTargetDead => &mut self.is_target_dead,

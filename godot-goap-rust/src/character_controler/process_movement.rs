@@ -8,7 +8,8 @@ use crate::character_controler::movement_data::MovementData;
 
 const GROUND_CAST_DISTANCE: f32 = 0.004;
 const MAX_ITERATIONS_COUNT: u32 = 4;
-const MAX_STEP_HEIGHT: f32 = 0.5;
+/// 0,51m or <~17QU
+const MAX_STEP_HEIGHT: f32 = 0.51;
 
 /// PI / 4 => 45*
 const SLOPE_LIMIT: f32 = std::f32::consts::FRAC_PI_3;
@@ -287,19 +288,21 @@ fn step(forward_collision: &Gd<KinematicCollision3D>, args: &mut MovementParamet
     for col_index in 0..motion_result.get_collision_count() {
         let col_point = motion_result.get_collision_point_ex().collision_index(col_index).done() * Vector3::UP;
         let body_position_y = Vector3::UP * args.body.get_global_position();
-        let distance = col_point.distance_to(body_position_y);
         // stupid edge case – make sure that step floor is at higher point than body
-        if col_point.length() <= body_position_y.length() {
+        if (col_point.y - body_position_y.y).sign() != 1. {
             continue;
         }
+        let distance = col_point.distance_to(body_position_y);
         // check if given step floor is walkable
         if motion_result.get_collision_normal_ex().collision_index(col_index).done().angle_to(Vector3::UP) > SLOPE_LIMIT {
+            godot_print!("given step floor is not walkable");
             return;
         }
         distance_to_floor = Some(distance);
         break
     }
     if let Some(distance) = distance_to_floor.take() {
+        godot_print!("stepping!");
 
         args.body.move_and_collide(Vector3::UP * distance);
         movement_data.total_stepped_height = Some(Vector3::UP * distance);
