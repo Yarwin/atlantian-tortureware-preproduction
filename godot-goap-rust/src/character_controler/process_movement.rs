@@ -10,7 +10,7 @@ const GROUND_CAST_DISTANCE: f32 = 0.004;
 const MAX_ITERATIONS_COUNT: u32 = 4;
 /// 0,51m or <~17QU
 const MAX_STEP_HEIGHT: f32 = 0.51;
-
+const STEP_FORWARD_MULTIPLIER: f32 = 0.05;
 /// PI / 4 => 45*
 const SLOPE_LIMIT: f32 = std::f32::consts::FRAC_PI_3;
 const SNAP_TO_GROUND_DISTANCE: f32 = 0.2;
@@ -32,11 +32,12 @@ pub struct MovementParameters {
     pub(crate) deceleration: f32,
     pub(crate) speed: f32,
     pub(crate) acceleration: f32,
-    pub(crate) gravity_scale: f32
+    pub(crate) gravity_scale: f32,
+    pub(crate) current_platform_translation: Vector3
 }
 
 
-pub fn process_movement(delta: f32, args: MovementParameters,  previous_movement: Option<MovementData>) -> Option<MovementData> {
+pub fn process_movement(delta: f32, mut args: MovementParameters, previous_movement: Option<MovementData>) -> Option<MovementData> {
     let previous_horizontal_speed = previous_movement.as_ref().map(|pm| (pm.velocity * Vector3::new(1.0, 0.0, 1.0)).length()).unwrap_or(0.0);
     let current_speed: f32;
     let mut desired_motion: Vector3;
@@ -53,23 +54,44 @@ pub fn process_movement(delta: f32, args: MovementParameters,  previous_movement
         current_speed = previous_horizontal_speed.lerp(args.speed, args.acceleration);
         desired_motion = args.direction * current_speed;
     }
+    let mut platform_velocity = Vector3::ZERO;
     if let Some(previous_mov) = previous_movement.as_ref() {
         if !previous_mov.grounded {
             desired_motion += Vector3::DOWN * (previous_mov.velocity.y + ProjectSettings::singleton().get_setting("physics/3d/default_gravity".into()).to::<f32>() * args.gravity_scale * delta);
         } else if previous_mov.grounded && !args.jump_force.is_zero_approx() {
             desired_motion += Vector3::UP * args.jump_force;
         } else if previous_mov.grounded && previous_mov.velocity.y < 0. {
-                desired_motion.y = 0.0;
+            desired_motion.y = 0.0;
+        }
+        if let Some(platform) = previous_mov.platform_data.as_ref() {
+            if let Some(body_space) = PhysicsServer3D::singleton().body_get_direct_state(platform.rid) {
+                let local_position = args.body.get_global_position() - body_space.get_transform().origin;
+                platform_velocity += body_space.get_velocity_at_local_position(local_position);
+            }
         }
     }
-
-    execute_movement(desired_motion, args, delta)
+    args.current_platform_translation += platform_velocity * delta;
+    let mut current_movement_data = execute_movement(desired_motion, args, delta);
+    if let Some(mov_data) = current_movement_data.as_mut() {
+        if mov_data.platform_data.is_none() {
+            mov_data.velocity += platform_velocity;
+        }
+    }
+    current_movement_data
 }
 
 
 fn execute_movement(desired_motion: Vector3, mut args: MovementParameters, delta: f32) -> Option<MovementData> {
     let start_position = args.body.get_transform().origin;
     let mut movement_data = MovementData::new(desired_motion * delta);
+    // align to platform
+    if !args.current_platform_translation.length_squared().is_zero_approx() {
+        // don't add upward motion velocity (player will be lifted on its own by colliding body instead)
+        if args.current_platform_translation.y > 0. {
+            args.current_platform_translation.y = 0.;
+        }
+        args.body.move_and_collide(args.current_platform_translation);
+    }
 
     if movement_data.vertical_translation.length() <= f32::EPSILON {
         if let Some(ground_collision) = args.body.move_and_collide_ex(Vector3::DOWN * GROUND_CAST_DISTANCE).test_only(true).done() {
@@ -111,7 +133,6 @@ fn execute_movement(desired_motion: Vector3, mut args: MovementParameters, delta
 fn move_iteration(movement_type: MovementType, args: &mut MovementParameters, movement_data: &mut MovementData) {
     if movement_type == MovementType::Lateral && !move_and_step(movement_data, args) && movement_data.movement_collision.is_none() {
         args.body.move_and_collide(movement_data.lateral_translation);
-        // player_state.player_character_body.as_mut().map(|body| body.move_and_collide(movement_data.lateral_translation));
         movement_data.lateral_translation = Vector3::ZERO;
         return;
     }
@@ -123,7 +144,7 @@ fn move_iteration(movement_type: MovementType, args: &mut MovementParameters, mo
     let initial_translation: &Vector3 = match movement_type {
         MovementType::Lateral => &mut movement_data.initial_lateral_translation,
         MovementType::Vertical => &mut movement_data.initial_vertical_translation,
-        MovementType::Snap => &mut movement_data.initial_ground_snap_translation
+        MovementType::Snap => &mut movement_data.initial_ground_snap_translation,
     };
 
     movement_data.movement_collision = args.body.move_and_collide_ex(*translation).test_only(false).done();
@@ -132,24 +153,6 @@ fn move_iteration(movement_type: MovementType, args: &mut MovementParameters, mo
         return;
     } else {
         *translation -= movement_data.movement_collision.as_ref().unwrap().get_travel();
-    }
-
-    match movement_type {
-        MovementType::Lateral => {
-            if movement_data.lateral_collisions.is_none() {
-                movement_data.lateral_collisions = Some(vec![movement_data.movement_collision.clone().unwrap()])
-            } else if let Some(vc) = movement_data.lateral_collisions.as_mut() { vc.push(movement_data.movement_collision.clone().unwrap()) }
-        }
-        MovementType::Vertical  => {
-            if movement_data.vertical_collisions.is_none() {
-                movement_data.vertical_collisions = Some(vec![movement_data.movement_collision.clone().unwrap()])
-            } else if let Some(vc) = movement_data.vertical_collisions.as_mut() { vc.push(movement_data.movement_collision.clone().unwrap()) }
-        }
-        MovementType::Snap => {
-            if movement_data.snap_collisions.is_none() {
-                movement_data.snap_collisions = Some(vec![movement_data.movement_collision.clone().unwrap()])
-            } else if let Some(vc) = movement_data.snap_collisions.as_mut() { vc.push(movement_data.movement_collision.clone().unwrap()) }
-        }
     }
     if movement_data.movement_collision.as_ref().map(|c| c.get_normal().angle_to(Vector3::UP) < SLOPE_LIMIT).unwrap_or(false) {
         movement_data.grounded = true;
@@ -174,7 +177,7 @@ fn move_iteration(movement_type: MovementType, args: &mut MovementParameters, mo
         }
     };
 
-    if let Some(collision) = movement_data.movement_collision.as_ref() {
+    if let Some(collision) = movement_data.movement_collision.take() {
         let surface_angle = collision.get_normal().angle_to(Vector3::UP);
         let mut projection_normal = collision.get_normal();
         // If collision happens on the "side" of the cylinder, treat it as a vertical
@@ -190,6 +193,9 @@ fn move_iteration(movement_type: MovementType, args: &mut MovementParameters, mo
         }
         else if surface_angle >= min_block_angle && surface_angle <= max_block_angle {
             if movement_type == MovementType::Vertical || movement_type == MovementType::Snap {
+                if movement_type == MovementType::Snap {
+                    movement_data.add_platform_collision(&collision);
+                }
                 // If vertical is blocked, you're on solid ground - just stop moving
                 movement_data.vertical_translation = Vector3::ZERO;
                 return;
@@ -231,7 +237,7 @@ fn move_iteration(movement_type: MovementType, args: &mut MovementParameters, mo
         }
         if !next_translation.is_zero_approx() &&
             !translation.is_zero_approx() &&
-            next_translation.normalized().distance_to(translation.normalized()) <= f32::EPSILON
+            next_translation.normalized().distance_to(translation.normalized()).is_zero_approx()
         {
             next_translation += collision.get_normal() * 0.001;
         }
@@ -256,13 +262,15 @@ fn step(forward_collision: &Gd<KinematicCollision3D>, args: &mut MovementParamet
     if let Some(excluded) = args.excluded_bodies.take() {
         motion_parameters.set_exclude_bodies(excluded)
     }
+    let step_height = Vector3::UP * MAX_STEP_HEIGHT;
     motion_parameters.set_from(trans_step);
-    motion_parameters.set_motion(Vector3::UP * MAX_STEP_HEIGHT);
+    // motion_parameters.set_motion(Vector3::UP * MAX_STEP_HEIGHT);
+    motion_parameters.set_motion(step_height);
     let is_colliding_up = call_body_test_motion(&[body_rid.to_variant(), motion_parameters.to_variant(), motion_result.to_variant()]);
     let distance_to_ceiling = if is_colliding_up {
         Vector3::UP * motion_result.get_travel()
     } else {
-        Vector3::UP * MAX_STEP_HEIGHT
+        step_height
     };
     trans_step.origin += distance_to_ceiling;
     motion_result = PhysicsTestMotionResult3D::new_gd();
@@ -272,7 +280,7 @@ fn step(forward_collision: &Gd<KinematicCollision3D>, args: &mut MovementParamet
     let is_colliding_forward = call_body_test_motion(&[body_rid.to_variant(), motion_parameters.to_variant(), motion_result.to_variant()]);
     if is_colliding_forward {
         distance_to_next_wall = motion_result.get_travel();
-        if distance_to_next_wall.length() <= f32::EPSILON {
+        if distance_to_next_wall.length_squared().is_zero_approx() {
             return;
         }
     }
@@ -284,7 +292,6 @@ fn step(forward_collision: &Gd<KinematicCollision3D>, args: &mut MovementParamet
     motion_parameters.set_motion(Vector3::DOWN * distance_to_ceiling);
     let is_colliding_with_floor = call_body_test_motion(&[body_rid.to_variant(), motion_parameters.to_variant(), motion_result.to_variant()]);
     if !is_colliding_with_floor { return; }
-
     for col_index in 0..motion_result.get_collision_count() {
         let col_point = motion_result.get_collision_point_ex().collision_index(col_index).done() * Vector3::UP;
         let body_position_y = Vector3::UP * args.body.get_global_position();
@@ -296,17 +303,17 @@ fn step(forward_collision: &Gd<KinematicCollision3D>, args: &mut MovementParamet
         // check if given step floor is walkable
         if motion_result.get_collision_normal_ex().collision_index(col_index).done().angle_to(Vector3::UP) > SLOPE_LIMIT {
             godot_print!("given step floor is not walkable");
-            return;
+            continue;
         }
         distance_to_floor = Some(distance);
         break
     }
     if let Some(distance) = distance_to_floor.take() {
-        godot_print!("stepping!");
-
         args.body.move_and_collide(Vector3::UP * distance);
         movement_data.total_stepped_height = Some(Vector3::UP * distance);
-        let step_translation = distance_to_next_wall + forward_collision.get_travel();
+        // edge case - add some extra movement to deal with stepping from slopes
+        // adding small margin is easier&faster than checking if step happens on slope and works fairly well
+        let step_translation = distance_to_next_wall + forward_collision.get_travel() * (1. + STEP_FORWARD_MULTIPLIER);
         args.body.move_and_collide(step_translation);
         movement_data.lateral_translation -= step_translation;
     }
@@ -315,7 +322,8 @@ fn step(forward_collision: &Gd<KinematicCollision3D>, args: &mut MovementParamet
 
 
 fn move_and_step(movement_data: &mut MovementData, args: &mut MovementParameters) -> bool {
-    let mut forward_test = args.body.move_and_collide_ex(movement_data.lateral_translation).test_only(true).done();
+    let mut forward_test = args.body.move_and_collide_ex(movement_data.lateral_translation).test_only(true).recovery_as_collision(true).done();
+
     if let Some(forward_collision) = forward_test.take() {
         // don't step on slopes
         match forward_collision.get_normal().angle_to(Vector3::UP).partial_cmp(&SLOPE_LIMIT) {

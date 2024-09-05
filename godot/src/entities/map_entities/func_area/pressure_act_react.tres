@@ -1,0 +1,7 @@
+[gd_resource type="ActReactResource" load_steps=2 format=3 uid="uid://dqs1l76xhaqwk"]
+
+[sub_resource type="CallMethodGameEffect" id="CallMethodGameEffect_r54jm"]
+method_name = &"activate"
+
+[resource]
+Pressure = Array[Resource]([SubResource("CallMethodGameEffect_r54jm")])

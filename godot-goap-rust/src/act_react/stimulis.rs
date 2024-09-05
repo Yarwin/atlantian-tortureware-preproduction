@@ -1,7 +1,9 @@
 use godot::prelude::*;
+use strum_macros::{AsRefStr, EnumIter};
+use strum_macros::EnumString;
 
 #[derive(
-    Default, Export, Var, GodotConvert, Debug, Clone, Eq, PartialEq, Copy
+    Default, Export, Var, GodotConvert, Debug, Clone, Eq, PartialEq, Copy, EnumString, EnumIter, AsRefStr
 )]
 #[repr(usize)]
 #[godot(via = i32)]
@@ -18,6 +20,8 @@ pub enum Stimuli {
     Kick,
     Pain,
     PlayerFrob,
+    Pressure,
+    PlayerPressure,
     Poison,
     Parry,
     Repair,
@@ -26,5 +30,6 @@ pub enum Stimuli {
     Stun,
     Toxic,
     Water,
+    #[strum(disabled)]
     MAX
 }

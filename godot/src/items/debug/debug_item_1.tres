@@ -1,15 +1,8 @@
-[gd_resource type="InventoryItemData" load_steps=5 format=3 uid="uid://c8iqqkqnhnyp4"]
+[gd_resource type="InventoryItemData" load_steps=3 format=3 uid="uid://c8iqqkqnhnyp4"]
 
 [ext_resource type="Texture2D" uid="uid://ctnwk7h2qbkqr" path="res://icon.svg" id="1_57ylc"]
-[ext_resource type="ItemToSpawn" uid="uid://2pue7f67dx2o" path="res://src/items/debug/debug_item_1_actreact/item_to_spawn_for_debug_1_combine.tres" id="1_wbosc"]
-
-[sub_resource type="CombineInventoryItemGameEffect" id="CombineInventoryItemGameEffect_h3acn"]
-on_combine = {
-"quake": ExtResource("1_wbosc")
-}
 
 [sub_resource type="ActReactResource" id="ActReactResource_8ldkm"]
-combine = Array[Resource]([SubResource("CombineInventoryItemGameEffect_h3acn")])
 
 [resource]
 max_stack = 6

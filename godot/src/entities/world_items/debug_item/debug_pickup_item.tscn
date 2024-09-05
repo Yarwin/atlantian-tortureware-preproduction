@@ -1,7 +1,8 @@
-[gd_scene load_steps=8 format=3 uid="uid://dyd1eq0asf4id"]
+[gd_scene load_steps=9 format=3 uid="uid://dyd1eq0asf4id"]
 
 [ext_resource type="ItemResource" uid="uid://oyv8e11fd1bm" path="res://src/items/debug/debug_item_1_resource.tres" id="1_5puwk"]
 [ext_resource type="ActReactResource" uid="uid://yysbnvqe4nht" path="res://src/entities/world_items/meta/item_pickup_metaproperties.tres" id="1_oj5dn"]
+[ext_resource type="PickupItemGameEffect" uid="uid://bbwyoq25vxf18" path="res://src/entities/world_items/debug_item/pickup_item_game_effect.tres" id="2_t1r1g"]
 
 [sub_resource type="ItemToSpawn" id="ItemToSpawn_bfg58"]
 amount = 1
@@ -15,6 +16,7 @@ size = Vector3(0.255, 0.22, 0.56)
 
 [sub_resource type="ActReactResource" id="ActReactResource_p3wja"]
 metaproperties = Array[ActReactResource]([ExtResource("1_oj5dn")])
+PlayerFrob = Array[Resource]([ExtResource("2_t1r1g")])
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_qhqw2"]
 size = Vector3(0.385, 0.36, 0.65)

@@ -2,6 +2,12 @@ use godot::prelude::*;
 use godot::classes::{KinematicCollision3D};
 
 
+#[derive(Debug)]
+pub struct PlatformData {
+    pub rid: Rid,
+    pub velocity: Vector3,
+}
+
 #[derive(Default, Debug)]
 pub struct MovementData {
     pub(crate) velocity: Vector3,
@@ -16,9 +22,10 @@ pub struct MovementData {
     pub(crate) movement_collision: Option<Gd<KinematicCollision3D>>,
     pub(crate) ground_normal: Option<Vector3>,
     pub(crate) steep_slope_normals: Option<Vec<Vector3>>,
-    pub(crate) lateral_collisions: Option<Vec<Gd<KinematicCollision3D>>>,
-    pub(crate) vertical_collisions: Option<Vec<Gd<KinematicCollision3D>>>,
-    pub(crate) snap_collisions: Option<Vec<Gd<KinematicCollision3D>>>,
+    pub(crate) platform_data: Option<PlatformData>,
+    // pub(crate) lateral_collisions: Option<Vec<Gd<KinematicCollision3D>>>,
+    // pub(crate) vertical_collisions: Option<Vec<Gd<KinematicCollision3D>>>,
+    // pub(crate) snap_collisions: Option<Vec<Gd<KinematicCollision3D>>>,
 }
 
 impl MovementData {
@@ -33,5 +40,12 @@ impl MovementData {
             vertical_translation: initial_vertical_translation,
             ..Default::default()
         }
+    }
+
+    pub(crate) fn add_platform_collision(&mut self, col: &Gd<KinematicCollision3D>) {
+        self.platform_data = Some(PlatformData {
+            rid: col.get_collider_rid(),
+            velocity: col.get_collider_velocity(),
+        });
     }
 }

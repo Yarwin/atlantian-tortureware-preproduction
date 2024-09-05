@@ -15,8 +15,8 @@ material = SubResource("StandardMaterial3D_qw6oy")
 [sub_resource type="BoxShape3D" id="BoxShape3D_ma82c"]
 
 [sub_resource type="ActReactResource" id="ActReactResource_3c754"]
-damage_standard = Array[Resource]([ExtResource("3_aakh4")])
-player_frob = Array[Resource]([ExtResource("1_cpl2p")])
+DamageStandard = Array[Resource]([ExtResource("3_aakh4")])
+PlayerFrob = Array[Resource]([ExtResource("1_cpl2p")])
 
 [sub_resource type="ActReactResource" id="ActReactResource_ypewy"]
 

@@ -1,4 +1,4 @@
-use godot::classes::{IArea3D, Area3D, Engine};
+use godot::classes::{IArea3D, Area3D};
 use godot::prelude::*;
 use crate::act_react::act_react_executor::ActReactExecutor;
 use crate::act_react::act_react_resource::ActReactResource;
@@ -73,9 +73,32 @@ pub struct ActReactArea3D {
     pub target: Option<Gd<Node>>,
     #[export]
     pub act_react: Option<Gd<ActReactResource>>,
+    #[export]
+    pub name_display: GString,
     base: Base<Area3D>
 }
 
+impl ActReactArea3D {
+    fn get_area_display(&self) -> GString {
+        self.name_display.clone()
+    }
+    pub fn get_name(&mut self) -> GString {
+        if let Some(target) = self.target.as_mut() {
+            if target.has_method("get_name_display".into()) {
+                return target.call("get_name_display".into(), &[]).to::<GString>();
+            }
+        }
+        self.get_area_display()
+    }
+
+    pub fn get_reactor(&self) -> Gd<Object> {
+        if let Some(target) = self.target.as_ref() {
+            return target.clone().upcast()
+        }
+        self.base().clone().upcast()
+    }
+
+}
 
 #[godot_api]
 impl IArea3D for ActReactArea3D {
@@ -104,14 +127,6 @@ impl IArea3D for ActReactArea3D {
 
 #[godot_api]
 impl ActReactArea3D {
-    pub fn get_name(&mut self) -> GString {
-        if let Some(target) = self.target.as_mut() {
-            if target.has_method("get_name_display".into()) {
-                return target.call("get_name_display".into(), &[]).to::<GString>();
-            }
-        }
-        GString::default()
-    }
     #[func(gd_self, virtual)]
     fn post_ready(_s: Gd<Self>) {
         godot_print!("running virtual function…");
@@ -121,10 +136,8 @@ impl ActReactArea3D {
     fn on_other_area_act(&self, actor: Gd<ActReactArea3D>) {
         let Some(react) = self.act_react.clone() else {return;};
         let Some(act) = actor.bind().act_react.clone() else {return;};
-        let mut act_react_executor = Engine::singleton()
-            .get_singleton("ActReactExecutor".into())
-            .unwrap()
-            .cast::<ActReactExecutor>();
+
+        let mut act_react_executor = ActReactExecutor::singleton();
         let reactor = self.target.clone().unwrap_or(self.base().clone().upcast::<Node>());
         let mut context = dict! {
             "reactor": reactor

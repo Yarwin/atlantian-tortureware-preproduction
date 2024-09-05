@@ -1,65 +1,75 @@
 use std::ops::Index;
+use godot::meta::PropertyInfo;
 use godot::prelude::*;
+use strum::IntoEnumIterator;
 use crate::act_react::stimulis::Stimuli;
 
 
-/// todo – automate it with some kind of macro
-/// all the stims are hardcoded since Godot dictionaries are untyped.
 #[derive(GodotClass, Debug)]
-#[class(init, base=Resource)]
+#[class(init, tool, base=Resource)]
 pub struct ActReactResource {
-    #[export]
+    /// metaproperties used by given entity.
+    /// All acts and reacts defined in metaproperties are being applied before ones defined by given entity.
     pub metaproperties: Array<Gd<ActReactResource>>,
-    /// dumb hack before proper groups will be implemented
-    #[var(usage_flags = [GROUP, EDITOR, READ_ONLY])]
-    acts: u32,
-    /// acts that are being emitted by this entity
-    #[export]
     pub emits: Array<Gd<Resource>>,
-    /// dumb hack before proper groups will be implemented
-    #[var(usage_flags = [GROUP, EDITOR, READ_ONLY])]
-    reacts: u32,
-
-    #[export]
-    pub cold: Array<Gd<Resource>>,
-    #[export]
-    pub combine: Array<Gd<Resource>>,
-    #[export]
-    pub damage_standard: Array<Gd<Resource>>,
-    #[export]
-    pub electrify: Array<Gd<Resource>>,
-    #[export]
-    pub fire: Array<Gd<Resource>>,
-    #[export]
-    pub frob: Array<Gd<Resource>>,
-    #[export]
-    pub grab: Array<Gd<Resource>>,
-    #[export]
-    pub heat: Array<Gd<Resource>>,
-    #[export]
-    pub kick: Array<Gd<Resource>>,
-    #[export]
-    pub pain: Array<Gd<Resource>>,
-    #[export]
-    pub player_frob: Array<Gd<Resource>>,
-    #[export]
-    pub poison: Array<Gd<Resource>>,
-    #[export]
-    pub parry: Array<Gd<Resource>>,
-    #[export]
-    pub repair: Array<Gd<Resource>>,
-    #[export]
-    pub slime: Array<Gd<Resource>>,
-    #[export]
-    pub splash_damage: Array<Gd<Resource>>,
-    #[export]
-    pub stun: Array<Gd<Resource>>,
-    #[export]
-    pub toxic: Array<Gd<Resource>>,
-    #[export]
-    pub water: Array<Gd<Resource>>,
+    pub reacts: [Array<Gd<Resource>>; Stimuli::MAX as usize],
 
     base: Base<Resource>
+}
+
+#[godot_api]
+impl IResource for ActReactResource {
+
+    fn get_property(&self, property: StringName) -> Option<Variant> {
+        let prop_str = property.to_string();
+        if prop_str == "metaproperties" {
+            return Some(self.metaproperties.to_variant())
+        } else if prop_str == "emits" {
+            return Some(self.emits.to_variant())
+        }
+        for stim in Stimuli::iter() {
+            if stim == Stimuli::MAX {break}
+            if prop_str == stim.as_ref() {
+                return Some(self.reacts[stim as usize].to_variant())
+            }
+        }
+        None
+    }
+
+    fn set_property(&mut self, property: StringName, value: Variant) -> bool {
+        let prop_str = property.to_string();
+        if prop_str == "metaproperties" {
+            self.metaproperties = value.to::<Array<Gd<ActReactResource>>>();
+            return true
+        } else if prop_str == "emits" {
+            self.emits = value.to::<Array<Gd<Resource>>>();
+            return true
+        }
+        for stim in Stimuli::iter() {
+            if stim == Stimuli::MAX {break}
+            if prop_str == stim.as_ref() {
+                self.reacts[stim as usize] = value.to::<Array<Gd<Resource>>>();
+                return true
+            }
+        }
+        false
+    }
+
+    fn get_property_list(&mut self) -> Vec<PropertyInfo> {
+        let mut property_list = vec![
+            PropertyInfo::new_export::<Array<Gd<ActReactResource>>>("metaproperties"),
+            PropertyInfo::new_group("acts", ""),
+            PropertyInfo::new_export::<Array<Gd<Resource>>>("emits"),
+            PropertyInfo::new_group("reacts", ""),
+        ];
+        for stim in Stimuli::iter() {
+            if stim == Stimuli::MAX {break}
+            property_list.push(
+                PropertyInfo::new_export::<Array<Gd<Resource>>>(stim.as_ref()),
+            );
+        }
+        property_list
+    }
 }
 
 impl ActReactResource {
@@ -99,27 +109,6 @@ impl Index<Stimuli> for ActReactResource {
     type Output = Array<Gd<Resource>>;
 
     fn index(&self, index: Stimuli) -> &Self::Output {
-        match index {
-            Stimuli::Cold => &self.cold,
-            Stimuli::Combine => &self.combine,
-            Stimuli::DamageStandard => &self.damage_standard,
-            Stimuli::Electrify => &self.electrify,
-            Stimuli::Fire => &self.fire,
-            Stimuli::Frob => &self.frob,
-            Stimuli::Grab => &self.grab,
-            Stimuli::Heat => &self.heat,
-            Stimuli::Kick => &self.kick,
-            Stimuli::Pain => &self.pain,
-            Stimuli::PlayerFrob => &self.player_frob,
-            Stimuli::Poison => &self.poison,
-            Stimuli::Parry => &self.parry,
-            Stimuli::Repair => &self.repair,
-            Stimuli::Slime => &self.slime,
-            Stimuli::SplashDamage => &self.splash_damage,
-            Stimuli::Stun => &self.stun,
-            Stimuli::Toxic => &self.toxic,
-            Stimuli::Water => &self.water,
-            Stimuli::MAX => unreachable!()
-        }
+        &self.reacts[index as usize]
     }
 }

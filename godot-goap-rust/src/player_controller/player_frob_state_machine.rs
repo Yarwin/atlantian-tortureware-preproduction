@@ -47,12 +47,11 @@ fn update_shapecast(player_frob_controller: &mut PlayerController, frob_data: &m
     let mut frob_info = frob_data.take().unwrap_or_default();
 
     if player_frob_controller.interface_shape_cast.is_colliding() {
-        let Some(Ok(mut react_area)) = player_frob_controller.interface_shape_cast.get_collider(0).map(|o| o.try_cast::<ActReactArea3D>()) else {
-            if let Some(mut frobbed) = frob_info.frobbed.take() {
-                let on_shapecasted_freed = player_frob_controller.base().callable("on_shapecasted_freed");
-                frobbed.disconnect("tree_exiting".into(), on_shapecasted_freed.clone());
-            }
-            *frob_data = Some(frob_info);
+        let possible_collider = player_frob_controller.interface_shape_cast.get_collider(0).map(|o| o.try_cast::<ActReactArea3D>());
+        let Some(Ok(mut react_area)) = possible_collider else {
+            let mut frob_option = Some(frob_info);
+            stop_frobbing_and_disconnect(player_frob_controller, &mut frob_option);
+            *frob_data = frob_option;
             return;
         };
         let is_already_displayed = frob_info.frobbed.as_mut().map(|i| *i == react_area).unwrap_or(false);
@@ -71,7 +70,6 @@ fn update_shapecast(player_frob_controller: &mut PlayerController, frob_data: &m
         let area_bind = react_area.bind();
         let message = area_bind.act_react.as_ref().expect("no act react for given area?!").bind().get_playerfrob_display();
         drop(area_bind);
-
         let on_shapecasted_freed = player_frob_controller.base().callable("on_shapecasted_freed");
         if let Some(mut frobbed) = frob_info.frobbed.take() {
             frobbed.disconnect("tree_exiting".into(), on_shapecasted_freed.clone());
@@ -134,18 +132,17 @@ fn frob(player_frob_controller: &mut PlayerController, frob_info: &mut Option<Fr
         GameSys::singleton().emit_signal("frob_progress_updated".into(), &[progress.to_variant()]);
         return;
     }
-
     let Some(react_area) = frob_data.frobbed.as_ref() else { return; };
     let Some(acts) = player_frob_controller.interface_act_react.clone() else { return };
     let actor = player_frob_controller.base().clone();
     let inventories_ids = player_frob_controller.get_inventories_ids().clone();
+    let reactor = { react_area.bind().get_reactor() };
     let context = dict! {
                         "inventories": inventories_ids,
                         "actor": actor,
-                        "reactor": react_area.bind().target.clone(),
+                        "reactor": reactor,
                     };
     ActReactExecutor::singleton().bind_mut().react(acts, react_area.bind().act_react.clone().expect("no act react for react area!?"), context);
-
     stop_frobbing_and_disconnect(player_frob_controller, frob_info);
     player_frob_controller.is_frobbing = false;
 }

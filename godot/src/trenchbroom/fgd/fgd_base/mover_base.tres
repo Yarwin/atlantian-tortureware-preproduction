@@ -10,10 +10,22 @@ func_godot_internal = false
 base_classes = Array[Resource]([])
 class_properties = {
 "_amount": 0.0,
+"_cyclic": false,
+"_delay": 0.0,
+"_reverse": false,
+"_reverse_delay": 2.0,
+"_reverse_travel_time": 2.0,
+"_travel_time": 2.0,
 "axis": Vector3(0, 0, 0)
 }
 class_property_descriptions = {
 "_amount": "length of the movement",
+"_cyclic": "Defines if movement is cyclic",
+"_delay": "Time before movement starts after initial activation",
+"_reverse": "Defines if movement should reversed after finishing initial travel.",
+"_reverse_delay": "Time before reversed movement starts after finishing initial travel",
+"_reverse_travel_time": "Travel time of reversed movement in seconds",
+"_travel_time": "Travel time in seconds",
 "axis": "axis of the movement (relative to the body)"
 }
 meta_properties = {

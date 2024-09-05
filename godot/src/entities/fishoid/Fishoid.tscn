@@ -1,4 +1,4 @@
-[gd_scene load_steps=76 format=4 uid="uid://qaegqhcgvgj"]
+[gd_scene load_steps=75 format=4 uid="uid://qaegqhcgvgj"]
 
 [ext_resource type="Script" path="res://src/entities/fishoid/fishoid.gd" id="1_6ui7v"]
 [ext_resource type="Texture2D" uid="uid://ddfcw85nf2ol4" path="res://assets/3D/models/fishoid/Fishoid_0.png" id="1_vhn36"]
@@ -4327,12 +4327,7 @@ material = SubResource("StandardMaterial3D_bghrh")
 radius = 0.05
 height = 0.1
 
-[sub_resource type="ApplyDamageGameEffect" id="ApplyDamageGameEffect_vtn3q"]
-vulnerability = 2.0
-flat_reduction = 2.0
-
 [sub_resource type="ActReactResource" id="ActReactResource_8dvnv"]
-damage_standard = Array[Resource]([SubResource("ApplyDamageGameEffect_vtn3q")])
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bokm5"]
 radius = 0.281633

@@ -50,6 +50,7 @@ impl CharacterController3D {
             speed: self.speed,
             acceleration: self.acceleration,
             gravity_scale: self.gravity_scale,
+            current_platform_translation: Vector3::ZERO,
         }
     }
 }
