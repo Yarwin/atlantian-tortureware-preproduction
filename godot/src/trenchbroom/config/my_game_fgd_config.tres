@@ -1,26 +1,26 @@
 [gd_resource type="Resource" script_class="FuncGodotFGDFile" load_steps=17 format=3 uid="uid://pqkx78ajm8cg"]
 
+[ext_resource type="Resource" uid="uid://8a6kis8favvd" path="res://src/trenchbroom/fgd/navigation/navigation_fgd.tres" id="1_5lst6"]
 [ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_file.gd" id="1_030rr"]
-[ext_resource type="Resource" uid="uid://u61puqgn1c40" path="res://src/trenchbroom/fgd/func_detail.tres" id="1_jte5g"]
-[ext_resource type="Resource" uid="uid://csavo4iv77gr2" path="res://src/trenchbroom/fgd/func_detail_illusionary.tres" id="2_m0vc0"]
-[ext_resource type="Resource" uid="uid://be3yrr4ld7w87" path="res://src/trenchbroom/fgd/func_geo.tres" id="3_qy6xs"]
-[ext_resource type="Resource" uid="uid://coola4t476rb" path="res://src/trenchbroom/fgd/func_illusionary.tres" id="4_ovvam"]
+[ext_resource type="Resource" uid="uid://u61puqgn1c40" path="res://src/trenchbroom/fgd/geometry/func_detail.tres" id="1_xmssc"]
+[ext_resource type="Resource" uid="uid://csavo4iv77gr2" path="res://src/trenchbroom/fgd/geometry/func_detail_illusionary.tres" id="2_vnarj"]
+[ext_resource type="Resource" uid="uid://be3yrr4ld7w87" path="res://src/trenchbroom/fgd/geometry/func_geo.tres" id="3_p6crq"]
+[ext_resource type="Resource" uid="uid://coola4t476rb" path="res://src/trenchbroom/fgd/geometry/func_illusionary.tres" id="4_bpsh2"]
 [ext_resource type="Resource" uid="uid://b41gi40o3tcy1" path="res://src/trenchbroom/fgd/fgd_base/phong_base.tres" id="5_dbb88"]
-[ext_resource type="Resource" uid="uid://dj45unjy13x0l" path="res://src/trenchbroom/fgd/worldspawn.tres" id="6_b0abf"]
-[ext_resource type="Resource" uid="uid://hce63bf8cm85" path="res://src/trenchbroom/fgd/func_button.tres" id="7_4ahce"]
-[ext_resource type="Resource" uid="uid://egsodhbmqis7" path="res://src/trenchbroom/fgd/func_mover.tres" id="8_0nue6"]
+[ext_resource type="Resource" uid="uid://dj45unjy13x0l" path="res://src/trenchbroom/fgd/geometry/worldspawn.tres" id="6_ve34j"]
+[ext_resource type="Resource" uid="uid://egsodhbmqis7" path="res://src/trenchbroom/fgd/interactable/func_mover.tres" id="7_glh3v"]
 [ext_resource type="Resource" uid="uid://j8rse51f6wvf" path="res://src/trenchbroom/fgd/fgd_base/target_base.tres" id="9_i4buh"]
 [ext_resource type="Resource" uid="uid://c7dcbtv12nats" path="res://src/trenchbroom/fgd/fgd_base/targetname_base.tres" id="10_ujftw"]
 [ext_resource type="Resource" uid="uid://7vgslvl8p41g" path="res://src/trenchbroom/fgd/fgd_base/mover_base.tres" id="11_r7nsh"]
-[ext_resource type="Resource" uid="uid://diwrv3viyeadc" path="res://src/trenchbroom/fgd/func_fishoid.tres" id="12_mdboi"]
-[ext_resource type="Resource" uid="uid://dlj2p2r1udqb1" path="res://src/trenchbroom/fgd/func_area.tres" id="13_2oi4o"]
+[ext_resource type="Resource" uid="uid://dlj2p2r1udqb1" path="res://src/trenchbroom/fgd/interactable/func_area.tres" id="12_kb718"]
+[ext_resource type="Resource" uid="uid://diwrv3viyeadc" path="res://src/trenchbroom/fgd/monsters/func_fishoid.tres" id="12_mdboi"]
 [ext_resource type="Resource" uid="uid://bgeqi8fvdew12" path="res://src/trenchbroom/fgd/fgd_base/parent_base.tres" id="14_ifirg"]
 [ext_resource type="Resource" uid="uid://nhvd0q0f2vdj" path="res://src/trenchbroom/fgd/fgd_base/parentname_base.tres" id="15_jhn23"]
 
 [resource]
 script = ExtResource("1_030rr")
 export_file = false
-model_key_word_supported = true
+target_map_editor = 1
 fgd_name = "FuncGodot"
-base_fgd_files = Array[Resource]([])
-entity_definitions = Array[Resource]([ExtResource("1_jte5g"), ExtResource("2_m0vc0"), ExtResource("3_qy6xs"), ExtResource("4_ovvam"), ExtResource("5_dbb88"), ExtResource("6_b0abf"), ExtResource("7_4ahce"), ExtResource("8_0nue6"), ExtResource("9_i4buh"), ExtResource("10_ujftw"), ExtResource("11_r7nsh"), ExtResource("12_mdboi"), ExtResource("13_2oi4o"), ExtResource("14_ifirg"), ExtResource("15_jhn23")])
+base_fgd_files = Array[Resource]([ExtResource("1_5lst6")])
+entity_definitions = Array[Resource]([ExtResource("1_xmssc"), ExtResource("2_vnarj"), ExtResource("3_p6crq"), ExtResource("4_bpsh2"), ExtResource("5_dbb88"), ExtResource("6_ve34j"), ExtResource("7_glh3v"), ExtResource("9_i4buh"), ExtResource("10_ujftw"), ExtResource("11_r7nsh"), ExtResource("12_mdboi"), ExtResource("12_kb718"), ExtResource("14_ifirg"), ExtResource("15_jhn23")])

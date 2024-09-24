@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="FuncGodotFGDBaseClass" load_steps=2 format=3 uid="uid://cnxtrrw0kw6ol"]
+
+[ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_base_class.gd" id="1_1ylbq"]
+
+[resource]
+script = ExtResource("1_1ylbq")
+classname = "FuncNavigation_navregion_mode_base"
+description = ""
+func_godot_internal = false
+base_classes = Array[Resource]([])
+class_properties = {
+"_behavior": {
+"Door": 0,
+"Lift": 1,
+"Trapdoor": 2
+}
+}
+class_property_descriptions = {
+"_behavior": ["lorem ipsum", 0]
+}
+meta_properties = {
+"color": Color(0.8, 0.8, 0.8, 1),
+"size": AABB(-8, -8, -8, 8, 8, 8)
+}
+node_class = ""
+name_property = ""

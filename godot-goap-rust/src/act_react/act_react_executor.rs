@@ -99,6 +99,11 @@ impl ActReactExecutor {
     }
 
     pub fn create_effects(&mut self, actor: &mut GdMut<ActReactResource>, reactor: &mut GdMut<ActReactResource>, context: &Dictionary) {
+        for meta in actor.metaproperties.iter_shared() {
+            for act in meta.bind().emits.iter_shared() {
+                self.create_reacts_for_act(act, reactor, context);
+            }
+        }
         for act in actor.emits.iter_shared() {
             self.create_reacts_for_act(act, reactor, context);
         }

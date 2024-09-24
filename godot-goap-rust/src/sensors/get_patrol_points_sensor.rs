@@ -67,6 +67,10 @@ impl PatrolPointSensor {
 impl SensorPolling for PatrolPointSensor {
     fn process(&mut self, delta: f64, args: &mut SensorArguments) -> bool {
         self.last_update_delta += delta;
+        // bail if we have some target
+        if args.blackboard.target.as_ref().is_some() {
+            return false
+        }
         if self.last_update_delta < self.update_every {
             return false;
         }
@@ -74,7 +78,6 @@ impl SensorPolling for PatrolPointSensor {
         if args.polls.get_ainodes().is_none() {
             return false;
         }
-
         let fact_query = FactQuery::with_check(FactQueryCheck::Node(
             WMNodeType::Patrol,
         ));

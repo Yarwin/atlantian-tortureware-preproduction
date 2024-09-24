@@ -70,8 +70,8 @@ pub struct InventoryManager {
     inventories: HashMap<u32, InventoryEntity>,
     inventory_agents: HashMap<u32, Gd<InventoryAgent>>,
     items: HashMap<u32, Gd<Item>>,
-    #[init(default = Some(Vec::new()))]
-    inventories_to_create: Option<Vec<InventoryToCreate>>,
+    #[init(default = Vec::new())]
+    inventories_to_create: Vec<InventoryToCreate>,
     pub is_initialized: bool,
     base: Base<Object>
 }
@@ -123,7 +123,7 @@ impl InventoryManager {
 impl InventoryManager {
 
     pub fn register_inventory(&mut self, to_create: InventoryToCreate) {
-        self.inventories_to_create.as_mut().unwrap().push(to_create);
+        self.inventories_to_create.push(to_create);
     }
 
     fn remove_item(&mut self, mut item: Gd<Item>) {
@@ -304,7 +304,10 @@ impl InventoryManager {
     }
 
     fn initialize_inventories(&mut self) {
-        for mut to_create in self.inventories_to_create.take().unwrap().drain(..) {
+        let mut to_drain = std::mem::take(&mut self.inventories_to_create);
+        to_drain.sort();
+        to_drain.reverse();
+        for mut to_create in to_drain.drain(..) {
             let mut inventory = to_create.entity();
             let inventory_id = assign_id(to_create.agent.bind().id, &mut self.current_inventory_id);
 
@@ -318,6 +321,7 @@ impl InventoryManager {
             self.inventories.insert(inventory_id, inventory);
             self.inventory_agents.insert(inventory_id, to_create.agent);
         }
+        self.inventories_to_create = to_drain;
         self.base_mut().emit_signal("inventories_initialized".into(), &[]);
     }
 }
@@ -325,15 +329,11 @@ impl InventoryManager {
 
 impl GameSystem for InventoryManager {
     const NAME: &'static str = "InventoryManager";
-    fn singleton_name() -> StringName {
-        StringName::from("InventoryManager")
-    }
 
     fn initialize() -> Gd<Self> {
-        let mut inventory_manager = Self::new_alloc();
+        let inventory_manager = Self::new_alloc();
         Engine::singleton()
             .register_singleton(Self::singleton_name(), inventory_manager.clone());
-        inventory_manager.call_deferred("create_inventories".into(), &[]);
         inventory_manager
     }
 

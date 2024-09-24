@@ -386,9 +386,7 @@ impl Equipment for SpreadGun {
         self.base_mut().connect("taken_off".into(), on_gun_taken_off);
 
         let mut gun_display = gun_ui.cast::<GunDisplay>();
-        unsafe {
-            gun_display.bind_mut().eq_component = Some(self.eq_component.unwrap() as *mut SpreadGunItemComponent);
-        }
+        gun_display.bind_mut().eq_component = Some(self.eq_component.unwrap());
         gun_display.bind_mut().init_with_component();
     }
 }

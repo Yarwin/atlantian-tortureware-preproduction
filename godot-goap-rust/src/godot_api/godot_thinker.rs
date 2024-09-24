@@ -8,9 +8,10 @@ use crate::ai::working_memory::{AIStimuli, Desire, WMProperty};
 use crate::character_controler::character_controller_3d::CharacterController3D;
 use crate::godot_api::gamesys::{GameSystem};
 use crate::receiver::damage_receptor_component::ReceivedDamage;
+use crate::utils::generate_id::ToCreate;
 
 /// an interface to speak with AI manager
-#[derive(GodotClass, Debug)]
+#[derive(GodotClass)]
 #[class(init, base=Node3D, rename=Thinker)]
 pub struct GodotThinker {
     #[var]
@@ -79,10 +80,14 @@ impl GodotThinker {}
 
 #[godot_api]
 impl GodotThinker {
-    #[func]
-    fn register_self(&mut self) {
+    #[func(gd_self)]
+    fn register_self(this: Gd<Self>) {
         let mut ai_manager = GodotAIManager::singleton();
-        self.thinker_id = ai_manager.bind_mut().register_thinker(self);
+        let to_create = ToCreate {
+            id: this.bind().thinker_id,
+            instance: this.clone()
+        };
+        ai_manager.bind_mut().register_thinker(to_create);
     }
 
     #[func]

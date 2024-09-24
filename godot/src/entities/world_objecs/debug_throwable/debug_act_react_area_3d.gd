@@ -12,6 +12,9 @@ func _on_debug_world_object_grabbed() -> void:
 
 func _on_debug_world_object_released() -> void:
 	set_act_react(normal_act_react)
+	for area in self.get_overlapping_areas():
+		if area is ActReactArea3D:
+			area.on_other_area_act.bind(self).call_deferred()
 
 
 func _on_debug_world_object_contact_velocity_achieved() -> void:

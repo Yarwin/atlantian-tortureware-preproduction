@@ -1,10 +1,13 @@
-[gd_scene load_steps=11 format=3 uid="uid://ctid7gp5i86x7"]
+[gd_scene load_steps=13 format=3 uid="uid://ctid7gp5i86x7"]
 
 [ext_resource type="GrabGameEffect" uid="uid://xgppo68y5e2n" path="res://src/entities/world_objecs/debug_throwable/act_react/new_grab_game_effect.tres" id="1_cpl2p"]
+[ext_resource type="ActFrob" uid="uid://cr52wfkpcaceu" path="res://src/metaprops/acts/new_act_frob.tres" id="1_x825t"]
 [ext_resource type="Script" path="res://src/entities/world_objecs/debug_throwable/debug_act_react_area_3d.gd" id="2_u0cd5"]
 [ext_resource type="FlyGameEffect" uid="uid://b5sry3c3b2hrd" path="res://src/entities/world_objecs/debug_throwable/act_react/new_fly_game_effect.tres" id="3_aakh4"]
+[ext_resource type="ActReactResource" uid="uid://b2y80y8rv1fdo" path="res://src/metaprops/metaprops_pressured.tres" id="4_pxv8l"]
 
 [sub_resource type="ActReactResource" id="ActReactResource_t5t28"]
+emits = Array[Resource]([ExtResource("1_x825t")])
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qw6oy"]
 albedo_color = Color(0.692378, 0.14695, 0.348301, 1)
@@ -15,6 +18,7 @@ material = SubResource("StandardMaterial3D_qw6oy")
 [sub_resource type="BoxShape3D" id="BoxShape3D_ma82c"]
 
 [sub_resource type="ActReactResource" id="ActReactResource_3c754"]
+metaproperties = Array[ActReactResource]([ExtResource("4_pxv8l")])
 DamageStandard = Array[Resource]([ExtResource("3_aakh4")])
 PlayerFrob = Array[Resource]([ExtResource("1_cpl2p")])
 
@@ -30,7 +34,6 @@ contact_velocity_effects = SubResource("ActReactResource_t5t28")
 act_react_area = NodePath("ActReactArea3D")
 mesh = NodePath("MeshInstance3D")
 collision_layer = 9
-mass = 2.0
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_no0qy")
@@ -39,11 +42,11 @@ mesh = SubResource("BoxMesh_no0qy")
 shape = SubResource("BoxShape3D_ma82c")
 
 [node name="ActReactArea3D" type="ActReactArea3D" parent="." node_paths=PackedStringArray("target")]
+propagation_mode = 2
 target = NodePath("..")
 act_react = SubResource("ActReactResource_3c754")
 collision_layer = 64
-collision_mask = 0
-monitoring = false
+collision_mask = 64
 script = ExtResource("2_u0cd5")
 while_grabbed_act_react = SubResource("ActReactResource_ypewy")
 

@@ -1,3 +1,4 @@
+#![allow(clippy::boxed_local)]
 use std::fmt::Debug;
 use std::time::SystemTime;
 use godot::classes::RigidBody3D;

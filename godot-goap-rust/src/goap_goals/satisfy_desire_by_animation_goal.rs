@@ -21,7 +21,7 @@ impl GoalBehaviour for SatisfyDesireByPlayingAnimationGoal {
 
     // set what animation to play to satisfy surprised goal
     fn activate(&self, _goal: &GoalComponent, agent_world_context: &mut AgentGoalWorldContext) -> bool {
-        agent_world_context.blackboard.animation_target = Some(self.animation_type.clone());
+        agent_world_context.blackboard.animation_target = Some(self.animation_type);
         true
     }
 

@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="FuncGodotFGDSolidClass" load_steps=6 format=3 uid="uid://bmllqe5drm6lk"]
+
+[ext_resource type="Resource" uid="uid://c7dcbtv12nats" path="res://src/trenchbroom/fgd/fgd_base/targetname_base.tres" id="2_fiaqi"]
+[ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_solid_class.gd" id="3_8jott"]
+[ext_resource type="Resource" uid="uid://cnxtrrw0kw6ol" path="res://src/trenchbroom/fgd/navigation/navregion_mode_base.tres" id="3_p62eh"]
+[ext_resource type="Resource" uid="uid://bgeqi8fvdew12" path="res://src/trenchbroom/fgd/fgd_base/parent_base.tres" id="4_5uvet"]
+[ext_resource type="Script" path="res://src/trenchbroom/func_navigation/func_navregion_bounds.gd" id="4_y7gos"]
+
+[resource]
+script = ExtResource("3_8jott")
+spawn_type = 2
+origin_type = 0
+build_visuals = false
+use_in_baked_light = false
+shadow_casting_setting = 1
+build_occlusion = false
+render_layers = 0
+collision_shape_type = 1
+collision_layer = 0
+collision_mask = 0
+collision_priority = 1.0
+collision_shape_margin = 0.04
+script_class = ExtResource("4_y7gos")
+classname = "FuncNavigation_navigation_region"
+description = "Defines bounds of given NavRegion."
+func_godot_internal = false
+base_classes = Array[Resource]([ExtResource("2_fiaqi"), ExtResource("3_p62eh"), ExtResource("4_5uvet")])
+class_properties = {
+"_grow": 1.0,
+"_is_enabled": true,
+"_layers_disabled": 0,
+"_layers_enabled": 1,
+"_use_edge_connections": true
+}
+class_property_descriptions = {
+"_bounded": "Defines if given NavigationRegion is bounded to some other entity (for example the moving platform)",
+"_grow": "Defines how much bounding box of given Navigation Region should grow (to include the neighbouring geometry)",
+"_is_enabled": "Defines starting state of given entity",
+"_layers_disabled": "Defines layers of this navregion after being targeted",
+"_layers_enabled": "Defines INITIAL layers of this navregion.",
+"_use_edge_connections": "If enabled the navigation region will use edge connections to connect with other navigation regions within proximity of the navigation map edge connection margin."
+}
+meta_properties = {
+"color": Color(0.8, 0.8, 0.8, 1),
+"size": AABB(-8, -8, -8, 8, 8, 8)
+}
+node_class = "Area3D"
+name_property = ""

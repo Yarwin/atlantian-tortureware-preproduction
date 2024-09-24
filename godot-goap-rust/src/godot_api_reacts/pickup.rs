@@ -48,7 +48,7 @@ pub struct PickupItem {
 }
 
 impl PickupItem {
-    fn try_stack_item(&mut self, item: Gd<Item>, success_message: &String) -> Result<EffectResult, Gd<Item>> {
+    fn try_stack_item(&mut self, item: Gd<Item>, _success_message: &str) -> Result<EffectResult, Gd<Item>> {
         let mut inventory_manager = InventoryManager::singleton();
         let potential_inventory_data = {
             let item_bind = item.bind();

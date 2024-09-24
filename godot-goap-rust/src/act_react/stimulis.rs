@@ -30,6 +30,7 @@ pub enum Stimuli {
     Stun,
     Toxic,
     Water,
+    #[allow(clippy::upper_case_acronyms)]
     #[strum(disabled)]
     MAX
 }

@@ -14,5 +14,3 @@ func _post_ready():
 	if target_name:
 		var potential_target: Node3D = get_tree().get_first_node_in_group(target_name) as Node3D
 		target = potential_target
-		#print(potential_target)
-		#set_deferred("target", potential_target)

@@ -7,7 +7,7 @@ use crate::sensors::damage_sensor::DamageSensor;
 use crate::sensors::get_patrol_points_sensor::PatrolPointSensor;
 use crate::sensors::vision_character_sensor::VisionCharacterSensor;
 use crate::targeting::targeting_systems::TargetMask;
-use crate::thinker_states::process_thinker::PollingResult;
+use crate::thinker_states::polling::PollingResult;
 use enum_dispatch::enum_dispatch;
 use godot::prelude::*;
 use serde::{Deserialize, Serialize};

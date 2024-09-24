@@ -1,4 +1,4 @@
-[gd_scene load_steps=75 format=4 uid="uid://qaegqhcgvgj"]
+[gd_scene load_steps=76 format=4 uid="uid://qaegqhcgvgj"]
 
 [ext_resource type="Script" path="res://src/entities/fishoid/fishoid.gd" id="1_6ui7v"]
 [ext_resource type="Texture2D" uid="uid://ddfcw85nf2ol4" path="res://assets/3D/models/fishoid/Fishoid_0.png" id="1_vhn36"]
@@ -8,6 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://dis6capqnfbc8" path="res://assets/icons/pngwing.com.png" id="5_ir511"]
 [ext_resource type="Script" path="res://src/entities/fishoid/animation_resolver.gd" id="5_uw3al"]
 [ext_resource type="PackedScene" uid="uid://ck8ut83caaw2s" path="res://src/entities/projectiles/fishball/fishball.tscn" id="6_6m37m"]
+[ext_resource type="ApplyDamageGameEffect" uid="uid://goq4oshgbfhi" path="res://src/entities/fishoid/data/hitboxes/new_apply_damage_game_effect.tres" id="9_r8ynq"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_25x3a"]
 resource_local_to_scene = true
@@ -4328,6 +4329,7 @@ radius = 0.05
 height = 0.1
 
 [sub_resource type="ActReactResource" id="ActReactResource_8dvnv"]
+DamageStandard = Array[Resource]([ExtResource("9_r8ynq")])
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bokm5"]
 radius = 0.281633
@@ -4731,7 +4733,7 @@ head_position = NodePath("../BoneAttachment3D/Marker3D")
 ainodes_detection_shape = SubResource("SphereShape3D_4taox")
 vision_detection_shape = SubResource("SphereShape3D_4tib6")
 avoidance_detection_radius = 2.0
-agent_radius = 0.45
+agent_radius = 0.51
 rotation_speed_walk = 2.5
 rotation_speed_normal = 4.5
 rotation_speed_fast = 6.0

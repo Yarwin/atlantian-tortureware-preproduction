@@ -1,0 +1,8 @@
+[gd_resource type="ActReactResource" load_steps=2 format=3 uid="uid://clajrevvi1glm"]
+
+[sub_resource type="CallMethodGameEffect" id="CallMethodGameEffect_r54jm"]
+method_name = &"activate"
+method_display = "Open"
+
+[resource]
+PlayerFrob = Array[Resource]([SubResource("CallMethodGameEffect_r54jm")])

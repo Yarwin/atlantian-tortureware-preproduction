@@ -1,11 +1,12 @@
 use std::f32::consts::FRAC_PI_2;
 use std::f64::consts::PI;
+use std::time::SystemTime;
 use godot::classes::{InputEvent, InputEventMouseMotion, ShapeCast3D};
 use godot::prelude::*;
 use crate::character_controler::character_controller_3d::CharacterController3D;
 use godot::classes::input::MouseMode;
 use godot::global::{fmod, lerpf, sin};
-use crate::godot_api::gamesys::{GameSys, GameSystem};
+use crate::godot_api::gamesys::{GameSys};
 
 
 #[derive(Debug, Default)]
@@ -39,6 +40,11 @@ pub struct PlayerCameraController3D {
     pub immersion_scale: Vector3,
     #[export]
     bob_frequency: Vector3,
+    #[export]
+    #[init(default=0.1)]
+    step_damping_time: f32,
+    current_bob: Vector3,
+    damping_time: Option<SystemTime>,
     original_camera_pos: Vector3,
     camera_data: CameraData,
     base: Base<Node>
@@ -125,13 +131,33 @@ impl INode for PlayerCameraController3D {
         self.perform_mouse_rotation(delta as f32);
         self.tilt_camera(delta as f32);
         let bob = self.calculate_bob(delta as f32);
-        if let Some(head) = self.head.as_mut() {
-            head.set_rotation(self.camera_data.target_rotation_head);
-        }
-        if let Some(camera) = self.camera.as_mut() {
-            camera.set_position(self.original_camera_pos + bob * self.immersion_scale);
-        }
 
+        let Some(head) = self.head.as_mut() else {return;};
+        head.set_rotation(self.camera_data.target_rotation_head);
+
+        let Some(cam) = self.camera.as_mut() else {return;};
+        let Some(damp_time) = self.damping_time.as_mut() else {
+            cam.set_position(self.original_camera_pos + bob * self.immersion_scale);
+            return;
+        };
+
+        // This is not a physics interpolation
+        // Stepping happens in one frame
+        // Thus we lag camera by a bit to prevent the teleporting
+        let elapsed = damp_time.elapsed().unwrap().as_secs_f32();
+        if elapsed > self.step_damping_time {
+            self.damping_time = None;
+            cam.set_as_top_level(false);
+            cam.set_transform(Transform3D::new(Basis::from_cols(Vector3::RIGHT, Vector3::UP, Vector3::BACK), Vector3::ZERO));
+        } else {
+            let target_transform = head.get_global_transform();
+            let mut transform = Transform3D::new(target_transform.basis, Vector3::ZERO);
+            let prev_transform = cam.get_transform();
+            let diff = (target_transform.origin + self.original_camera_pos + self.current_bob * self.immersion_scale) - prev_transform.origin;
+            let lerp_speed = (elapsed / 0.1).max(0.5);
+            transform.origin = prev_transform.origin + diff * lerp_speed;
+            cam.set_transform(transform);
+        }
     }
 
     fn ready(&mut self) {
@@ -146,4 +172,21 @@ impl INode for PlayerCameraController3D {
         }
     }
 
+}
+
+#[godot_api]
+impl PlayerCameraController3D {
+    #[func]
+    fn _on_step(&mut self, step_height: Vector3) {
+        if self.damping_time.is_some() {
+            self.damping_time = Some(SystemTime::now());
+            return;
+        }
+        if let Some(cam) = self.camera.as_mut() {
+            let cam_pos = cam.get_position();
+            cam.set_as_top_level(true);
+            cam.set_global_position(self.head.as_ref().unwrap().get_global_position() + cam_pos - step_height);
+            self.damping_time = Some(SystemTime::now());
+        }
+    }
 }

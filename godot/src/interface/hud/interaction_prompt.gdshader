@@ -12,7 +12,7 @@ float radial_progress(vec2 UV_, float VAL)
 	vec2 origin = vec2(0.0, 0.0);
 
 	float d = length(uv);
-	float a = atan(uv.y - origin.y, uv.x - origin.x);  
+	float a = atan(uv.y - origin.y, uv.x - origin.x);
 	float theta = (a < 0.0) ? (a + TWO_PI) / TWO_PI : a / TWO_PI;
 	float progress = smoothstep(0., theta, VAL);
 

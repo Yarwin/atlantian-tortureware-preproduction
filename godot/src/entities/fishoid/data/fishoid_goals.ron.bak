@@ -1,0 +1,89 @@
+#![enable(implicit_some, unwrap_newtypes, unwrap_variant_newtypes)]
+[
+    GoalComponent(
+        name: "Patrol",
+        goto_target: PatrolPoint,
+        goal_type: PatrolGoal(),
+        priority: 2,
+        desired_state: {IsAreaSurveyed: Truth(true)},
+        required_state: {HasTarget: Truth(false)},
+    ),
+    GoalComponent(
+        name: "Idle",
+        goal_type: BasicGoal(),
+        priority: 1,
+        desired_state: {IsIdling: Truth(true)},
+        required_state: {},
+    ),
+    GoalComponent(
+        name: "Be Surprised By Enemy",
+        is_interruptible: false,
+        goal_type: SatisfyDesireByPlayingAnimationGoal(
+            desire_type: Surprise,
+            animation_type: Surprised,
+        ),
+        priority: 50,
+        desired_state: {AnimPlayed: Truth(true)},
+        required_state: {},
+    ),
+        GoalComponent( 
+        name: "Dodge",
+        goal_type: KillEnemyGoal(),
+        priority: 10,
+        desired_state: {
+            IsTargetAimingAtMe: Truth(false),
+        },
+        required_state: {
+            IsTargetAimingAtMe: Truth(true),
+            HasTarget: Target(Character),
+        },
+    ),
+    GoalComponent(
+        name: "KillEnemy",
+        goal_type: BasicGoal(),
+        priority: 6,
+        desired_state: {IsTargetDead: Truth(true)},
+        required_state: {HasTarget: Target(Character)},
+    ),
+    GoalComponent(
+        name: "ChaseEnemy",
+        goal_type: ChaseEnemyGoal(),
+        priority: 5,
+        desired_state: {AtTargetPosition: Truth(true)},
+        required_state: {
+            IsWeaponArmed: Truth(false),
+            HasTarget: Target(Character),
+        },
+    ),
+    GoalComponent(
+        name: "ReleaseWeapon",
+        goal_type: BasicGoal(),
+        priority: 4,
+        desired_state: {IsWeaponArmed: Truth(false)},
+        required_state: {IsWeaponArmed: Truth(true)},
+    ),
+    GoalComponent(
+        name: "Recover From Attack",
+        goal_type: BasicGoal(),
+        priority: 1,
+        desired_state: {
+            IsTargetDead: Truth(true)
+        },
+        required_state: {
+            HasTarget: Target(Character),
+        },
+    ),
+    GoalComponent(
+        name: "Stagger",
+        is_interruptible: false,
+        goal_type: SatisfyDesireByPlayingAnimationGoal(
+            desire_type: Stagger,
+            animation_type: Hurt,
+        ),
+        priority: 51,
+        desired_state: {
+            AnimPlayed: Truth(true),
+        },
+        required_state: {},
+    ),
+]

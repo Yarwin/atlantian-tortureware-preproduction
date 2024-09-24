@@ -208,11 +208,17 @@ pub fn navigate(mut navigation_arguments: NavigationArguments, delta: f64) {
             &navigation_arguments.navigation_data.danger_table,
             forward_vec,
         );
+        let avoidance_norm = if !avoidance.is_zero_approx() {
+            avoidance.normalized()
+        } else {
+            godot_print!("avoidance is 0");
+            Vector3::ONE
+        };
         let mut debug_node = character.get_node_as::<MeshInstance3D>("Debug/DebugDir");
         debug_node.set_global_position(
-            character.get_global_position() + desired_velocity.length() * avoidance.normalized(),
+            character.get_global_position() + desired_velocity.length() * avoidance_norm,
         );
-        desired_velocity = desired_velocity.length() * avoidance.normalized();
+        desired_velocity = desired_velocity.length() * avoidance_norm;
         if desired_velocity.length() < 0.3 {
             desired_velocity *= 5.0;
         }

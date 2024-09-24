@@ -5,14 +5,14 @@
 [resource]
 script = ExtResource("1_q1meo")
 classname = "TargetName"
-description = "Target name of this entity"
+description = "Defines groups this entity belongs to."
 func_godot_internal = false
 base_classes = Array[Resource]([])
 class_properties = {
-"_target_name": "targetname"
+"_target_names": ""
 }
 class_property_descriptions = {
-"_target_name": "name of the entity as a target"
+"_target_names": "name of groups this entity belongs to"
 }
 meta_properties = {
 "color": Color(0.8, 0.8, 0.8, 1),

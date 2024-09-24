@@ -59,10 +59,15 @@ impl CharacterController3D {
 
 #[godot_api]
 impl CharacterController3D {
+    #[signal]
+    fn stepped(step_height: Vector3);
     #[func]
     pub fn process_movement(&mut self, delta: f64) {
         let motion_params = self.get_motion_params();
         self.movement_data = process_movement(delta as f32, motion_params, self.movement_data.take());
+        if let Some(Some(step_height)) = self.movement_data.as_ref().map(|md| md.total_stepped_height) {
+            self.base_mut().emit_signal("stepped".into(), &[step_height.to_variant()]);
+        }
         let velocity = self.movement_data.as_ref().map(|md| md.velocity).unwrap_or(Vector3::ZERO);
         self.base_mut().set_velocity(velocity);
     }

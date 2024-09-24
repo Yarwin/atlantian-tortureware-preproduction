@@ -6,12 +6,12 @@ use std::f32::consts::FRAC_PI_2;
 use godot::global::{cos, tan};
 use crate::character_controler::movement_data::MovementData;
 
-const GROUND_CAST_DISTANCE: f32 = 0.004;
+const GROUND_CAST_DISTANCE: f32 = 0.005;
 const MAX_ITERATIONS_COUNT: u32 = 4;
 /// 0,51m or <~17QU
 const MAX_STEP_HEIGHT: f32 = 0.51;
 const STEP_FORWARD_MULTIPLIER: f32 = 0.05;
-/// PI / 4 => 45*
+/// PI / 3 => 60*
 const SLOPE_LIMIT: f32 = std::f32::consts::FRAC_PI_3;
 const SNAP_TO_GROUND_DISTANCE: f32 = 0.2;
 
@@ -51,7 +51,11 @@ pub fn process_movement(delta: f32, mut args: MovementParameters, previous_movem
         };
         desired_motion = previous_direction * current_speed;
     }  else {
-        current_speed = previous_horizontal_speed.lerp(args.speed, args.acceleration);
+        current_speed = if previous_horizontal_speed > args.speed {
+            previous_horizontal_speed
+        } else {
+            previous_horizontal_speed.lerp(args.speed, args.acceleration)
+        };
         desired_motion = args.direction * current_speed;
     }
     let mut platform_velocity = Vector3::ZERO;
@@ -72,6 +76,7 @@ pub fn process_movement(delta: f32, mut args: MovementParameters, previous_movem
     }
     args.current_platform_translation += platform_velocity * delta;
     let mut current_movement_data = execute_movement(desired_motion, args, delta);
+    // add platform velocity on exit
     if let Some(mov_data) = current_movement_data.as_mut() {
         if mov_data.platform_data.is_none() {
             mov_data.velocity += platform_velocity;
@@ -93,7 +98,7 @@ fn execute_movement(desired_motion: Vector3, mut args: MovementParameters, delta
         args.body.move_and_collide(args.current_platform_translation);
     }
 
-    if movement_data.vertical_translation.length() <= f32::EPSILON {
+    if movement_data.vertical_translation.length().is_zero_approx() {
         if let Some(ground_collision) = args.body.move_and_collide_ex(Vector3::DOWN * GROUND_CAST_DISTANCE).test_only(true).done() {
             if ground_collision.get_normal().angle_to(Vector3::UP) < SLOPE_LIMIT {
                 movement_data.grounded = true;
@@ -186,7 +191,7 @@ fn move_iteration(movement_type: MovementType, args: &mut MovementParameters, mo
 
         let shape_height = args.collision_shape.get_shape().unwrap().cast::<CylinderShape3D>().get_height();
         let distance_to_bottom = (args.collision_shape.get_global_position() - args.body.get_global_basis().col_b() * shape_height * 0.5).y;
-        if movement_type == MovementType::Lateral && collision_point.y > distance_to_bottom + 0.005 {
+        if movement_type == MovementType::Lateral && collision_point.y > distance_to_bottom + 0.05 {
             projection_normal = args.collision_shape.get_global_position() - collision_point;
             projection_normal.y = 0.0;
             projection_normal = projection_normal.normalized();
@@ -235,10 +240,7 @@ fn move_iteration(movement_type: MovementType, args: &mut MovementParameters, mo
         } else {
             next_translation = initial_influenced_translation.normalized() * continued_translation.length();
         }
-        if !next_translation.is_zero_approx() &&
-            !translation.is_zero_approx() &&
-            next_translation.normalized().distance_to(translation.normalized()).is_zero_approx()
-        {
+        if !next_translation.is_zero_approx() && !translation.is_zero_approx() && next_translation.normalized().distance_to(translation.normalized()).is_zero_approx() {
             next_translation += collision.get_normal() * 0.001;
         }
         *translation = next_translation;
@@ -253,7 +255,6 @@ fn call_body_test_motion(varargs: &[Variant]) -> bool {
 
 /// check if given collision is steppable and step over it
 fn step(forward_collision: &Gd<KinematicCollision3D>, args: &mut MovementParameters, movement_data: &mut MovementData) {
-    // let player_body = &args.body;
     let body_rid = args.body.get_rid();
     let mut trans_step = args.body.get_global_transform();
     let mut motion_parameters = PhysicsTestMotionParameters3D::new_gd();
@@ -264,8 +265,8 @@ fn step(forward_collision: &Gd<KinematicCollision3D>, args: &mut MovementParamet
     }
     let step_height = Vector3::UP * MAX_STEP_HEIGHT;
     motion_parameters.set_from(trans_step);
-    // motion_parameters.set_motion(Vector3::UP * MAX_STEP_HEIGHT);
     motion_parameters.set_motion(step_height);
+
     let is_colliding_up = call_body_test_motion(&[body_rid.to_variant(), motion_parameters.to_variant(), motion_result.to_variant()]);
     let distance_to_ceiling = if is_colliding_up {
         Vector3::UP * motion_result.get_travel()
@@ -302,7 +303,6 @@ fn step(forward_collision: &Gd<KinematicCollision3D>, args: &mut MovementParamet
         let distance = col_point.distance_to(body_position_y);
         // check if given step floor is walkable
         if motion_result.get_collision_normal_ex().collision_index(col_index).done().angle_to(Vector3::UP) > SLOPE_LIMIT {
-            godot_print!("given step floor is not walkable");
             continue;
         }
         distance_to_floor = Some(distance);
@@ -322,6 +322,9 @@ fn step(forward_collision: &Gd<KinematicCollision3D>, args: &mut MovementParamet
 
 
 fn move_and_step(movement_data: &mut MovementData, args: &mut MovementParameters) -> bool {
+    if !movement_data.grounded {
+        return false
+    }
     let mut forward_test = args.body.move_and_collide_ex(movement_data.lateral_translation).test_only(true).recovery_as_collision(true).done();
 
     if let Some(forward_collision) = forward_test.take() {

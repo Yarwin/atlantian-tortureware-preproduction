@@ -1,0 +1,6 @@
+[gd_resource type="ActReactResource" load_steps=2 format=3 uid="uid://b2y80y8rv1fdo"]
+
+[ext_resource type="ActPressure" uid="uid://d2rnfomakwhgm" path="res://src/metaprops/acts/new_act_pressure.tres" id="1_casb6"]
+
+[resource]
+emits = Array[Resource]([ExtResource("1_casb6")])

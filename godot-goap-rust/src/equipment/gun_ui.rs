@@ -144,12 +144,12 @@ impl GunDisplay {
     }
 
     #[func(gd_self)]
-    fn on_new_ammo_type_selected(this: Gd<Self>) {
+    fn on_new_ammo_type_selected(_this: Gd<Self>) {
 
     }
 
     #[func(gd_self)]
-    fn on_new_firemode_selected(this: Gd<Self>) {
+    fn on_new_firemode_selected(_this: Gd<Self>) {
 
     }
 

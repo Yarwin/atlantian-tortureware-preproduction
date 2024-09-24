@@ -4,66 +4,68 @@
 [
     GoTo(
         cost: 1,
-        preconditions: WorldState(),
-        effects: WorldState(
-			at_target_position: Truth(true)
-        ),
+        preconditions: {},
+        effects: {
+			AtTargetPosition: Truth(true)
+        },
 		animation: Walk
     ),
     Patrol(
         cost: 1,
-        preconditions: WorldState(
-			at_target_position: Truth(true)
-        ),
-        effects: WorldState(
-			is_area_surveyed: Truth(true)
-        ),
+        preconditions: {
+			AtTargetPosition: Truth(true)
+        },
+        effects: {
+			IsAreaSurveyed: Truth(true)
+        },
 		animation: Idle
     ),
     Animate(
         // Play some animation set by the goal (like for example the stun)
         cost: 1,
-        preconditions: WorldState(),
-        effects: WorldState(anim_played: Truth(true)),
+        preconditions: {},
+        effects: {AnimPlayed: Truth(true)},
         animation: Idle
     ),
     AttackRanged(
         // attack
         cost: 1,
-        preconditions: WorldState(
-            is_weapon_armed: Truth(true),
-            i_am_looking_at_target: Truth(true),
-            distance_to_target: DistanceToTarget(Medium)
-        ),
-        effects: WorldState(is_target_dead: Truth(true)),
+        preconditions: {
+            IsWeaponArmed: Truth(true),
+            AmILookingAtTarget: Truth(true),
+            DistanceToTarget: DistanceToTarget(Medium)
+        },
+        effects: {IsTargetDead: Truth(true)},
         animation: Attack
     ),
     Aim(
         // rotate to target
         cost: 1,
-        preconditions: WorldState(has_target: Target(Character)),
-        effects: WorldState(i_am_looking_at_target: Truth(true)),
+        preconditions: {HasTarget: Target(Character)},
+        effects: {AmILookingAtTarget: Truth(true)},
         animation: AttackReady
     ),
     DeployWeapon(
         // prepare attack
         cost: 1,
-        preconditions: WorldState(
-            has_target: Target(Character),
-            distance_to_target: DistanceToTarget(Medium)
-        ),
-        effects: WorldState(
-            is_weapon_armed: Truth(true)
-            ),
+        preconditions: {
+            HasTarget: Target(Character),
+            DistanceToTarget: DistanceToTarget(Medium)
+        },
+        effects: {
+            IsWeaponArmed: Truth(true)
+        },
         animation: AttackPrepare
     ),
     ReleaseWeapon(
         // release weapon
         cost: 1,
-        preconditions: WorldState(
-            is_weapon_armed: Truth(true)
-        ),
-        effects: WorldState(is_weapon_armed: Truth(false)),
+        preconditions: {
+            IsWeaponArmed: Truth(true)
+        },
+        effects: {
+            IsWeaponArmed: Truth(false)
+        },
         animation: AttackRelease
     ),
 ]

@@ -9,7 +9,7 @@ description = "Target options for entities with targets"
 func_godot_internal = false
 base_classes = Array[Resource]([])
 class_properties = {
-"_target": "no_target"
+"_target": ""
 }
 class_property_descriptions = {
 "_target": "target name"

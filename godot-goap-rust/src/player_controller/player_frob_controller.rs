@@ -5,7 +5,7 @@ use godot::prelude::*;
 use crate::act_react::act_react_resource::ActReactResource;
 use crate::equipment::equip_component::EquipmentComponent;
 use crate::godot_api::CONNECT_DEFERRED;
-use crate::godot_api::gamesys::{GameSys, GameSystem};
+use crate::godot_api::gamesys::{GameSys};
 use crate::godot_api::godot_inventory::InventoryAgent;
 use crate::godot_api::item_object::Item;
 use crate::godot_api_reacts::fly::FlyGameEffect;
@@ -49,7 +49,7 @@ impl ToGodot for EquippedItems {
 impl FromGodot for EquippedItems {
     fn try_from_godot(via: Self::Via) -> Result<Self, ConvertError> {
         let mut equipped_items = Self::default();
-        /// todo – handle convert errors
+        // todo – handle convert errors
         for (i, v) in via.iter_shared().map(|(k, v)| (k.to::<u32>() as usize, v.to::<Option<Gd<Item>>>())) {
             equipped_items.items[i] = v;
         }

@@ -1,9 +1,10 @@
-[gd_scene load_steps=18 format=3 uid="uid://b4tvyguynxs6f"]
+[gd_scene load_steps=19 format=3 uid="uid://b4tvyguynxs6f"]
 
 [ext_resource type="Script" path="res://src/entities/debug_player/debug_player.gd" id="1_evmxd"]
 [ext_resource type="ActPlayerFrob" uid="uid://wvt3hqsi78ga" path="res://src/entities/debug_player/actreact/act_debug_player_frob.tres" id="3_1d3xj"]
 [ext_resource type="Script" path="res://src/entities/debug_player/debug_entity_picker.gd" id="3_b8qh4"]
 [ext_resource type="ItemResource" uid="uid://oyv8e11fd1bm" path="res://src/items/debug/debug_item_1_resource.tres" id="3_vgf5h"]
+[ext_resource type="ActPlayerPressure" uid="uid://cxyaeirkfsi5j" path="res://src/entities/debug_player/actreact/new_act_player_pressure.tres" id="4_344sp"]
 [ext_resource type="ItemResource" uid="uid://dq42vsn2s0un" path="res://src/items/debug/debug_item_spreadgun/spreadgun_resource.tres" id="5_5qd5u"]
 
 [sub_resource type="FlyGameEffect" id="FlyGameEffect_51vg6"]
@@ -25,7 +26,7 @@ radius = 0.204017
 [sub_resource type="ActPressure" id="ActPressure_k3b6n"]
 
 [sub_resource type="ActReactResource" id="ActReactResource_sc5wh"]
-emits = Array[Resource]([SubResource("ActPressure_k3b6n")])
+emits = Array[Resource]([SubResource("ActPressure_k3b6n"), ExtResource("4_344sp")])
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_bc143"]
 height = 0.125
@@ -80,6 +81,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
 shape = SubResource("CylinderShape3D_8f5f6")
 
 [node name="Head" type="Node3D" parent="."]
+unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.67233, 0)
 
 [node name="Camera3D" type="Camera3D" parent="Head"]
@@ -140,10 +142,12 @@ mesh = SubResource("SphereMesh_637gy")
 size = Vector2i(2, 3)
 
 [node name="InventoryAgent2" type="InventoryAgent" parent="." groups=["player_inventory", "player_inventory_center"]]
+id = 5
 size = Vector2i(6, 4)
 items_to_spawn = Array[ItemToSpawn]([SubResource("ItemToSpawn_a113f"), SubResource("ItemToSpawn_e6k6h"), SubResource("ItemToSpawn_e6k6h")])
 
 [node name="InventoryAgent3" type="InventoryAgent" parent="." groups=["player_inventory", "player_inventory_right"]]
 size = Vector2i(2, 3)
 
+[connection signal="stepped" from="." to="PlayerCameraController3D" method="_on_step"]
 [connection signal="timeout" from="Head/Camera3D/DebugEntityPicker/Timer" to="Head/Camera3D/DebugEntityPicker" method="check_for_entity"]

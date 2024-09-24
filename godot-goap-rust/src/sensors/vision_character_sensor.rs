@@ -27,11 +27,11 @@ impl SensorPolling for VisionCharacterSensor {
         }
 
         for target in args.polls.get_visible().unwrap() {
-            // bail if target outside vision cone
+            // bail if target outside vision cone (~73 deg)
             if args.thinker_forward_axis.dot(
                 args.head_position
                     .direction_to(target.area_transform.origin),
-            ) < 0.12
+            ) < 0.3
             {
                 continue;
             }
@@ -40,7 +40,7 @@ impl SensorPolling for VisionCharacterSensor {
             let target_height = target.area_transform.basis.col_b() * target.shape_height;
 
             // visibility check
-            // todo –  project ray targets on a clipped plane that uses area direction to the head as its normal
+            // todo –  project ray targets on a clipped plane that uses reflected area's direction to the head as its normal
             // we assume that target's visible area is always a cylinder
 
             let raycast_directions = [

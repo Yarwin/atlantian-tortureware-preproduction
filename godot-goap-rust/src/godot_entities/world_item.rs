@@ -35,7 +35,7 @@ impl IRigidBody3D for WorldItem {
 impl WorldItem {
     #[func]
     fn get_name_display(&self) -> GString {
-        let Some(item) = self.item.as_ref() else {return return GString::default()};
+        let Some(item) = self.item.as_ref() else {return GString::default()};
         let display_text = item.bind().get_item_display();
         display_text
     }

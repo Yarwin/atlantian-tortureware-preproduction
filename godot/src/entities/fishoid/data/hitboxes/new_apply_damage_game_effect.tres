@@ -1,0 +1,5 @@
+[gd_resource type="ApplyDamageGameEffect" format=3 uid="uid://goq4oshgbfhi"]
+
+[resource]
+flat_reduction = 2.0
+flat_pain_reduction = 2.0

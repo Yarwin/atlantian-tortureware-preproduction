@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="FuncGodotFGDPointClass" load_steps=6 format=3 uid="uid://djwj42t04gbud"]
+
+[ext_resource type="Resource" uid="uid://bgeqi8fvdew12" path="res://src/trenchbroom/fgd/fgd_base/parent_base.tres" id="1_a540a"]
+[ext_resource type="Resource" uid="uid://c7dcbtv12nats" path="res://src/trenchbroom/fgd/fgd_base/targetname_base.tres" id="2_tsq5f"]
+[ext_resource type="Resource" uid="uid://cnxtrrw0kw6ol" path="res://src/trenchbroom/fgd/navigation/navregion_mode_base.tres" id="3_exxsu"]
+[ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_point_class.gd" id="3_wu45x"]
+[ext_resource type="Script" path="res://src/trenchbroom/func_navigation/func_navlink_builder.gd" id="4_frlea"]
+
+[resource]
+script = ExtResource("3_wu45x")
+script_class = ExtResource("4_frlea")
+apply_rotation_on_map_build = true
+classname = "FuncNavigation_navlink"
+description = "A godot navlink."
+func_godot_internal = false
+base_classes = Array[Resource]([ExtResource("1_a540a"), ExtResource("2_tsq5f"), ExtResource("3_exxsu")])
+class_properties = {
+"_bidirectional": true,
+"_is_start": true,
+"_layers_disabled": 0,
+"_layers_enabled": 1,
+"_name": ""
+}
+class_property_descriptions = {
+"_bidirectional": "Whether this link can be traveled in both directions or only from start_position to end_position.",
+"_is_start": "defines if given point entity symbolizes start or an end of the navlink",
+"_layers_disabled": "Defines layers of this navregion after being targeted",
+"_layers_enabled": "Defines INITIAL layers of this navregion.",
+"_name": "Name of this navlink. Start and End positions of given navlink should share their names."
+}
+meta_properties = {
+"color": Color(0.8, 0.8, 0.8, 1),
+"size": AABB(-8, -8, -8, 8, 8, 8)
+}
+node_class = "Marker3D"
+name_property = ""

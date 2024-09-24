@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="FuncGodotFGDSolidClass" load_steps=6 format=3 uid="uid://dlj2p2r1udqb1"]
+
+[ext_resource type="Resource" uid="uid://j8rse51f6wvf" path="res://src/trenchbroom/fgd/fgd_base/target_base.tres" id="1_t42nr"]
+[ext_resource type="Resource" uid="uid://bgeqi8fvdew12" path="res://src/trenchbroom/fgd/fgd_base/parent_base.tres" id="2_ae5ho"]
+[ext_resource type="Resource" uid="uid://nhvd0q0f2vdj" path="res://src/trenchbroom/fgd/fgd_base/parentname_base.tres" id="3_fqeou"]
+[ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_solid_class.gd" id="4_w3rvl"]
+[ext_resource type="Script" path="res://src/entities/map_entities/func_area/func_area.gd" id="5_4eh5f"]
+
+[resource]
+script = ExtResource("4_w3rvl")
+spawn_type = 2
+origin_type = 0
+build_visuals = false
+use_in_baked_light = false
+shadow_casting_setting = 1
+build_occlusion = false
+render_layers = 0
+collision_shape_type = 1
+collision_layer = 64
+collision_mask = 64
+collision_priority = 1.0
+collision_shape_margin = 0.04
+script_class = ExtResource("5_4eh5f")
+classname = "func_area"
+description = "A region of 3D space defining possible interactions"
+func_godot_internal = false
+base_classes = Array[Resource]([ExtResource("1_t42nr"), ExtResource("2_ae5ho"), ExtResource("3_fqeou")])
+class_properties = {
+"_delay": 0.0,
+"_mode": {
+"Button": 1,
+"PlayerPresence": 3,
+"Pressure": 0,
+"Switch": 2
+},
+"_monitorable": false,
+"_monitoring": false,
+"_name_display": "",
+"_one_shot": false,
+"_recover_time": 0.0
+}
+class_property_descriptions = {
+"_delay": "delay time before activation (in seconds)",
+"_mode": ["Determines possible way of interactions ", 0],
+"_monitorable": "defines if this entity is monitorable",
+"_monitoring": "defines if this entity is monitoring",
+"_name_display": "A display name of this frobbable entity",
+"_one_shot": "Describes if entity can be activated more than once",
+"_recover_time": "recover time (in seconds)"
+}
+meta_properties = {
+"color": Color(0.8, 0.8, 0.8, 1),
+"size": AABB(-8, -8, -8, 8, 8, 8)
+}
+node_class = "ActReactArea3D"
+name_property = ""

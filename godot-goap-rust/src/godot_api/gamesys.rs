@@ -2,6 +2,8 @@ use godot::classes::Engine;
 use godot::obj::{bounds, Bounds, NewAlloc};
 use godot::prelude::*;
 use crate::equipment::equip_component::EquipmentComponent;
+use crate::godot_api::ai_manager::GodotAIManager;
+use crate::godot_api::inventory_manager::InventoryManager;
 use crate::godot_api::item_object::Item;
 use crate::multi_function_display::mfd_main::DisplayType;
 
@@ -47,6 +49,14 @@ impl GameSys {
     fn new_log_message(message: GString);
     #[signal]
     fn new_debug_info(info: GString);
+
+    /// called after level has been loaded.
+    /// forces initialization of all Game Systems
+    #[func]
+    fn on_level_loaded(&self) {
+        InventoryManager::singleton().call_deferred("create_inventories".into(), &[]);
+        GodotAIManager::singleton().call_deferred("create_thinkers".into(), &[]);
+    }
 }
 
 impl GameSys {

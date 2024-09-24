@@ -1,10 +1,13 @@
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use std::ops::Index;
 use crate::thinker_states::animate::AnimationMode;
+use strum_macros::{EnumIter, EnumString, IntoStaticStr};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(IntoStaticStr)]
+#[derive(Debug, Clone, Copy, Hash, EnumIter, EnumString, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AnimationType {
-    Attack,
+    Attack = 0,
     AttackExhaustion,
     AttackPrepare,
     AttackReady,
@@ -16,6 +19,7 @@ pub enum AnimationType {
     Patrol,
     Surprised,
     Walk,
+    Max
 }
 
 
@@ -26,19 +30,19 @@ pub struct AnimationProps {
     pub mode: AnimationMode,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone)]
 pub struct AnimationsData {
-    walk: Option<AnimationProps>,
-    idle: Option<AnimationProps>,
-    patrol: Option<AnimationProps>,
-    attack: Option<AnimationProps>,
-    attack_prepare: Option<AnimationProps>,
-    attack_ready: Option<AnimationProps>,
-    attack_exhaustion: Option<AnimationProps>,
-    attack_release: Option<AnimationProps>,
-    civilian_pose: Option<AnimationProps>,
-    hurt: Option<AnimationProps>,
-    surprised: Option<AnimationProps>
+    pub(crate) fields: [Option<AnimationProps>; AnimationType::Max as usize]
+}
+
+impl From<HashMap<AnimationType, AnimationProps>> for AnimationsData {
+    fn from(value: HashMap<AnimationType, AnimationProps>) -> Self {
+        let mut animation_props = Self::default();
+        for (k, v) in value.into_iter() {
+            animation_props.fields[k as usize] = Some(v);
+        }
+        animation_props
+    }
 }
 
 impl Index<AnimationType> for AnimationsData {
@@ -53,25 +57,6 @@ impl Index<&AnimationType> for AnimationsData {
     type Output = AnimationProps;
 
     fn index(&self, index: &AnimationType) -> &Self::Output {
-        match index {
-            AnimationType::Walk => self.walk.as_ref().expect("no animation data!"),
-            AnimationType::Idle => self.idle.as_ref().expect("no animation data!"),
-            AnimationType::AttackPrepare => {
-                self.attack_prepare.as_ref().expect("no animation data!")
-            }
-            AnimationType::Attack => self.attack.as_ref().expect("no animation data!"),
-            AnimationType::AttackReady => self.attack_ready.as_ref().expect("no animation data!"),
-            AnimationType::AttackRelease => self.attack_release.as_ref().expect("no animation data!"),
-            AnimationType::AttackExhaustion => {
-                self.attack_exhaustion.as_ref().expect("no animation data!")
-            }
-            AnimationType::CivilianPose => self.civilian_pose.as_ref().expect("no animation data!"),
-            AnimationType::Hurt => self.hurt.as_ref().expect("no animation data!"),
-            AnimationType::Patrol => self.patrol.as_ref().expect("no animation data!"),
-            AnimationType::Surprised => self.surprised.as_ref().expect("no animation data!"),
-            _ => {
-                panic!("no animation data for {:?}!", index)
-            }
-        }
+        return self.fields[*index as usize].as_ref().unwrap()
     }
 }

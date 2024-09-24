@@ -70,7 +70,8 @@ impl PartialEq for Node {
 #[derive(Clone, Debug, PartialEq, Eq, EnumDiscriminants)]
 #[strum_discriminants(name(WMEventType))]
 pub enum Event {
-    AnimationCompleted(String)
+    AnimationCompleted(String),
+    AttackPerformed(String)
 }
 
 #[derive(Clone, Debug, EnumDiscriminants)]

@@ -248,7 +248,7 @@ fn activate_plan(thinker_view: &mut ThinkerPlanView, new_plan: VecDeque<usize>, 
 fn process_goal_and_plan(event: ThinkerPlanEvent) {
     let mut thinker_process = event.process_view();
     let Ok(mut shared_lock) = thinker_process.shared.lock() else {
-        panic!("mutex failed!")
+        panic!("couldn't open thinker shared lock!")
     };
     // deref guard to inner to make mut references to said struct
     let shared = &mut *shared_lock;

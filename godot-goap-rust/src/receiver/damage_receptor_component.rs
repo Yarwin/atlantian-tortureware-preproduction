@@ -71,6 +71,10 @@ pub struct DamageReceptorComponent {
     /// defines how long given entity is invulnerable to pain after entering the pain state
     #[export]
     pub pain_resistance_time: f64,
+    #[var]
+    #[export(range = (0.0, 1.0))]
+    #[init(default = 0.1)]
+    pub gib_threshold: f64,
     time_since_last_pain_state: Option<SystemTime>,
     #[export]
     pain_recovery: f64,
@@ -102,7 +106,7 @@ impl INode for DamageReceptorComponent {
             self.damage_taken = 0.;
         }
         if self.hp < 0. {
-            let is_gib = (self.hp.abs() / self.max_hp) > 0.1;
+            let is_gib = (self.hp.abs() / self.max_hp) > self.gib_threshold;
             self.base_mut().emit_signal("health_depleted".into(), &[is_gib.to_variant()]);
         }
 
@@ -140,9 +144,4 @@ impl DamageReceptorComponent {
 
     #[signal]
     fn pain_threshold_achieved();
-
-    #[func]
-    fn hello_world() {
-        godot_print!("hello from receptor!");
-    }
 }

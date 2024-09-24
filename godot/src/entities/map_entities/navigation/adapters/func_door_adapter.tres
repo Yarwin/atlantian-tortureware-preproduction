@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="FuncDoorAdapter" load_steps=2 format=3 uid="uid://c201wlnjwdsio"]
+
+[ext_resource type="Script" path="res://src/entities/map_entities/navigation/adapters/func_door_adapter.gd" id="1_efwu7"]
+
+[resource]
+script = ExtResource("1_efwu7")

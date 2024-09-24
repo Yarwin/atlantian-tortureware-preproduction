@@ -3,7 +3,7 @@ use crate::ai::process_plan::{process_plan, ThinkerPlanEvent, ThinkerProcess};
 use crate::ai::thinker::{Thinker, ThinkerShared};
 use crate::ai_nodes::ai_node::AINode;
 use crate::ai_nodes::godot_ai_node::GodotAINode;
-use crate::animations::animation_data::AnimationsData;
+use crate::animations::animation_data::{AnimationProps, AnimationsData, AnimationType};
 use crate::goap_goals::goal_component::GoalComponent;
 use crate::godot_api::godot_thinker::GodotThinker;
 use crate::godot_api::CONNECT_ONE_SHOT;
@@ -21,7 +21,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use crate::ai::working_memory::WMProperty;
 use crate::godot_api::gamesys::GameSystem;
-use crate::utils::generate_id::assign_id;
+use crate::utils::generate_id::{assign_id, ToCreate};
 
 
 #[derive(GodotClass)]
@@ -35,6 +35,9 @@ pub struct GodotAIManager {
     ainode_id_with_dependencies: VecDeque<(u32, Gd<GodotAINode>)>,
 
     pub thinkers: HashMap<u32, Thinker>,
+    #[init(default = Vec::new())]
+    thinkers_to_create: Vec<ToCreate<GodotThinker>>,
+    pub is_initialized: bool,
     pub current_thinker_id: u32,
     pub current_node_id: u32,
     pub sender: Option<Sender<ThinkerPlanEvent>>,
@@ -61,6 +64,18 @@ impl GodotAIManager {
             let new_ainode = std::mem::take(&mut *ainode);
             *ainode = new_ainode.with_dependency(dep_node_id);
         }
+    }
+
+    #[func]
+    fn create_thinkers(&mut self) {
+        let mut to_drain = std::mem::take(&mut self.thinkers_to_create);
+        to_drain.sort();
+        to_drain.reverse();
+        for to_create in to_drain.drain(..) {
+            self.create_thinker(to_create);
+        }
+        self.thinkers_to_create = to_drain;
+        self.is_initialized = true;
     }
 
     #[func]
@@ -108,15 +123,21 @@ impl GodotAIManager {
 }
 
 impl GodotAIManager {
+    pub fn register_thinker(&mut self, thinker: ToCreate<GodotThinker>) {
+        self.thinkers_to_create.push(thinker);
+        if !self.is_initialized {
+            self.base_mut().call_deferred("create_thinkers".into(), &[]);
+        }
+    }
 
     pub fn add_new_wm_fact(&mut self, thinker_id: u32, fact: WMProperty, confidence: f32, expiration: f64) {
-        let Ok(mut guard) = self.thinkers[&thinker_id].shared.lock() else {panic!("mutex failed!")};
+        let Ok(mut guard) = self.thinkers[&thinker_id].shared.lock() else {panic!("mutex failed - couldn't add new wm fact!")};
         guard.working_memory.add_working_memory_fact(fact, confidence, expiration);
         drop(guard)
     }
 
     pub fn invalidate_plan(&mut self, thinker_id: u32) {
-        let Ok(mut guard) = self.thinkers[&thinker_id].shared.lock() else {panic!("mutex failed!")};
+        let Ok(mut guard) = self.thinkers[&thinker_id].shared.lock() else {panic!("mutex failed! Couldn't invalidate the plan")};
         guard.blackboard.invalidate_plan = true;
     }
 
@@ -137,54 +158,54 @@ impl GodotAIManager {
         }
         let node = AINode::from(&*ai_node);
         let Ok(mut ai_nodes) = self.ai_nodes.write() else {
-            panic!("Mutex failed!");
+            panic!("RWLock failed!");
         };
         ai_nodes.insert(id, node);
         id
     }
 
-    pub fn register_thinker(&mut self, godot_thinker: &mut GodotThinker) -> u32 {
-        let id = assign_id(godot_thinker.thinker_id, &mut self.current_thinker_id);
+    fn create_thinker(&mut self, mut to_create: ToCreate<GodotThinker>) {
+            let id = assign_id(to_create.id, &mut self.current_thinker_id);
 
-        // unregister on exit
-        let callable = Callable::from_object_method(&self.base().clone(), "unregister_thinker")
-            .bindv(array![id.to_variant()]);
-        let _ = godot_thinker
-            .base_mut()
-            .connect_ex("tree_exiting".into(), callable)
-            .flags(CONNECT_ONE_SHOT)
-            .done();
-        let navigation_map_rid = godot_thinker
-            .navigation_agent
-            .as_ref()
-            .map(|agent| agent.get_navigation_map());
+            // unregister on exit
+            let callable = Callable::from_object_method(&self.base(), "unregister_thinker")
+                .bindv(array![id.to_variant()]);
+            let _ = to_create
+                .instance
+                .connect_ex("tree_exiting".into(), callable)
+                .flags(CONNECT_ONE_SHOT)
+                .done();
+            let navigation_map_rid = to_create
+                .instance
+                .bind_mut()
+                .navigation_agent
+                .as_ref()
+                .map(|agent| agent.get_navigation_map());
 
-        let mut shared = ThinkerShared {
-            working_memory: Default::default(),
-            blackboard: Default::default(),
-            world_state: Self::load(&godot_thinker.initial_state),
-            target_mask: Default::default(),
-        };
-        shared.blackboard.thinker_position = godot_thinker.base().get_global_position();
+            let mut shared = ThinkerShared {
+                working_memory: Default::default(),
+                blackboard: Default::default(),
+                world_state: Self::load(&to_create.instance.bind().initial_state),
+                target_mask: Default::default(),
+            };
+            shared.blackboard.thinker_position = to_create.instance.get_global_position();
 
-        let thinker = Thinker {
-            id,
-            base: Some(godot_thinker.base().clone().cast::<GodotThinker>()),
-            is_active: godot_thinker.is_active,
-            actions: self.get_actions(&godot_thinker.actions_file).unwrap(),
-            goals: self.get_goals(&godot_thinker.goals_file).unwrap(),
-            polling_sensors: self.get_sensors(&godot_thinker.sensors_file).unwrap(),
-            animations: self
-                .get_animations_data(&godot_thinker.animation_data)
-                .unwrap(),
-            shared: Arc::new(Mutex::new(shared)),
-            navigation_map_rid,
-            ..Default::default()
-        };
-        thinker.shared.lock().unwrap().blackboard.thinker_position =
-            godot_thinker.base().get_global_position();
-        self.thinkers.insert(id, thinker);
-        id
+            let thinker = Thinker {
+                id,
+                base: Some(to_create.instance.clone()),
+                is_active: to_create.instance.bind().is_active,
+                actions: self.get_actions(&to_create.instance.bind().actions_file).unwrap(),
+                goals: self.get_goals(&to_create.instance.bind().goals_file).unwrap(),
+                polling_sensors: self.get_sensors(&to_create.instance.bind().sensors_file).unwrap(),
+                animations: self
+                    .get_animations_data(&to_create.instance.bind().animation_data)
+                    .unwrap(),
+                shared: Arc::new(Mutex::new(shared)),
+                navigation_map_rid,
+                ..Default::default()
+            };
+            self.thinkers.insert(id, thinker);
+            to_create.instance.bind_mut().thinker_id = id;
     }
 
     fn load<T: for<'a> Deserialize<'a>>(path: &GString) -> T {
@@ -225,9 +246,10 @@ impl GodotAIManager {
         if let Some(collection) = self.animations.get(path) {
             return Some(collection.clone());
         }
-        let components: Arc<AnimationsData> = Arc::new(Self::load::<AnimationsData>(path));
-        self.animations.insert(path.clone(), components.clone());
-        Some(components)
+        let components: HashMap<AnimationType, AnimationProps> = Self::load::<HashMap<AnimationType, AnimationProps>>(path);
+        let animations_data = Arc::new(AnimationsData::from(components));
+        self.animations.insert(path.clone(), animations_data.clone());
+        Some(animations_data)
     }
 
     fn get_sensors(&mut self, path: &GString) -> Option<Vec<PollingSensor>> {
@@ -243,10 +265,6 @@ impl GodotAIManager {
 
 impl GameSystem for GodotAIManager {
     const NAME: &'static str = "AIManager";
-    fn singleton_name() -> StringName {
-        StringName::from("AIManager")
-    }
-
     fn initialize() -> Gd<Self> {
         let (process_sender, process_receiver) = mpsc::channel();
         let (update_sender, update_receiver) = mpsc::channel();
@@ -259,7 +277,7 @@ impl GameSystem for GodotAIManager {
         }));
         Engine::singleton()
             .register_singleton(Self::singleton_name(), ai_manager.clone());
-        ai_manager.call_deferred("post_ready".into(), &[]);
+        // ai_manager.call_deferred("post_ready".into(), &[]);
         ai_manager
     }
 
@@ -277,7 +295,7 @@ impl GameSystem for GodotAIManager {
         let mut memories: Vec<_> = self.thinkers.values().map(|t| t.shared.clone()).collect();
         memories.par_iter_mut().rev().for_each(|shared| {
             let Ok(mut shared) = shared.lock() else {
-                panic!("mutex failed")
+                panic!("Couldn't read thinker working memory")
             };
             shared.working_memory.validate();
         });

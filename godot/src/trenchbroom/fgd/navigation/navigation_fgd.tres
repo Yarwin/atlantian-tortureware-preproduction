@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="FuncGodotFGDFile" load_steps=7 format=3 uid="uid://8a6kis8favvd"]
+
+[ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_file.gd" id="1_cgvgp"]
+[ext_resource type="Resource" uid="uid://djwj42t04gbud" path="res://src/trenchbroom/fgd/navigation/func_navlink.tres" id="1_nsmxs"]
+[ext_resource type="Resource" uid="uid://bmllqe5drm6lk" path="res://src/trenchbroom/fgd/navigation/func_navregion_bounds.tres" id="2_eyn0b"]
+[ext_resource type="Resource" uid="uid://cnxtrrw0kw6ol" path="res://src/trenchbroom/fgd/navigation/navregion_mode_base.tres" id="4_tf3em"]
+[ext_resource type="Resource" uid="uid://bg323q0plaitc" path="res://src/trenchbroom/fgd/navigation/navregion_base.tres" id="4_ujcq2"]
+[ext_resource type="Resource" uid="uid://dtp87htv6wfnc" path="res://src/trenchbroom/fgd/navigation/func_obstacle.tres" id="5_lki81"]
+
+[resource]
+script = ExtResource("1_cgvgp")
+export_file = false
+target_map_editor = 1
+fgd_name = "FuncGodot"
+base_fgd_files = Array[Resource]([])
+entity_definitions = Array[Resource]([ExtResource("4_ujcq2"), ExtResource("1_nsmxs"), ExtResource("2_eyn0b"), ExtResource("4_tf3em"), ExtResource("5_lki81")])

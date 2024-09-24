@@ -1,73 +1,113 @@
-[gd_scene load_steps=6 format=3 uid="uid://bf5q5islujj2v"]
+[gd_scene load_steps=8 format=3 uid="uid://bf5q5islujj2v"]
 
 [ext_resource type="Script" path="res://src/interface/hud/interaction_prompt.gd" id="1_0y15f"]
-[ext_resource type="Shader" path="res://src/interface/hud/interaction_prompt.gdshader" id="2_yb2dk"]
-[ext_resource type="Texture2D" uid="uid://d0lpnlqvaqpkl" path="res://assets/sprites/ui/buttons/circle_progress_texture.png" id="3_mi7tn"]
+[ext_resource type="Texture2D" uid="uid://cwspx34rkwjp6" path="res://assets/sprites/ui/buttons/scfi_circle_progress.png" id="3_s0fk0"]
+[ext_resource type="Shader" path="res://src/interface/hud/progress_button.gdshader" id="4_burpx"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_7sk8h"]
-shader = ExtResource("2_yb2dk")
-shader_parameter/primary_color = Color(0.121162, 0.577525, 0.920559, 1)
-shader_parameter/unfilled_color = Color(0.0325, 0.105, 0.25, 0.141176)
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_d5aa2"]
+shader = ExtResource("4_burpx")
 shader_parameter/value = 0.0
+shader_parameter/o79805_tex = ExtResource("3_s0fk0")
 
 [sub_resource type="LabelSettings" id="LabelSettings_tvn28"]
 outline_size = 4
 outline_color = Color(0, 0, 0, 1)
 shadow_color = Color(0, 0, 0, 1)
 
+[sub_resource type="LabelSettings" id="LabelSettings_fqv5c"]
+line_spacing = 1.0
+font_size = 12
+outline_size = 3
+outline_color = Color(0, 0, 0, 1)
+shadow_size = 2
+
+[sub_resource type="LabelSettings" id="LabelSettings_ivv7r"]
+font_size = 14
+outline_size = 5
+outline_color = Color(0, 0, 0, 1)
+shadow_size = 2
+
 [node name="InteractionPrompt" type="Control"]
 layout_mode = 3
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-script = ExtResource("1_0y15f")
-
-[node name="MarginContainer" type="MarginContainer" parent="."]
-layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+script = ExtResource("1_0y15f")
 
-[node name="TextureRect" type="TextureRect" parent="MarginContainer"]
-texture_repeat = 2
-material = SubResource("ShaderMaterial_7sk8h")
-layout_mode = 2
+[node name="VBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -83.5
+offset_top = -64.0
+offset_right = 83.5
+offset_bottom = 64.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("3_mi7tn")
-expand_mode = 5
-stretch_mode = 4
+alignment = 1
 
-[node name="UseLabel" type="Label" parent="MarginContainer"]
+[node name="TextureRect2" type="ColorRect" parent="VBoxContainer"]
+texture_repeat = 2
+material = SubResource("ShaderMaterial_d5aa2")
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="UseLabel" type="Label" parent="VBoxContainer/TextureRect2"]
 custom_minimum_size = Vector2(0, 32)
 layout_direction = 2
-layout_mode = 2
-text = "[F]"
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -10.0
+offset_top = -16.0
+offset_right = 10.0
+offset_bottom = 16.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "F"
 label_settings = SubResource("LabelSettings_tvn28")
 horizontal_alignment = 1
 vertical_alignment = 1
 uppercase = true
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+[node name="HBoxContainer" type="VBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
-size_flags_vertical = 8
+size_flags_horizontal = 0
+size_flags_vertical = 4
 mouse_filter = 2
+alignment = 1
 
-[node name="FrobInfo" type="Label" parent="MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(0, 32)
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
-text = "ContexAction"
-vertical_alignment = 1
-
-[node name="Label" type="Label" parent="MarginContainer/HBoxContainer"]
-layout_mode = 2
+size_flags_horizontal = 0
 theme_override_font_sizes/font_size = 11
 text = "Name"
+label_settings = SubResource("LabelSettings_fqv5c")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+mouse_filter = 2
+alignment = 1
+
+[node name="FrobInfo" type="Label" parent="VBoxContainer/HBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 11
+text = "ContexAction"
+label_settings = SubResource("LabelSettings_ivv7r")
+vertical_alignment = 1

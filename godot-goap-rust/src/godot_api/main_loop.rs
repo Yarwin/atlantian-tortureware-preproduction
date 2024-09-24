@@ -1,4 +1,3 @@
-use godot::classes::IMainLoop;
 use godot::prelude::*;
 use crate::act_react::act_react_executor::ActReactExecutor;
 use crate::equipment::register_equipment_dispatch;
@@ -14,6 +13,8 @@ struct AtlantianTorturewareGameLoop {
     ai_manager: Option<Gd<GodotAIManager>>,
     act_react_executor: Option<Gd<ActReactExecutor>>,
 }
+
+
 
 
 #[godot_api]
