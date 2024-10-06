@@ -100,28 +100,6 @@ pub enum WorldStateProperty {
 
 #[derive(Clone, Default)]
 pub struct WorldState {
-    // pub i_am_looking_at_target: Option<WSProperty>,
-    // pub anim_looped: Option<WSProperty>,
-    // pub anim_played: Option<WSProperty>,
-    // pub at_node: Option<WSProperty>,
-    // pub at_node_type: Option<WSProperty>,
-    // pub at_target_position: Option<WSProperty>,
-    // pub cover_status: Option<WSProperty>,
-    // pub distance_to_target: Option<WSProperty>,
-    // pub has_target: Option<WSProperty>,
-    // pub is_area_surveyed: Option<WSProperty>,
-    // pub is_dead: Option<WSProperty>,
-    // pub is_idling: Option<WSProperty>,
-    // pub is_in_combat: Option<WSProperty>,
-    // pub is_navigation_finished: Option<WSProperty>,
-    // pub is_position_valid: Option<WSProperty>,
-    // pub is_target_aiming_at_me: Option<WSProperty>,
-    // pub is_target_dead: Option<WSProperty>,
-    // pub is_target_looking_at_me: Option<WSProperty>,
-    // pub is_weapon_armed: Option<WSProperty>,
-    // pub is_weapon_loaded: Option<WSProperty>,
-    // pub is_recovering_from_attack: Option<WSProperty>,
-    // pub reacted_to_world_state_event: Option<WSProperty>,
     pub inner: [Option<WSProperty>; WorldStateProperty::Max as usize]
 }
 

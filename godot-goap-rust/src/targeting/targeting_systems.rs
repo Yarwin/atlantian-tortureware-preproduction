@@ -1,10 +1,10 @@
 use crate::targeting::target_select_character::select_character;
 use bitflags::bitflags;
-use crate::sensors::sensor_types::SensorArguments;
+use crate::sensors::sensor_types::ThinkerProcessArgs;
 use crate::targeting::target::{AITarget, TargetType};
 
 
-pub type TargetSelectorWithMask = (TargetMask, TargetType, for<'a, 'b> fn(&'a mut SensorArguments<'b>) -> Option<AITarget>);
+pub type TargetSelectorWithMask = (TargetMask, TargetType, for<'a, 'b> fn(&'a mut ThinkerProcessArgs<'b>) -> Option<AITarget>);
 
 bitflags! {
     #[derive(Debug, Clone, Copy)]
@@ -36,7 +36,7 @@ impl TargetMask {
         ]
     }
 
-    pub fn valid_target_selectors(other: TargetMask) -> impl Iterator<Item=(TargetMask, TargetType, for<'a, 'b> fn(&'a mut SensorArguments<'b>) -> Option<AITarget>)> + 'static
+    pub fn valid_target_selectors(other: TargetMask) -> impl Iterator<Item=(TargetMask, TargetType, for<'a, 'b> fn(&'a mut ThinkerProcessArgs<'b>) -> Option<AITarget>)> + 'static
     {
         TargetMask::priority().into_iter().filter(move |(bits, _target, _func)| other.contains(*bits))
     }

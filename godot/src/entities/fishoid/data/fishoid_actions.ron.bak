@@ -1,0 +1,27 @@
+#![enable(unwrap_newtypes)]
+#![enable(unwrap_variant_newtypes)]
+#![enable(implicit_some)]
+[
+    ActionComponent(
+        name: "Goto",
+        cost: 1,
+        preconditions: {},
+        effects: {
+			AtTargetPosition: Truth(true)
+        },
+		animation: Walk,
+        action_type: GoTo(),
+    ),
+    ActionComponent(
+        name: "Patrol",
+        cost: 1,
+        preconditions: {
+            AtTargetPosition: Truth(true)
+        },
+        effects: {
+			IsAreaSurveyed: Truth(true)
+        },
+		animation: Patrol,
+        action_type: GoTo(),
+    ),
+]

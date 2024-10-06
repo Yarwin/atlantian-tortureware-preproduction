@@ -33,14 +33,14 @@ pub enum NavigationTarget {
 }
 
 #[derive(Debug)]
-pub struct FailedGoal {
+pub struct Failed {
     pub index: usize,
     pub time: SystemTime
 }
 
-impl FailedGoal {
+impl Failed {
     pub fn new(index: usize) -> Self {
-        FailedGoal {
+        Failed {
             index,
             time: SystemTime::now()
         }
@@ -49,18 +49,24 @@ impl FailedGoal {
 
 #[derive(Default, Debug)]
 pub struct Blackboard {
+    /// id of ainode locked by this entity
     pub current_locked_node: Option<u32>,
+    /// pointer to some new state for thinker (Goto/animate).
     pub new_state: Option<Box<dyn ThinkerState + Send>>,
     pub current_plan_ids: VecDeque<usize>,
     pub current_goal: Option<usize>,
-    pub failed_goals: Vec<FailedGoal>,
+    /// todo – move it to Working Memory instead?
+    pub failed_goals: Vec<Failed>,
     pub thinker_position: Vector3,
     pub target: Option<AITarget>,
+    pub distance_to_target: Option<f32>,
     pub valid_targets: TargetMask,
     pub navigation_target: Option<NavigationTarget>,
     pub animation_target: Option<AnimationType>,
     pub invalidate_target: bool,
     pub invalidate_plan: bool,
+    pub invalidate_attack: bool,
+    pub chosen_attack_idx: Option<usize>,
     pub rotation_target: Option<RotationTarget>,
     pub walk_speed: SpeedMod,
     pub rotation_speed: SpeedMod,
@@ -76,9 +82,11 @@ impl Blackboard {
     pub fn next_action(&mut self) -> Option<usize> {
         self.current_plan_ids.pop_front()
     }
+
     pub fn validate_failed(&mut self) {
-        self.failed_goals.retain(|fail| fail.time.elapsed().unwrap().as_secs_f64() < 0.5);
+        self.failed_goals.retain(|fail| fail.time.elapsed().unwrap().as_secs_f64() < 1.0);
     }
+
     pub fn is_goal_failed(&self, goal: usize) -> bool {
         self.failed_goals.iter().any(|failed| failed.index == goal)
     }

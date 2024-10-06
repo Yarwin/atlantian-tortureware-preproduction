@@ -17,7 +17,7 @@ use crate::sensors::distance_to_target_sensor::DistanceToTargetSensor;
 
 #[allow(unused_attributes, dead_code)]
 #[derive(Debug)]
-pub struct SensorArguments<'a> {
+pub struct ThinkerProcessArgs<'a> {
     pub id: u32,
     // pub base: Gd<GodotThinker>,
     pub character_rid: Rid,
@@ -49,11 +49,11 @@ pub enum PollingSensor {
 
 #[enum_dispatch(PollingSensor)]
 pub trait SensorPolling {
-    fn process(&mut self, delta: f64, args: &mut SensorArguments) -> bool;
+    fn process(&mut self, delta: f64, args: &mut ThinkerProcessArgs) -> bool;
 }
 
 #[enum_dispatch(EventSensor)]
 pub trait SensorEvent {
     /// stimulate given sensor with given stim. Returns true if stimulus has been consumed
-    fn stimulate(&mut self, _stim: AIStimulusType, _args: &mut SensorArguments) -> bool;
+    fn stimulate(&mut self, _stim: AIStimulusType, _args: &mut ThinkerProcessArgs) -> bool;
 }

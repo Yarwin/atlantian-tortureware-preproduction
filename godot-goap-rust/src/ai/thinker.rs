@@ -1,4 +1,3 @@
-use crate::goap_actions::action_types::Action;
 use crate::ai::blackboard::Blackboard;
 use crate::ai::working_memory::WorkingMemory;
 use crate::ai::world_state::WorldState;
@@ -12,7 +11,7 @@ use crate::thinker_states::types::ThinkerState;
 use godot::obj::InstanceId;
 use godot::prelude::*;
 use std::sync::{Arc, Mutex};
-use crate::targeting::attack_manager::AttackData;
+use crate::goap_actions::action_component::ActionComponent;
 
 #[derive(Default, Debug)]
 pub struct Thinker {
@@ -22,14 +21,13 @@ pub struct Thinker {
     pub is_active: bool,
     pub state: Option<Box<dyn ThinkerState>>,
 
-    /// shared mutable owned by the thinker
+    /// mutable data kept by the thinker shared with various subsystems (that might edit it)
     pub shared: Arc<Mutex<ThinkerShared>>,
 
     /// shared immutable owned by AIManager
     pub goals: Arc<Vec<GoalComponent>>,
-    pub actions: Arc<Vec<Action>>,
+    pub actions: Arc<Vec<ActionComponent>>,
     pub animations: Arc<AnimationsData>,
-    pub attacks: Arc<Vec<AttackData>>,
     pub polling_sensors: Vec<PollingSensor>,
     pub event_sensor: Vec<EventSensor>,
     pub navigation_map_rid: Option<Rid>,

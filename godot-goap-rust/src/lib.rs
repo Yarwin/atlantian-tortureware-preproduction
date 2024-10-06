@@ -4,7 +4,6 @@ mod ai_nodes;
 mod animations;
 mod goap_goals;
 mod godot_api;
-mod godot_thinker_components;
 mod sensors;
 mod targeting;
 mod thinker_states;
@@ -20,6 +19,7 @@ mod inventory_ui;
 mod equipment;
 mod multi_function_display;
 mod receiver;
+mod ai_attacks;
 
 use godot::prelude::*;
 

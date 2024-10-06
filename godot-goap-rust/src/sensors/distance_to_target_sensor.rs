@@ -1,5 +1,5 @@
 use crate::ai::working_memory::{FactQuery, FactQueryCheck, AIStimuli, WMProperty};
-use crate::sensors::sensor_types::{SensorArguments, SensorPolling};
+use crate::sensors::sensor_types::{ThinkerProcessArgs, SensorPolling};
 use crate::targeting::target::AITarget;
 use serde::{Deserialize, Serialize};
 use crate::ai::world_state::{DistanceToTarget, WorldStateProperty, WSProperty};
@@ -17,7 +17,7 @@ pub struct DistanceToTargetSensor {
 
 
 impl SensorPolling for DistanceToTargetSensor {
-    fn process(&mut self, delta: f64, args: &mut SensorArguments) -> bool {
+    fn process(&mut self, delta: f64, args: &mut ThinkerProcessArgs) -> bool {
         self.last_update_delta += delta;
         if self.last_update_delta < self.update_every {
             return false;
@@ -37,6 +37,7 @@ impl SensorPolling for DistanceToTargetSensor {
         };
 
         let distance_to_target = args.blackboard.thinker_position.distance_to(*position);
+        args.blackboard.distance_to_target = Some(distance_to_target);
 
         if distance_to_target <= self.distance_close {
             args.world_state[WorldStateProperty::DistanceToTarget] = Some(WSProperty::DistanceToTarget(DistanceToTarget::Close));
@@ -46,7 +47,8 @@ impl SensorPolling for DistanceToTargetSensor {
         }
         else if distance_to_target <= self.distance_far {
             args.world_state[WorldStateProperty::DistanceToTarget] = Some(WSProperty::DistanceToTarget(DistanceToTarget::Far));
-        } else {
+        }
+        else {
             args.world_state[WorldStateProperty::DistanceToTarget] = Some(WSProperty::DistanceToTarget(DistanceToTarget::OutsideReach));
         }
         false

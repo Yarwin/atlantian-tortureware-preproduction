@@ -4142,7 +4142,7 @@ radius = 0.4
 radius = 12.0
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_4tib6"]
-radius = 16.0
+radius = 30.0
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_40b14"]
 animation = &"Attack"

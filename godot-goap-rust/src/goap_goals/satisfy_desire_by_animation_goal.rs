@@ -1,3 +1,4 @@
+use godot::prelude::godot_print;
 use crate::ai::working_memory::{FactQuery, FactQueryCheck, WMDesireType};
 use serde::{Deserialize, Serialize};
 use crate::animations::animation_data::AnimationType;
@@ -30,5 +31,4 @@ impl GoalBehaviour for SatisfyDesireByPlayingAnimationGoal {
         let fact_query = FactQuery::with_check(FactQueryCheck::Desire(self.desire_type));
         agent_world_context.working_memory.mark_as_invalid(fact_query);
     }
-
 }

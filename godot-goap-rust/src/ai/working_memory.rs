@@ -12,7 +12,8 @@ use crate::receiver::damage_receptor_component::ReceivedDamage;
 #[strum_discriminants(name(WMKnowledgeType))]
 pub enum Knowledge {
     Invalid,
-    Character(InstanceId, Option<Vector3>)
+    Character(InstanceId, Option<Vector3>),
+    LastTargetPosition(Vector3)
 }
 
 impl Eq for Knowledge {}
@@ -23,6 +24,7 @@ impl PartialEq for Knowledge {
             (Knowledge::Character(i, ..), Knowledge::Character(other_i, ..)) => {
                 i == other_i
             }
+            (Knowledge::LastTargetPosition(pos), Knowledge::LastTargetPosition(other_pos)) => (*pos - *other_pos).is_zero_approx(),
             (_, _) => false
         }
     }
@@ -71,7 +73,9 @@ impl PartialEq for Node {
 #[strum_discriminants(name(WMEventType))]
 pub enum Event {
     AnimationCompleted(String),
-    AttackPerformed(String)
+    AttackPerformed {id: usize},
+    AttackFailed {id: usize},
+    GoalFailed {id: usize},
 }
 
 #[derive(Clone, Debug, EnumDiscriminants)]
@@ -213,6 +217,16 @@ impl WorkingMemory {
         }
     }
 
+    pub fn add_or_update(&mut self, f_type: WMProperty, confidence: f32, expiration: f64) {
+        let query = FactQuery::with_check(FactQueryCheck::Match(f_type.clone()));
+        if let Some(fact) = self.find_fact_mut(query) {
+            fact.confidence = confidence;
+            fact.expiration = expiration;
+            return;
+        }
+        self.add_working_memory_fact(f_type, confidence, expiration);
+    }
+
     pub fn count_facts(&self, query: FactQuery) -> u32 {
         let mut count: u32 = 0;
         for fact in self.facts_list.iter() {
@@ -255,6 +269,10 @@ impl WorkingMemory {
         self.facts().find(|&fact| fact.matches_query(&query))
     }
 
+    pub fn find_fact_mut(&mut self, query: FactQuery) -> Option<&mut WorkingMemoryFact> {
+        self.facts_mut().find(|fact| fact.matches_query(&query))
+    }
+
     pub fn find_fact_with_max_confidence(&self, fact_query: FactQuery) -> Option<&WorkingMemoryFact> {
         let (fact, _max_confidence) = self.facts().filter(|f| f.matches_query(&fact_query))
             .fold(
@@ -270,10 +288,6 @@ impl WorkingMemory {
                 }
             );
         fact
-    }
-
-    pub fn find_fact_mut(&mut self, query: FactQuery) -> Option<&mut WorkingMemoryFact> {
-        self.facts_mut().find(|fact| fact.matches_query(&query))
     }
 
     pub fn mark_as_invalid(&mut self, query: FactQuery) {

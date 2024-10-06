@@ -16,6 +16,5 @@
         distance_close: 2.5,
         distance_medium: 12.0,
         distance_far: 14.0,
-        max_distance: 16.0
     )
 ]

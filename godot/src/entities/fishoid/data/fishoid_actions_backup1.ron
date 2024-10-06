@@ -1,0 +1,71 @@
+#![enable(unwrap_newtypes)]
+#![enable(unwrap_variant_newtypes)]
+#![enable(implicit_some)]
+[
+    GoTo(
+        cost: 1,
+        preconditions: {},
+        effects: {
+			AtTargetPosition: Truth(true)
+        },
+		animation: Walk
+    ),
+    Patrol(
+        cost: 1,
+        preconditions: {
+			AtTargetPosition: Truth(true)
+        },
+        effects: {
+			IsAreaSurveyed: Truth(true)
+        },
+		animation: Idle
+    ),
+    Animate(
+        // Play some animation set by the goal (like for example the stun)
+        cost: 1,
+        preconditions: {},
+        effects: {AnimPlayed: Truth(true)},
+        animation: Idle
+    ),
+    AttackRanged(
+        // attack
+        cost: 1,
+        preconditions: {
+            IsWeaponArmed: Truth(true),
+            AmILookingAtTarget: Truth(true),
+            DistanceToTarget: DistanceToTarget(Medium)
+        },
+        effects: {IsTargetDead: Truth(true)},
+        animation: Attack
+    ),
+    Aim(
+        // rotate to target
+        cost: 1,
+        preconditions: {HasTarget: Target(Character)},
+        effects: {AmILookingAtTarget: Truth(true)},
+        animation: AttackReady
+    ),
+    DeployWeapon(
+        // prepare attack
+        cost: 1,
+        preconditions: {
+            HasTarget: Target(Character),
+            DistanceToTarget: DistanceToTarget(Medium)
+        },
+        effects: {
+            IsWeaponArmed: Truth(true)
+        },
+        animation: AttackPrepare
+    ),
+    ReleaseWeapon(
+        // release weapon
+        cost: 1,
+        preconditions: {
+            IsWeaponArmed: Truth(true)
+        },
+        effects: {
+            IsWeaponArmed: Truth(false)
+        },
+        animation: AttackRelease
+    ),
+]

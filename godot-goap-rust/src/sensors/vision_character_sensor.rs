@@ -1,7 +1,7 @@
 use std::time::SystemTime;
 use crate::ai::working_memory::{FactQuery, FactQueryCheck, Knowledge, AIStimuli, WMProperty};
 use crate::godot_api::godot_visible_area_3d::GodotVisibilityArea3D;
-use crate::sensors::sensor_types::{SensorArguments, SensorPolling};
+use crate::sensors::sensor_types::{ThinkerProcessArgs, SensorPolling};
 use godot::classes::{PhysicsRayQueryParameters3D, PhysicsServer3D};
 use godot::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,7 @@ pub struct VisionCharacterSensor {
 }
 
 impl SensorPolling for VisionCharacterSensor {
-    fn process(&mut self, delta: f64, args: &mut SensorArguments) -> bool {
+    fn process(&mut self, delta: f64, args: &mut ThinkerProcessArgs) -> bool {
         self.last_update_delta += delta;
         if self.last_update_delta < self.update_every {
             return false;

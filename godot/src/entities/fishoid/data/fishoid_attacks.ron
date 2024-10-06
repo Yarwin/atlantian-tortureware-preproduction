@@ -1,0 +1,30 @@
+#![enable(implicit_some, unwrap_newtypes, unwrap_variant_newtypes)]
+[
+	AttackData(
+		name: "Spit",
+		required_state: {},
+		validators: [
+			AttackCooldown(cooldown: 0.5),
+			AttackVisibleWithinRange(min: 1.0, max: 50.0)
+		],
+		default_weight: 4.0,
+		weight_range: (-1.0, 1.0),
+		steps: [
+			AnimationProps(
+				tree_name: "Attack/AttackPrepare",
+				name: "AttackPrepare",
+				mode: OneShot
+				),
+			AnimationProps(
+				tree_name: "Attack/AttackReady",
+				name: "AttackReady",
+				mode: Timed(0.2)
+			),
+			AnimationProps(
+				tree_name: "Attack/Attack",
+				name: "Attack",
+				mode: OneShot
+				)
+		]
+	),
+]

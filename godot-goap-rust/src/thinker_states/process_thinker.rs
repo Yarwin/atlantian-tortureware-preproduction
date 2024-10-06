@@ -1,6 +1,6 @@
 use crate::ai::thinker::Thinker;
 use crate::ai_nodes::ai_node::AINode;
-use crate::sensors::sensor_types::{SensorArguments, SensorPolling};
+use crate::sensors::sensor_types::{ThinkerProcessArgs, SensorPolling};
 use crate::thinker_states::navigation_subsystem::{navigate, NavigationArguments};
 use crate::thinker_states::types::StateArguments;
 use godot::prelude::*;
@@ -22,7 +22,7 @@ pub fn process_thinker(
         panic!("couldn't open thinker mutex!")
     };
     let shared = &mut *shared_guard;
-    let mut sensor_args = SensorArguments {
+    let mut sensor_args = ThinkerProcessArgs {
         id: thinker.id,
         character_rid: base.bind().character_body.as_ref().unwrap().get_rid(),
         head_position: base
@@ -67,6 +67,7 @@ pub fn process_thinker(
             sensor_args.world_state[WorldStateProperty::HasTarget] = Some(Truth(false));
         }
     }
+
 
     // state change
     let new_bb_state = shared.blackboard.new_state.take();

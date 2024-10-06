@@ -1,12 +1,24 @@
-[gd_scene load_steps=7 format=3 uid="uid://0407y73st0sl"]
+[gd_scene load_steps=8 format=3 uid="uid://0407y73st0sl"]
 
 [ext_resource type="PackedScene" uid="uid://t0ys0mdppkhu" path="res://src/interface/hud/player_hud.tscn" id="1_a0rkr"]
 [ext_resource type="PackedScene" uid="uid://73rj3r7hccpc" path="res://src/levels/test_level_1.tscn" id="1_rrvsy"]
 [ext_resource type="Script" path="res://testpanel.gd" id="2_g4o3d"]
 [ext_resource type="Shader" path="res://testing_ground_main.gdshader" id="2_uyo3u"]
+[ext_resource type="Texture2D" uid="uid://ctnwk7h2qbkqr" path="res://icon.svg" id="5_sdfup"]
 
 [sub_resource type="GDScript" id="GDScript_byf4j"]
-script/source = "extends Control
+script/source = "@tool
+
+extends Control
+
+@export var dupa: bool = false
+
+
+func _process(delta: float) -> void:
+	if dupa:
+		print(EditorInterface.get_editor_theme().get_icon(\"Node\", \"EditorIcons\"))
+		print(EditorInterface.get_editor_theme().get_icon_list(\"EditorIcons\"))
+		dupa = false
 "
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_du05y"]
@@ -46,13 +58,15 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 focus_mode = 2
+stretch = true
 metadata/_edit_lock_ = true
 
 [node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
 handle_input_locally = false
 msaa_3d = 2
 use_occlusion_culling = true
-size = Vector2i(1920, 1080)
+canvas_item_default_texture_filter = 3
+size = Vector2i(1152, 648)
 render_target_update_mode = 4
 
 [node name="World" parent="SubViewportContainer/SubViewport" instance=ExtResource("1_rrvsy")]
@@ -116,3 +130,6 @@ theme_override_font_sizes/bold_italics_font_size = 12
 theme_override_font_sizes/normal_font_size = 12
 theme_override_font_sizes/bold_font_size = 12
 bbcode_enabled = true
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+texture = ExtResource("5_sdfup")

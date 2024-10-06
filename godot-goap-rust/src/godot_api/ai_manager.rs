@@ -1,4 +1,3 @@
-use crate::goap_actions::action_types::Action;
 use crate::ai::process_plan::{process_plan, ThinkerPlanEvent, ThinkerProcess};
 use crate::ai::thinker::{Thinker, ThinkerShared};
 use crate::ai_nodes::ai_node::AINode;
@@ -20,6 +19,7 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use crate::ai::working_memory::WMProperty;
+use crate::goap_actions::action_component::ActionComponent;
 use crate::godot_api::gamesys::GameSystem;
 use crate::utils::generate_id::{assign_id, ToCreate};
 
@@ -27,7 +27,7 @@ use crate::utils::generate_id::{assign_id, ToCreate};
 #[derive(GodotClass)]
 #[class(init, base=Object, rename=AIManager)]
 pub struct GodotAIManager {
-    pub actions: HashMap<GString, Arc<Vec<Action>>>,
+    pub actions: HashMap<GString, Arc<Vec<ActionComponent>>>,
     pub goals: HashMap<GString, Arc<Vec<GoalComponent>>>,
     pub animations: HashMap<GString, Arc<AnimationsData>>,
     sensors_blueprint: HashMap<GString, Vec<PollingSensor>>,
@@ -165,47 +165,47 @@ impl GodotAIManager {
     }
 
     fn create_thinker(&mut self, mut to_create: ToCreate<GodotThinker>) {
-            let id = assign_id(to_create.id, &mut self.current_thinker_id);
+        let id = assign_id(to_create.id, &mut self.current_thinker_id);
 
-            // unregister on exit
-            let callable = Callable::from_object_method(&self.base(), "unregister_thinker")
-                .bindv(array![id.to_variant()]);
-            let _ = to_create
-                .instance
-                .connect_ex("tree_exiting".into(), callable)
-                .flags(CONNECT_ONE_SHOT)
-                .done();
-            let navigation_map_rid = to_create
-                .instance
-                .bind_mut()
-                .navigation_agent
-                .as_ref()
-                .map(|agent| agent.get_navigation_map());
+        // unregister on exit
+        let callable = Callable::from_object_method(&self.base(), "unregister_thinker")
+            .bindv(array![id.to_variant()]);
+        let _ = to_create
+            .instance
+            .connect_ex("tree_exiting".into(), callable)
+            .flags(CONNECT_ONE_SHOT)
+            .done();
+        let navigation_map_rid = to_create
+            .instance
+            .bind_mut()
+            .navigation_agent
+            .as_ref()
+            .map(|agent| agent.get_navigation_map());
 
-            let mut shared = ThinkerShared {
-                working_memory: Default::default(),
-                blackboard: Default::default(),
-                world_state: Self::load(&to_create.instance.bind().initial_state),
-                target_mask: Default::default(),
-            };
-            shared.blackboard.thinker_position = to_create.instance.get_global_position();
+        let mut shared = ThinkerShared {
+            working_memory: Default::default(),
+            blackboard: Default::default(),
+            world_state: Self::load(&to_create.instance.bind().initial_state),
+            target_mask: Default::default(),
+        };
+        shared.blackboard.thinker_position = to_create.instance.get_global_position();
 
-            let thinker = Thinker {
-                id,
-                base: Some(to_create.instance.clone()),
-                is_active: to_create.instance.bind().is_active,
-                actions: self.get_actions(&to_create.instance.bind().actions_file).unwrap(),
-                goals: self.get_goals(&to_create.instance.bind().goals_file).unwrap(),
-                polling_sensors: self.get_sensors(&to_create.instance.bind().sensors_file).unwrap(),
-                animations: self
-                    .get_animations_data(&to_create.instance.bind().animation_data)
-                    .unwrap(),
-                shared: Arc::new(Mutex::new(shared)),
-                navigation_map_rid,
-                ..Default::default()
-            };
-            self.thinkers.insert(id, thinker);
-            to_create.instance.bind_mut().thinker_id = id;
+        let thinker = Thinker {
+            id,
+            base: Some(to_create.instance.clone()),
+            is_active: to_create.instance.bind().is_active,
+            actions: self.get_actions(&to_create.instance.bind().actions_file).unwrap(),
+            goals: self.get_goals(&to_create.instance.bind().goals_file).unwrap(),
+            polling_sensors: self.get_sensors(&to_create.instance.bind().sensors_file).unwrap(),
+            animations: self
+                .get_animations_data(&to_create.instance.bind().animation_data)
+                .unwrap(),
+            shared: Arc::new(Mutex::new(shared)),
+            navigation_map_rid,
+            ..Default::default()
+        };
+        self.thinkers.insert(id, thinker);
+        to_create.instance.bind_mut().thinker_id = id;
     }
 
     fn load<T: for<'a> Deserialize<'a>>(path: &GString) -> T {
@@ -234,8 +234,8 @@ impl GodotAIManager {
         Some(components)
     }
 
-    pub fn get_actions(&mut self, path: &GString) -> Option<Arc<Vec<Action>>> {
-        Self::load_components::<Action, Action>(&mut self.actions, path)
+    pub fn get_actions(&mut self, path: &GString) -> Option<Arc<Vec<ActionComponent>>> {
+        Self::load_components::<ActionComponent, ActionComponent>(&mut self.actions, path)
     }
 
     pub fn get_goals(&mut self, path: &GString) -> Option<Arc<Vec<GoalComponent>>> {

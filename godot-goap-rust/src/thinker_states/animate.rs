@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::time::SystemTime;
 use crate::thinker_states::types::{StateArguments, ThinkerState};
 use godot::classes::AnimationNodeStateMachinePlayback;
@@ -17,8 +18,11 @@ pub enum AnimationMode {
     // play for until n seconds pass
     Timed(f64),
     // play n loops
-    Loops(u32)
+    Loops(u32),
+    // sequence of one-shots to play
+    Sequence{tree_names: VecDeque<String>, step: usize}
 }
+
 
 #[derive(Debug)]
 #[allow(unused_attributes)]
@@ -63,7 +67,7 @@ impl ThinkerState for AnimateState {
 
     fn physics_process(&mut self, _delta: f64, mut args: StateArguments) {
         let mut is_finished = false;
-        match self.mode {
+        match &mut self.mode {
             // set animation to complete after getting some signal
             AnimationMode::OneShot => {
                 let query = FactQuery::with_check(
@@ -79,7 +83,7 @@ impl ThinkerState for AnimateState {
                 self.play(&mut args);
             }
             AnimationMode::Timed(time) => {
-                if self.creation_time.elapsed().unwrap().as_secs_f64() > time {
+                if self.creation_time.elapsed().unwrap().as_secs_f64() > *time {
                     is_finished = true;
                 }
             }
@@ -88,9 +92,17 @@ impl ThinkerState for AnimateState {
                     FactQueryCheck::Match(WMProperty::Event(AnimationCompleted(self.tree_name.clone()))));
                 let Some(_f) = args.working_memory.find_and_mark_as_invalid(query) else {return;};
                 self.loops_performed += 1;
-                if self.loops_performed >= loop_amount {
+                if self.loops_performed >= *loop_amount {
                     is_finished = true;
                 }
+                self.play(&mut args);
+            }
+            AnimationMode::Sequence { tree_names,  step} => {
+                let query = FactQuery::with_check(
+                    FactQueryCheck::Match(WMProperty::Event(AnimationCompleted(tree_names[*step].clone()))));
+                let Some(_f) = args.working_memory.find_and_mark_as_invalid(query) else {return;};
+                *step += 1;
+                self.tree_name = tree_names.pop_front().unwrap();
                 self.play(&mut args);
             }
         };

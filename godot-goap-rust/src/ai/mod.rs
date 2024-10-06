@@ -5,3 +5,4 @@ pub(crate) mod process_plan;
 pub mod thinker;
 pub mod working_memory;
 pub mod world_state;
+mod working_memory_query;

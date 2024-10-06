@@ -1,7 +1,7 @@
 use crate::ai::working_memory::{FactQuery, FactQueryCheck, Node, WMNodeType, WMProperty};
 use crate::ai_nodes::ai_node::AINode;
 use crate::ai_nodes::godot_ai_node::AINodeType;
-use crate::sensors::sensor_types::SensorArguments;
+use crate::sensors::sensor_types::ThinkerProcessArgs;
 use crate::sensors::sensor_types::SensorPolling;
 use godot::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -16,7 +16,7 @@ pub struct PatrolPointSensor {
 impl PatrolPointSensor {
     const MINIMAL_DIST: f32 = 2.0;
 
-    fn find_nearest(args: &mut SensorArguments) -> Option<(u32, Vector3)> {
+    fn find_nearest(args: &mut ThinkerProcessArgs) -> Option<(u32, Vector3)> {
         let ainodes = args.polls.get_ainodes()?;
 
         let thinker_position = args.blackboard.thinker_position;
@@ -65,7 +65,7 @@ impl PatrolPointSensor {
 }
 
 impl SensorPolling for PatrolPointSensor {
-    fn process(&mut self, delta: f64, args: &mut SensorArguments) -> bool {
+    fn process(&mut self, delta: f64, args: &mut ThinkerProcessArgs) -> bool {
         self.last_update_delta += delta;
         // bail if we have some target
         if args.blackboard.target.as_ref().is_some() {

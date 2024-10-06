@@ -1,9 +1,8 @@
-use crate::goap_actions::action_types::Action;
 use crate::goap_actions::action_types::ActionBehavior;
-use crate::ai::blackboard::{Blackboard, FailedGoal};
+use crate::ai::blackboard::{Blackboard, Failed};
 use crate::ai::planner::plan;
 use crate::ai::thinker::{Thinker, ThinkerShared};
-use crate::ai::working_memory::WorkingMemory;
+use crate::ai::working_memory::{FactQuery, FactQueryCheck, WMProperty, WorkingMemory};
 use crate::ai::world_state::WorldState;
 use crate::ai_nodes::ai_node::AINode;
 use crate::animations::animation_data::AnimationsData;
@@ -16,6 +15,8 @@ use godot::obj::InstanceId;
 use std::collections::{HashMap, VecDeque};
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex, RwLock};
+use crate::ai::working_memory::Event::GoalFailed;
+use crate::goap_actions::action_component::ActionComponent;
 
 #[derive(Debug)]
 pub enum ThinkerPlanEvent {
@@ -44,7 +45,7 @@ pub struct ThinkerProcess {
     pub id: u32,
     pub base_id: Option<InstanceId>,
     pub shared: Arc<Mutex<ThinkerShared>>,
-    pub actions: Arc<Vec<Action>>,
+    pub actions: Arc<Vec<ActionComponent>>,
     pub goals: Arc<Vec<GoalComponent>>,
     pub animations: Arc<AnimationsData>,
     pub navigation_map_rid: Option<Rid>,
@@ -54,7 +55,7 @@ pub struct ThinkerProcess {
 pub struct ThinkerPlanView<'a> {
     pub id: &'a u32,
     pub goals: &'a Arc<Vec<GoalComponent>>,
-    pub actions: &'a Arc<Vec<Action>>,
+    pub actions: &'a Arc<Vec<ActionComponent>>,
     pub animations: &'a Arc<AnimationsData>,
     pub navigation_map_rid: &'a Option<Rid>,
     pub ai_nodes: &'a mut Option<Arc<RwLock<HashMap<u32, AINode>>>>,
@@ -107,9 +108,18 @@ fn get_relevant_goal(thinker: &mut ThinkerPlanView) -> Option<usize> {
             continue
         }
         // bail if goal failed recently
-        if context.blackboard.is_goal_failed(id) {
+        let query = FactQuery::with_check(
+            FactQueryCheck::Match(
+                WMProperty::Event(GoalFailed {id})
+            )
+        );
+        if context.working_memory.find_fact(query).is_some() {
             continue
         }
+
+        // if context.blackboard.is_goal_failed(id) {
+        //     continue
+        // }
         // bail if world state doesn't match
         if !goal.goal_type.validate_context(goal, &context) {
             continue;
@@ -143,7 +153,9 @@ fn update_plan(thinker_view: &mut ThinkerPlanView) -> Option<(VecDeque<usize>, u
 
     // bail if goal can't be activated
     if !activate_new_goal(thinker_view, new_goal) {
-        thinker_view.blackboard.failed_goals.push(FailedGoal::new(new_goal));
+        let property = WMProperty::Event(GoalFailed {id: new_goal});
+        thinker_view.working_memory.add_or_update(property, 1.0, 30.0);
+        thinker_view.blackboard.failed_goals.push(Failed::new(new_goal));
         return None;
     }
 
@@ -164,7 +176,9 @@ fn update_plan(thinker_view: &mut ThinkerPlanView) -> Option<(VecDeque<usize>, u
         return Some((indexes, new_goal));
     } else {
         // goal failed – couldn't find any plan to satisfy it
-        thinker_view.blackboard.failed_goals.push(FailedGoal::new(new_goal));
+        let property = WMProperty::Event(GoalFailed {id: new_goal});
+        thinker_view.working_memory.add_or_update(property, 1.0, 30.0);
+        thinker_view.blackboard.failed_goals.push(Failed::new(new_goal));
     }
     None
 }
@@ -178,7 +192,7 @@ fn advance_plan(thinker_view: &mut ThinkerPlanView) {
 
         // finalize action
         if let Some(index) = current_action {
-            thinker_view.actions[index].finish(action_arguments!(thinker_view));
+            thinker_view.actions[index].action_type.finish(action_arguments!(thinker_view));
         } else {
             return;
         }
@@ -186,10 +200,10 @@ fn advance_plan(thinker_view: &mut ThinkerPlanView) {
         let current_action: Option<usize> = thinker_view.blackboard.current_action();
         // execute the current action
         if let Some(index) = current_action {
-            thinker_view.actions[index].execute_action(action_arguments!(thinker_view));
+            thinker_view.actions[index].action_type.execute_action(&thinker_view.actions[index], action_arguments!(thinker_view));
             // advance the plan if action has been completed instantly
             let action_arguments = action_arguments!(thinker_view);
-            if !thinker_view.actions[index].is_action_complete(&action_arguments) {
+            if !thinker_view.actions[index].action_type.is_action_complete(&action_arguments) {
                 return;
             }
         } else {
@@ -209,7 +223,7 @@ fn advance_plan(thinker_view: &mut ThinkerPlanView) {
 fn activate_new_goal(thinker_view: &mut ThinkerPlanView, new_goal: usize) -> bool {
     if let Some(action) = thinker_view.blackboard.current_action() {
         let action_arguments = action_arguments!(thinker_view);
-        thinker_view.actions[action].finish(action_arguments);
+        thinker_view.actions[action].action_type.finish(action_arguments);
     }
 
     // deactivate previous goal
@@ -237,10 +251,10 @@ fn activate_plan(thinker_view: &mut ThinkerPlanView, new_plan: VecDeque<usize>, 
     thinker_view.blackboard.current_plan_ids = new_plan;
 
     let action_arguments = action_arguments!(thinker_view);
-    thinker_view.actions[first_action].execute_action(action_arguments);
+    thinker_view.actions[first_action].action_type.execute_action(&thinker_view.actions[first_action], action_arguments);
     let action_arguments = action_arguments!(thinker_view);
     // advance the plan if it was finished imminently
-    if thinker_view.actions[first_action].is_action_complete(&action_arguments) {
+    if thinker_view.actions[first_action].action_type.is_action_complete(&action_arguments) {
         advance_plan(thinker_view);
     }
 }
@@ -273,10 +287,12 @@ fn process_goal_and_plan(event: ThinkerPlanEvent) {
     let current_action = thinker_process_view.blackboard.current_action();
     let action_arguments = action_arguments!(thinker_process_view);
     let should_check_for_new_goal = should_invalidate || (current_action
-        .map(|index| thinker_process_view.actions[index].is_action_interruptible(&action_arguments))
+        .map(|index| thinker_process_view.actions[index].action_type.is_action_interruptible(&action_arguments))
         .unwrap_or(true) && current_goal.map(|index| thinker_process_view.goals[index].is_interruptible).unwrap_or(true));
+
     if should_check_for_new_goal {
         if let Some((new_p, new_g)) = update_plan(&mut thinker_process_view) {
+            godot_print!("new plan! {:?}", new_p);
             activate_plan(&mut thinker_process_view, new_p, new_g);
         }
         thinker_process_view.blackboard.invalidate_plan = false;
@@ -286,7 +302,7 @@ fn process_goal_and_plan(event: ThinkerPlanEvent) {
 
     if let Some(action) = current_action {
         let action_arguments = action_arguments!(thinker_process_view);
-        if thinker_process.actions[action].is_action_complete(&action_arguments) {
+        if thinker_process.actions[action].action_type.is_action_complete(&action_arguments) {
             advance_plan(&mut thinker_process_view);
         }
     }
