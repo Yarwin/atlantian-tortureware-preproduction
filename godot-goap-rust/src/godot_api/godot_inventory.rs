@@ -1,8 +1,8 @@
-use godot::prelude::*;
+use crate::godot_api::gamesys::GameSystem;
 use crate::godot_api::inventory_manager::{InventoryManager, InventoryToCreate};
 use crate::godot_api::item_object::{Item, ItemResource};
 use crate::inventory::item_builder::ItemBuilder;
-use crate::godot_api::gamesys::GameSystem;
+use godot::prelude::*;
 
 #[derive(GodotClass)]
 #[class(init, base=Resource)]
@@ -15,17 +15,17 @@ pub struct ItemToSpawn {
     pub position: Vector2i,
     #[export]
     pub item_data: Option<Gd<ItemResource>>,
-    base: Base<Resource>
+    base: Base<Resource>,
 }
-
 
 impl ItemToSpawn {
     pub fn builder(&self) -> ItemBuilder {
-        let item_builder = ItemBuilder::from(self.item_data.as_ref().unwrap()).amount(self.amount).spawn_context(self.to_gd());
+        let item_builder = ItemBuilder::from(self.item_data.as_ref().unwrap())
+            .amount(self.amount)
+            .spawn_context(self.to_gd());
         item_builder
     }
 }
-
 
 /// Facade to manage inventory connected to this entity
 #[derive(GodotClass)]
@@ -41,11 +41,10 @@ pub struct InventoryAgent {
     /// items to spawn in given inventory
     #[export]
     pub items_to_spawn: Array<Gd<ItemToSpawn>>,
-    base: Base<Node>
+    base: Base<Node>,
 }
 
-impl InventoryAgent {
-}
+impl InventoryAgent {}
 
 #[godot_api]
 impl INode for InventoryAgent {

@@ -1,10 +1,10 @@
 use crate::ai::blackboard::{Blackboard, SpeedMod};
+use crate::character_controler::character_controller_3d::CharacterController3D;
 use crate::godot_api::godot_thinker::GodotThinker;
 use godot::classes::{MeshInstance3D, PhysicsRayQueryParameters3D, PhysicsServer3D};
 use godot::prelude::*;
 use std::mem;
 use std::mem::MaybeUninit;
-use crate::character_controler::character_controller_3d::CharacterController3D;
 
 const AVOIDANCE_COLLISION_MASK: u32 = 8;
 const UP_OFFSET: Vector3 = Vector3::new(0.0, 0.1, 0.0);
@@ -38,7 +38,7 @@ pub struct Navigator {
 #[derive(Debug)]
 pub enum RotationTarget {
     Position(Vector3),
-    Character(InstanceId)
+    Character(InstanceId),
 }
 
 fn combine_tables_and_get_velocity(
@@ -101,10 +101,10 @@ fn avoid(
     ray_params.set_collision_mask(AVOIDANCE_COLLISION_MASK);
     ray_params.set_from(caster_pos + UP_OFFSET);
     ray_params.set_collide_with_bodies(true);
-    ray_params.set_exclude(array![caster_rid]);
+    ray_params.set_exclude(&array![caster_rid]);
 
     for (i, angle) in ANGLES.iter().enumerate() {
-        let mut debug_node = caster.get_node_as::<MeshInstance3D>(format!("Debug/{}", i + 1));
+        let mut debug_node = caster.get_node_as::<MeshInstance3D>(&format!("Debug/{}", i + 1));
         debug_node.set_global_position(
             caster_pos + (base_vec * avoidance_radius).rotated(Vector3::UP, *angle) + UP_OFFSET,
         );
@@ -121,7 +121,7 @@ fn avoid(
                     .normalized()
                 + UP_OFFSET,
         );
-        let intersection_result = direct_space.intersect_ray(ray_params.clone());
+        let intersection_result = direct_space.intersect_ray(&ray_params);
         if let Some(colpos) = intersection_result
             .get("position")
             .map(|v| v.to::<Vector3>())
@@ -148,7 +148,7 @@ pub fn rotate(
     delta: f64,
 ) {
     let target = match rotation_target {
-        RotationTarget::Position(p) => {*p}
+        RotationTarget::Position(p) => *p,
         RotationTarget::Character(character_id) => {
             let char: Gd<Node3D> = Gd::from_instance_id(*character_id);
             char.get_global_position()
@@ -157,7 +157,9 @@ pub fn rotate(
     let ground_offset = (character.get_global_transform().origin * Vector3::UP).y;
     let lateral_plane = Plane::new(Vector3::UP, ground_offset);
     let target_projected = lateral_plane.project(target);
-    if target_projected.is_zero_approx() {return;}
+    if target_projected.is_zero_approx() {
+        return;
+    }
     let look_at_transform =
         character
             .get_transform()
@@ -177,9 +179,9 @@ pub fn navigate(mut navigation_arguments: NavigationArguments, delta: f64) {
     // rotate character
     if let Some(rotation_target) = navigation_arguments.blackboard.rotation_target.as_ref() {
         let rotation_speed = match navigation_arguments.blackboard.rotation_speed {
-            SpeedMod::Slow => { bind.rotation_speed_walk }
-            SpeedMod::Normal => {bind.rotation_speed_normal}
-            SpeedMod::Fast => {bind.rotation_speed_fast}
+            SpeedMod::Slow => bind.rotation_speed_walk,
+            SpeedMod::Normal => bind.rotation_speed_normal,
+            SpeedMod::Fast => bind.rotation_speed_fast,
         };
         rotate(&mut character, rotation_target, rotation_speed, delta);
     }

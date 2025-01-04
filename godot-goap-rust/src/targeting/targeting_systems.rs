@@ -1,10 +1,13 @@
-use crate::targeting::target_select_character::select_character;
-use bitflags::bitflags;
 use crate::sensors::sensor_types::ThinkerProcessArgs;
 use crate::targeting::target::{AITarget, TargetType};
+use crate::targeting::target_select_character::select_character;
+use bitflags::bitflags;
 
-
-pub type TargetSelectorWithMask = (TargetMask, TargetType, for<'a, 'b> fn(&'a mut ThinkerProcessArgs<'b>) -> Option<AITarget>);
+pub type TargetSelectorWithMask = (
+    TargetMask,
+    TargetType,
+    for<'a, 'b> fn(&'a mut ThinkerProcessArgs<'b>) -> Option<AITarget>,
+);
 
 bitflags! {
     #[derive(Debug, Clone, Copy)]
@@ -29,15 +32,25 @@ impl Default for TargetMask {
 }
 
 impl TargetMask {
-    fn priority() -> [TargetSelectorWithMask; 1]
-    {
-        [
-            (TargetMask::VisibleCharacter, TargetType::Character, select_character),
-        ]
+    fn priority() -> [TargetSelectorWithMask; 1] {
+        [(
+            TargetMask::VisibleCharacter,
+            TargetType::Character,
+            select_character,
+        )]
     }
 
-    pub fn valid_target_selectors(other: TargetMask) -> impl Iterator<Item=(TargetMask, TargetType, for<'a, 'b> fn(&'a mut ThinkerProcessArgs<'b>) -> Option<AITarget>)> + 'static
-    {
-        TargetMask::priority().into_iter().filter(move |(bits, _target, _func)| other.contains(*bits))
+    pub fn valid_target_selectors(
+        other: TargetMask,
+    ) -> impl Iterator<
+        Item = (
+            TargetMask,
+            TargetType,
+            for<'a, 'b> fn(&'a mut ThinkerProcessArgs<'b>) -> Option<AITarget>,
+        ),
+    > + 'static {
+        TargetMask::priority()
+            .into_iter()
+            .filter(move |(bits, _target, _func)| other.contains(*bits))
     }
 }

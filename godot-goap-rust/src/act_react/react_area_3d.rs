@@ -1,12 +1,11 @@
-use godot::classes::{IArea3D, Area3D};
-use godot::prelude::*;
 use crate::act_react::act_react_executor::ActReactExecutor;
 use crate::act_react::act_react_resource::ActReactResource;
-use bitflags::bitflags;
-use godot::global::PropertyHint;
-use godot::register::property::PropertyHintInfo;
 use crate::godot_api::gamesys::GameSystem;
-
+use bitflags::bitflags;
+use godot::classes::{Area3D, IArea3D};
+use godot::global::PropertyHint;
+use godot::meta::PropertyHintInfo;
+use godot::prelude::*;
 
 bitflags! {
     #[derive(Default)]
@@ -28,22 +27,22 @@ impl Var for PropagationMode {
 }
 
 impl Export for PropagationMode {
-    fn default_export_info() -> PropertyHintInfo {
-        let mut hint = PropertyHintInfo::with_hint_none("TYPE_INT");
-        hint.hint = PropertyHint::FLAGS;
-        hint
+    fn export_hint() -> PropertyHintInfo {
+        PropertyHintInfo {
+            hint: PropertyHint::FLAGS,
+            hint_string: "TYPE_INT".into(),
+        }
     }
 }
 
-
-impl GodotConvert for PropagationMode { type Via = u32; }
+impl GodotConvert for PropagationMode {
+    type Via = u32;
+}
 
 impl ToGodot for PropagationMode {
-    fn to_godot(&self) -> Self::Via {
-        self.bits()
-    }
+    type ToVia<'v> = Self::Via;
 
-    fn into_godot(self) -> Self::Via {
+    fn to_godot(&self) -> Self::Via {
         self.bits()
     }
 
@@ -55,14 +54,11 @@ impl ToGodot for PropagationMode {
 impl FromGodot for PropagationMode {
     fn try_from_godot(via: Self::Via) -> Result<Self, ConvertError> {
         match PropagationMode::from_bits(via) {
-            None => {
-                Err(ConvertError::default())
-            }
-            Some(val) => {Ok(val)}
+            None => Err(ConvertError::default()),
+            Some(val) => Ok(val),
         }
     }
 }
-
 
 #[derive(GodotClass)]
 #[class(init, base=Area3D)]
@@ -75,7 +71,7 @@ pub struct ActReactArea3D {
     pub act_react: Option<Gd<ActReactResource>>,
     #[export]
     pub name_display: GString,
-    base: Base<Area3D>
+    base: Base<Area3D>,
 }
 
 impl ActReactArea3D {
@@ -84,8 +80,8 @@ impl ActReactArea3D {
     }
     pub fn get_name(&mut self) -> GString {
         if let Some(target) = self.target.as_mut() {
-            if target.has_method("get_name_display".into()) {
-                return target.call("get_name_display".into(), &[]).to::<GString>();
+            if target.has_method("get_name_display") {
+                return target.call("get_name_display", &[]).to::<GString>();
             }
         }
         self.get_area_display()
@@ -93,16 +89,14 @@ impl ActReactArea3D {
 
     pub fn get_reactor(&self) -> Gd<Object> {
         if let Some(target) = self.target.as_ref() {
-            return target.clone().upcast()
+            return target.clone().upcast();
         }
         self.base().clone().upcast()
     }
-
 }
 
 #[godot_api]
 impl IArea3D for ActReactArea3D {
-
     fn physics_process(&mut self, _delta: f64) {
         if !self.propagation_mode.contains(PropagationMode::Continuous) {
             return;
@@ -116,14 +110,13 @@ impl IArea3D for ActReactArea3D {
     fn ready(&mut self) {
         if self.propagation_mode.contains(PropagationMode::Contact) {
             let callable = self.base().callable("on_other_area_act");
-            self.base_mut().connect("area_entered".into(), callable);
+            self.base_mut().connect("area_entered", &callable);
         }
-        if self.base().has_method("_post_ready".into()) {
-            self.base_mut().call_deferred("_post_ready".into(), &[]);
+        if self.base().has_method("_post_ready") {
+            self.base_mut().call_deferred("_post_ready", &[]);
         }
     }
 }
-
 
 #[godot_api]
 impl ActReactArea3D {
@@ -134,11 +127,18 @@ impl ActReactArea3D {
 
     #[func]
     fn on_other_area_act(&self, actor: Gd<ActReactArea3D>) {
-        let Some(react) = self.act_react.clone() else {return;};
-        let Some(act) = actor.bind().act_react.clone() else {return;};
+        let Some(react) = self.act_react.clone() else {
+            return;
+        };
+        let Some(act) = actor.bind().act_react.clone() else {
+            return;
+        };
 
         let mut act_react_executor = ActReactExecutor::singleton();
-        let reactor = self.target.clone().unwrap_or(self.base().clone().upcast::<Node>());
+        let reactor = self
+            .target
+            .clone()
+            .unwrap_or(self.base().clone().upcast::<Node>());
         let mut context = dict! {
             "reactor": reactor
         };
@@ -150,8 +150,12 @@ impl ActReactArea3D {
 
     #[func]
     pub fn react(&self, act: Gd<ActReactResource>, actor_context: Dictionary) {
-        let Some(react) = self.act_react.clone() else {return;};
+        let Some(react) = self.act_react.clone() else {
+            return;
+        };
         let mut act_react_executor = ActReactExecutor::singleton();
-        act_react_executor.bind_mut().react(act, react, actor_context);
+        act_react_executor
+            .bind_mut()
+            .react(act, react, actor_context);
     }
 }

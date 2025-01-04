@@ -1,8 +1,8 @@
 #![allow(warnings, unused)]
+use crate::ai::world_state::WorldState;
 use crate::goap_actions::action_component::ActionComponent;
 /// An action that prepares an enemy attack
 use crate::goap_actions::action_types::{AgentActionPlanContext, AgentActionWorldContext};
-use crate::ai::world_state::WorldState;
 
 pub fn get_effects<'a>(
     inner: &'a ActionComponent,

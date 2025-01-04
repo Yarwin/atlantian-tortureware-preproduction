@@ -1,15 +1,18 @@
-use serde::{Deserialize, Serialize};
+use crate::ai::blackboard::SpeedMod;
 use crate::goap_actions::action_component::ActionComponent;
 use crate::goap_actions::action_types::{ActionBehavior, AgentActionWorldContext};
-use crate::ai::blackboard::SpeedMod;
 use crate::goap_actions::utils::action_set_animate_state;
-
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
 pub struct RangedAttack;
 
 impl ActionBehavior for RangedAttack {
-    fn execute_action(&self, inner: &ActionComponent, mut action_arguments: AgentActionWorldContext) {
+    fn execute_action(
+        &self,
+        inner: &ActionComponent,
+        mut action_arguments: AgentActionWorldContext,
+    ) {
         action_set_animate_state(inner, &mut action_arguments);
     }
 

@@ -1,9 +1,9 @@
+use crate::receiver::damage_receptor_component::ReceivedDamage;
 use godot::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
 use strum_macros::EnumDiscriminants;
-use crate::receiver::damage_receptor_component::ReceivedDamage;
 
 /// AIWorking memory is a central place to store the AI's observations about the world.
 /// AISensors and AIGoals publish and retrieve data to/from AIWorkingMemory to make decisions.
@@ -13,7 +13,7 @@ use crate::receiver::damage_receptor_component::ReceivedDamage;
 pub enum Knowledge {
     Invalid,
     Character(InstanceId, Option<Vector3>),
-    LastTargetPosition(Vector3)
+    LastTargetPosition(Vector3),
 }
 
 impl Eq for Knowledge {}
@@ -21,11 +21,11 @@ impl Eq for Knowledge {}
 impl PartialEq for Knowledge {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Knowledge::Character(i, ..), Knowledge::Character(other_i, ..)) => {
-                i == other_i
+            (Knowledge::Character(i, ..), Knowledge::Character(other_i, ..)) => i == other_i,
+            (Knowledge::LastTargetPosition(pos), Knowledge::LastTargetPosition(other_pos)) => {
+                (*pos - *other_pos).is_zero_approx()
             }
-            (Knowledge::LastTargetPosition(pos), Knowledge::LastTargetPosition(other_pos)) => (*pos - *other_pos).is_zero_approx(),
-            (_, _) => false
+            (_, _) => false,
         }
     }
 }
@@ -38,7 +38,7 @@ pub enum Desire {
     Stun,
     Stagger,
     Surprise,
-    Death
+    Death,
 }
 
 #[derive(Debug, PartialEq, Eq, EnumDiscriminants, Clone)]
@@ -51,10 +51,7 @@ pub enum Task {
 #[derive(Debug, EnumDiscriminants, Clone)]
 #[strum_discriminants(name(WMNodeType))]
 pub enum Node {
-    Patrol {
-        ainode_id: u32,
-        position: Vector3,
-    },
+    Patrol { ainode_id: u32, position: Vector3 },
 }
 
 impl Eq for Node {}
@@ -62,9 +59,13 @@ impl Eq for Node {}
 impl PartialEq for Node {
     fn eq(&self, other: &Self) -> bool {
         match (&self, other) {
-            (Node::Patrol{ainode_id, ..}, Node::Patrol{ainode_id: other_ainode_id, ..}) => {
-                ainode_id == other_ainode_id
-            },
+            (
+                Node::Patrol { ainode_id, .. },
+                Node::Patrol {
+                    ainode_id: other_ainode_id,
+                    ..
+                },
+            ) => ainode_id == other_ainode_id,
         }
     }
 }
@@ -73,9 +74,9 @@ impl PartialEq for Node {
 #[strum_discriminants(name(WMEventType))]
 pub enum Event {
     AnimationCompleted(String),
-    AttackPerformed {id: usize},
-    AttackFailed {id: usize},
-    GoalFailed {id: usize},
+    AttackPerformed { id: usize },
+    AttackFailed { id: usize },
+    GoalFailed { id: usize },
 }
 
 #[derive(Clone, Debug, EnumDiscriminants)]
@@ -93,11 +94,11 @@ impl PartialEq for AIStimuli {
         match (self, other) {
             (AIStimuli::Character(i, ..), AIStimuli::Character(other_i, ..)) => {
                 if i == other_i {
-                    return true
+                    return true;
                 }
                 false
             }
-            _ => false
+            _ => false,
         }
     }
 }
@@ -113,7 +114,6 @@ pub enum WMProperty {
     Knowledge(Knowledge),
     Event(Event),
 }
-
 
 #[derive(Debug)]
 pub struct WorkingMemoryFact {
@@ -131,36 +131,56 @@ impl WorkingMemoryFact {
         for check in other.checks.iter() {
             match check {
                 FactQueryCheck::Node(node_type) => {
-                    let WMProperty::Node(v) = &self.f_type else {return false};
+                    let WMProperty::Node(v) = &self.f_type else {
+                        return false;
+                    };
                     if WMNodeType::from(v) != *node_type {
-                        return false
+                        return false;
                     }
                 }
                 FactQueryCheck::TaskType(task_type) => {
-                    let WMProperty::Task(t) = &self.f_type else {return false};
+                    let WMProperty::Task(t) = &self.f_type else {
+                        return false;
+                    };
                     if WMTaskType::from(t) != *task_type {
-                        return false
+                        return false;
                     }
                 }
                 FactQueryCheck::Knowledge(knowledge_type) => {
-                    let WMProperty::Knowledge(k) = &self.f_type else {return false};
-                    if WMKnowledgeType::from(k) != *knowledge_type {return false}
+                    let WMProperty::Knowledge(k) = &self.f_type else {
+                        return false;
+                    };
+                    if WMKnowledgeType::from(k) != *knowledge_type {
+                        return false;
+                    }
                 }
                 FactQueryCheck::Desire(desire_type) => {
-                    let WMProperty::Desire(d) = &self.f_type else {return false};
-                    if WMDesireType::from(d) != *desire_type {return false}
+                    let WMProperty::Desire(d) = &self.f_type else {
+                        return false;
+                    };
+                    if WMDesireType::from(d) != *desire_type {
+                        return false;
+                    }
                 }
                 FactQueryCheck::Event(e_type) => {
-                    let WMProperty::Event(e) = &self.f_type else {return false};
-                    if WMEventType::from(e) != *e_type {return false}
+                    let WMProperty::Event(e) = &self.f_type else {
+                        return false;
+                    };
+                    if WMEventType::from(e) != *e_type {
+                        return false;
+                    }
                 }
                 FactQueryCheck::AIStimuli(s_type) => {
-                    let WMProperty::AIStimuli(s) = &self.f_type else {return false};
-                    if WMAIStimuliType::from(s) != *s_type {return false}
+                    let WMProperty::AIStimuli(s) = &self.f_type else {
+                        return false;
+                    };
+                    if WMAIStimuliType::from(s) != *s_type {
+                        return false;
+                    }
                 }
                 FactQueryCheck::Match(wmfact_type) => {
                     if wmfact_type != &self.f_type {
-                        return false
+                        return false;
                     }
                 }
             }
@@ -273,20 +293,22 @@ impl WorkingMemory {
         self.facts_mut().find(|fact| fact.matches_query(&query))
     }
 
-    pub fn find_fact_with_max_confidence(&self, fact_query: FactQuery) -> Option<&WorkingMemoryFact> {
-        let (fact, _max_confidence) = self.facts().filter(|f| f.matches_query(&fact_query))
-            .fold(
-                (None, 0.0),
-                |(max_f, max_c), other_f| {
-                    if max_f.is_none() {
-                        return (Some(other_f), other_f.confidence)
-                    }
-                    if other_f.confidence > max_c {
-                        return (Some(other_f), other_f.confidence)
-                    }
-                    (max_f, max_c)
+    pub fn find_fact_with_max_confidence(
+        &self,
+        fact_query: FactQuery,
+    ) -> Option<&WorkingMemoryFact> {
+        let (fact, _max_confidence) = self.facts().filter(|f| f.matches_query(&fact_query)).fold(
+            (None, 0.0),
+            |(max_f, max_c), other_f| {
+                if max_f.is_none() {
+                    return (Some(other_f), other_f.confidence);
                 }
-            );
+                if other_f.confidence > max_c {
+                    return (Some(other_f), other_f.confidence);
+                }
+                (max_f, max_c)
+            },
+        );
         fact
     }
 
@@ -294,7 +316,10 @@ impl WorkingMemory {
         let Some(fact_index) = self
             .facts_list
             .iter()
-            .position(|fact| fact.matches_query(&query)) else {return;};
+            .position(|fact| fact.matches_query(&query))
+        else {
+            return;
+        };
         self.to_remove.push_back(fact_index);
         let fact = &mut self.facts_list[fact_index];
         fact.is_valid = false;
@@ -321,7 +346,7 @@ pub enum FactQueryCheck {
     TaskType(WMTaskType),
     Knowledge(WMKnowledgeType),
     Desire(WMDesireType),
-    Event(WMEventType)
+    Event(WMEventType),
 }
 
 #[derive(Default, Debug, Clone)]

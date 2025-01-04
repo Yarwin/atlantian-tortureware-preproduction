@@ -1,9 +1,8 @@
-use crate::ai::working_memory::{FactQuery, FactQueryCheck, AIStimuli, WMProperty};
-use crate::sensors::sensor_types::{ThinkerProcessArgs, SensorPolling};
+use crate::ai::working_memory::{AIStimuli, FactQuery, FactQueryCheck, WMProperty};
+use crate::ai::world_state::{DistanceToTarget, WSProperty, WorldStateProperty};
+use crate::sensors::sensor_types::{SensorPolling, ThinkerProcessArgs};
 use crate::targeting::target::AITarget;
 use serde::{Deserialize, Serialize};
-use crate::ai::world_state::{DistanceToTarget, WorldStateProperty, WSProperty};
-
 
 /// sensor responsible for reading distance to some visible target
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -15,7 +14,6 @@ pub struct DistanceToTargetSensor {
     distance_far: f32,
 }
 
-
 impl SensorPolling for DistanceToTargetSensor {
     fn process(&mut self, delta: f64, args: &mut ThinkerProcessArgs) -> bool {
         self.last_update_delta += delta;
@@ -24,13 +22,17 @@ impl SensorPolling for DistanceToTargetSensor {
         }
         self.last_update_delta = 0.0;
         // bail if no target
-        let Some(AITarget::Character(character_id, ..)) = args.blackboard.target.as_ref() else { return false };
+        let Some(AITarget::Character(character_id, ..)) = args.blackboard.target.as_ref() else {
+            return false;
+        };
 
         // bail if target is not visible
-        let fact_query = FactQuery::with_check(FactQueryCheck::Match(
-            WMProperty::AIStimuli(AIStimuli::Character(*character_id, None))
-        ));
-        let Some(WMProperty::AIStimuli(AIStimuli::Character(_, Some(position)))) = args.working_memory.find_fact(fact_query).map(|f| &f.f_type) else {
+        let fact_query = FactQuery::with_check(FactQueryCheck::Match(WMProperty::AIStimuli(
+            AIStimuli::Character(*character_id, None),
+        )));
+        let Some(WMProperty::AIStimuli(AIStimuli::Character(_, Some(position)))) =
+            args.working_memory.find_fact(fact_query).map(|f| &f.f_type)
+        else {
             args.blackboard.invalidate_target = true;
             args.world_state[WorldStateProperty::DistanceToTarget] = None;
             return false;
@@ -40,16 +42,17 @@ impl SensorPolling for DistanceToTargetSensor {
         args.blackboard.distance_to_target = Some(distance_to_target);
 
         if distance_to_target <= self.distance_close {
-            args.world_state[WorldStateProperty::DistanceToTarget] = Some(WSProperty::DistanceToTarget(DistanceToTarget::Close));
-        }
-        else if distance_to_target <= self.distance_medium {
-            args.world_state[WorldStateProperty::DistanceToTarget] = Some(WSProperty::DistanceToTarget(DistanceToTarget::Medium));
-        }
-        else if distance_to_target <= self.distance_far {
-            args.world_state[WorldStateProperty::DistanceToTarget] = Some(WSProperty::DistanceToTarget(DistanceToTarget::Far));
-        }
-        else {
-            args.world_state[WorldStateProperty::DistanceToTarget] = Some(WSProperty::DistanceToTarget(DistanceToTarget::OutsideReach));
+            args.world_state[WorldStateProperty::DistanceToTarget] =
+                Some(WSProperty::DistanceToTarget(DistanceToTarget::Close));
+        } else if distance_to_target <= self.distance_medium {
+            args.world_state[WorldStateProperty::DistanceToTarget] =
+                Some(WSProperty::DistanceToTarget(DistanceToTarget::Medium));
+        } else if distance_to_target <= self.distance_far {
+            args.world_state[WorldStateProperty::DistanceToTarget] =
+                Some(WSProperty::DistanceToTarget(DistanceToTarget::Far));
+        } else {
+            args.world_state[WorldStateProperty::DistanceToTarget] =
+                Some(WSProperty::DistanceToTarget(DistanceToTarget::OutsideReach));
         }
         false
     }

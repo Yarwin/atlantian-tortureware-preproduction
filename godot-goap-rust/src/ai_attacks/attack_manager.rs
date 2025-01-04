@@ -1,14 +1,13 @@
-use godot::global::is_zero_approx;
+use crate::ai::world_state::WorldState;
+use crate::ai_attacks::attack_validators::{AttackValidator, AttackValidatorType};
 /// attack subsystem is responsible for finding the best attack for given entity
 /// and putting this information inside blackboard
-
 use crate::animations::animation_data::AnimationProps;
 use crate::sensors::sensor_types::ThinkerProcessArgs;
+use godot::global::is_zero_approx;
 use rand::prelude::*;
+use rand::{rng};
 use serde::{Deserialize, Serialize};
-use crate::ai::world_state::WorldState;
-use crate::ai_attacks::attack_validators::{AttackValidatorType, AttackValidator};
-
 
 /// Immutable struct that keeps all the data related to given attack.
 #[derive(Debug, Serialize, Deserialize)]
@@ -28,7 +27,7 @@ impl AttackData {
     pub fn is_valid(&self, args: &ThinkerProcessArgs) -> bool {
         for (id, validator) in self.validators.iter().enumerate() {
             if !validator.validate(args, self, &id) {
-                return false
+                return false;
             }
         }
         true
@@ -39,8 +38,8 @@ impl AttackData {
         if is_zero_approx(self.weight_range.0) && is_zero_approx(self.weight_range.1) {
             return self.default_weight;
         }
-        let mut rng = thread_rng();
-        let weight_mod = rng.gen_range(self.weight_range.0..self.weight_range.1);
+        let mut rng = rng();
+        let weight_mod = rng.random_range(self.weight_range.0..self.weight_range.1);
         self.default_weight + weight_mod
     }
 }

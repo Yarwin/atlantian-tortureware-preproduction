@@ -1,8 +1,8 @@
-use crate::inventory::inventory_item::InventoryItem;
-use godot::prelude::*;
 use crate::equipment::equip_component::build_item_equipment_component;
 use crate::godot_api::godot_inventory::ItemToSpawn;
 use crate::godot_api::item_object::{Item, ItemResource};
+use crate::inventory::inventory_item::InventoryItem;
+use godot::prelude::*;
 
 #[derive(Default)]
 pub struct ItemBuilder<'a> {
@@ -12,7 +12,7 @@ pub struct ItemBuilder<'a> {
     amount: u32,
     pub context: Option<Dictionary>,
     spawn_context: Option<Gd<ItemToSpawn>>,
-    current_item_id: Option<&'a mut u32>
+    current_item_id: Option<&'a mut u32>,
 }
 
 impl<'a> ItemBuilder<'a> {
@@ -33,9 +33,7 @@ impl<'a> ItemBuilder<'a> {
         self
     }
 
-    fn resolve_context(&mut self) {
-
-    }
+    fn resolve_context(&mut self) {}
 
     pub fn context(mut self, context: Dictionary) -> Self {
         self.context = Some(context);
@@ -59,7 +57,7 @@ impl<'a> ItemBuilder<'a> {
             item_resource: Some(self.item_resource.clone()),
             inventory: self.inventory.take(),
             equip: None,
-            base
+            base,
         })
     }
 }
@@ -73,7 +71,10 @@ impl Iterator for ItemBuilder<'_> {
         // let item: Gd<Item>;
         let max_stack = self.inventory.as_ref()?.inventory_data.bind().max_stack;
         **self.current_item_id.as_mut()? += 1;
-        let equip = self.equipment.as_ref().map(|e| build_item_equipment_component(e.clone()));
+        let equip = self
+            .equipment
+            .as_ref()
+            .map(|e| build_item_equipment_component(e.clone()));
         let item = if self.amount <= max_stack {
             self.inventory.as_mut()?.stack = self.amount;
             self.amount = 0;
@@ -82,7 +83,7 @@ impl Iterator for ItemBuilder<'_> {
                 item_resource: None,
                 inventory: self.inventory.take(),
                 equip,
-                base
+                base,
             })
         } else {
             self.inventory.as_mut()?.stack = max_stack;
@@ -92,7 +93,7 @@ impl Iterator for ItemBuilder<'_> {
                 item_resource: None,
                 inventory: self.inventory.clone(),
                 equip,
-                base
+                base,
             })
         };
         Some(item)

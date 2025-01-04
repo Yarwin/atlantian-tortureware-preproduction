@@ -1,16 +1,17 @@
-use crate::godot_api::gamesys::GameSystem;
-use godot::prelude::*;
-use godot::classes::{Control, IControl, InputEvent, Tween};
-use std::time::SystemTime;
 use crate::act_react::act_react_resource::ActReactResource;
-use crate::godot_api::CONNECT_ONE_SHOT;
 use crate::godot_api::gamesys::GameSys;
+use crate::godot_api::gamesys::GameSystem;
 use crate::godot_api::godot_inventory::InventoryAgent;
 use crate::godot_api::inventory_manager::InventoryManager;
+use crate::godot_api::CONNECT_ONE_SHOT;
 use crate::inventory_ui::inventory_ui_grid::InventoryUIGrid;
 use crate::inventory_ui::inventory_ui_item::InventoryUIItem;
-use crate::inventory_ui::inventory_ui_state_machine::{InventoryUIManagerState, InventoryUIDefaultState};
-
+use crate::inventory_ui::inventory_ui_state_machine::{
+    InventoryUIDefaultState, InventoryUIManagerState,
+};
+use godot::classes::{Control, IControl, InputEvent, Tween};
+use godot::prelude::*;
+use std::time::SystemTime;
 
 #[derive(GodotClass)]
 #[class(init, base=Control)]
@@ -27,15 +28,15 @@ pub struct InventoryUIManager {
     anchors_hidden: Vector4,
     #[export]
     cooldown_time: f64,
-    #[init(default = SystemTime::now())]
+    #[init(val = SystemTime::now())]
     cooldown: SystemTime,
     pub player_inventory_ids: Array<u32>,
-    #[init(default = Some(Box::<InventoryUIDefaultState>::default()))]
+    #[init(val = Some(Box::<InventoryUIDefaultState>::default()))]
     state: Option<Box<dyn InventoryUIManagerState>>,
     current_focused_grid: Option<Gd<InventoryUIGrid>>,
     // current cell size. Cached for displaying new temporary inventories
     current_cell_size: f32,
-    base: Base<Control>
+    base: Base<Control>,
 }
 
 pub struct InventoryUIManagerView<'view> {
@@ -90,16 +91,22 @@ impl IControl for InventoryUIManager {
         let mouse_entered_callable = self.base().callable("on_mouse_entered_grid");
         let mouse_exited_callable = self.base().callable("on_mouse_exited_grid");
         for mut grid_holder in self.inventories.iter_shared() {
-            grid_holder.connect("resized".into(), callable.clone());
+            grid_holder.connect("resized", &callable);
             let callable_bind_args = varray![grid_holder.clone().to_variant()];
-            grid_holder.connect("mouse_entered".into(), mouse_entered_callable.bindv(callable_bind_args.clone()));
-            grid_holder.connect("mouse_exited".into(), mouse_exited_callable.bindv(callable_bind_args));
+            grid_holder.connect(
+                "mouse_entered",
+                &mouse_entered_callable.bindv(&callable_bind_args),
+            );
+            grid_holder.connect(
+                "mouse_exited",
+                &mouse_exited_callable.bindv(&callable_bind_args),
+            );
         }
         self.inventory_initialization();
 
-        self.base_mut().call_deferred("calculate_offset".into(), &[]);
+        self.base_mut().call_deferred("calculate_offset", &[]);
         let on_hud_visibility_changed = self.base().callable("on_hud_visibility_changed");
-        GameSys::singleton().connect("hud_visibility_changed".into(), on_hud_visibility_changed);
+        GameSys::singleton().connect("hud_visibility_changed", &on_hud_visibility_changed);
     }
 
     fn unhandled_input(&mut self, event: Gd<InputEvent>) {
@@ -126,7 +133,10 @@ impl InventoryUIManager {
             self.on_inventory_init();
             return;
         }
-        InventoryManager::singleton().connect_ex("post_init".into(), self.base().callable("on_inventory_init")).flags(CONNECT_ONE_SHOT).done();
+        InventoryManager::singleton()
+            .connect_ex("post_init", &self.base().callable("on_inventory_init"))
+            .flags(CONNECT_ONE_SHOT)
+            .done();
     }
 
     #[func]
@@ -134,7 +144,7 @@ impl InventoryUIManager {
         let mut offset: Option<f32> = None;
         for grid_holder in self.inventories.iter_shared() {
             if let Ok(inventory_agent) = grid_holder
-                .get("inventory_agent".into())
+                .get("inventory_agent")
                 .try_to::<Gd<InventoryAgent>>()
             {
                 let size = grid_holder.get_size();
@@ -154,13 +164,18 @@ impl InventoryUIManager {
         if let Some(off) = offset {
             self.current_cell_size = off;
             self.base_mut()
-                .emit_signal("cell_size_calculated".into(), &[off.to_variant()]);
+                .emit_signal("cell_size_calculated", &[off.to_variant()]);
         }
     }
 
     #[func]
     fn on_mouse_entered_grid(&mut self, grid: Gd<InventoryUIGrid>) {
-        if self.current_focused_grid.as_ref().map(|g| *g == grid).unwrap_or(false) {
+        if self
+            .current_focused_grid
+            .as_ref()
+            .map(|g| *g == grid)
+            .unwrap_or(false)
+        {
             return;
         }
         self.current_focused_grid = Some(grid);
@@ -169,7 +184,10 @@ impl InventoryUIManager {
     #[func]
     fn on_mouse_exited_grid(&mut self, _grid: Gd<InventoryUIGrid>) {
         if let Some(grid) = self.current_focused_grid.as_ref() {
-            if !grid.get_global_rect().has_point(grid.get_global_mouse_position()) {
+            if !grid
+                .get_global_rect()
+                .has_point(grid.get_global_mouse_position())
+            {
                 self.current_focused_grid = None;
             }
         }
@@ -191,7 +209,7 @@ impl InventoryUIManager {
 
     #[func]
     fn on_resized(&mut self) {
-        self.base_mut().call_deferred("calculate_offset".into(), &[]);
+        self.base_mut().call_deferred("calculate_offset", &[]);
     }
 
     #[func]
@@ -200,7 +218,7 @@ impl InventoryUIManager {
             .base()
             .get_tree()
             .expect("failed to fetch the scene tree!")
-            .get_nodes_in_group("player_inventory".into());
+            .get_nodes_in_group("player_inventory");
         for id in player_inventory_agents
             .iter_shared()
             .map(|v| v.cast::<InventoryAgent>().bind().id)

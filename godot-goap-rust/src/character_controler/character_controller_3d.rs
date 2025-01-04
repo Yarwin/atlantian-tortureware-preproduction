@@ -1,8 +1,7 @@
-use godot::prelude::*;
-use godot::classes::{CharacterBody3D, CollisionShape3D, PhysicsBody3D};
 use crate::character_controler::movement_data::MovementData;
-use crate::character_controler::process_movement::{MovementParameters, process_movement};
-
+use crate::character_controler::process_movement::{process_movement, MovementParameters};
+use godot::classes::{CharacterBody3D, CollisionShape3D, PhysicsBody3D};
+use godot::prelude::*;
 
 #[derive(GodotClass, Debug)]
 #[class(init, base=CharacterBody3D)]
@@ -24,9 +23,8 @@ pub struct CharacterController3D {
     #[var]
     direction: Vector3,
     pub(crate) movement_data: Option<MovementData>,
-    base: Base<CharacterBody3D>
+    base: Base<CharacterBody3D>,
 }
-
 
 impl CharacterController3D {
     pub fn get_motion_params(&self) -> MovementParameters {
@@ -55,8 +53,6 @@ impl CharacterController3D {
     }
 }
 
-
-
 #[godot_api]
 impl CharacterController3D {
     #[signal]
@@ -64,11 +60,21 @@ impl CharacterController3D {
     #[func]
     pub fn process_movement(&mut self, delta: f64) {
         let motion_params = self.get_motion_params();
-        self.movement_data = process_movement(delta as f32, motion_params, self.movement_data.take());
-        if let Some(Some(step_height)) = self.movement_data.as_ref().map(|md| md.total_stepped_height) {
-            self.base_mut().emit_signal("stepped".into(), &[step_height.to_variant()]);
+        self.movement_data =
+            process_movement(delta as f32, motion_params, self.movement_data.take());
+        if let Some(Some(step_height)) = self
+            .movement_data
+            .as_ref()
+            .map(|md| md.total_stepped_height)
+        {
+            self.base_mut()
+                .emit_signal("stepped", &[step_height.to_variant()]);
         }
-        let velocity = self.movement_data.as_ref().map(|md| md.velocity).unwrap_or(Vector3::ZERO);
+        let velocity = self
+            .movement_data
+            .as_ref()
+            .map(|md| md.velocity)
+            .unwrap_or(Vector3::ZERO);
         self.base_mut().set_velocity(velocity);
     }
 }

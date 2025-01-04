@@ -1,11 +1,11 @@
-use std::time::SystemTime;
-use godot::builtin::math::ApproxEq;
 use crate::ai::blackboard::SpeedMod;
 use crate::ai::world_state::{WSProperty, WorldStateProperty};
+use crate::thinker_states::navigation_subsystem::RotationTarget;
 use crate::thinker_states::types::{StateArguments, ThinkerState};
+use godot::builtin::math::ApproxEq;
 use godot::classes::{AnimationNodeStateMachinePlayback, MeshInstance3D};
 use godot::prelude::*;
-use crate::thinker_states::navigation_subsystem::RotationTarget;
+use std::time::SystemTime;
 
 #[derive(Debug)]
 pub enum Destination {
@@ -18,7 +18,7 @@ impl Destination {
     pub fn is_dynamic_pos(&self) -> bool {
         match self {
             Destination::Position(..) | Destination::Node(..) => false,
-            Destination::Character(..) => true
+            Destination::Character(..) => true,
         }
     }
 }
@@ -30,7 +30,7 @@ pub struct GotoState {
     pub is_destination_blocked: bool,
     pub finished: bool,
     pub should_repath: bool,
-    pub time_since_last_pathing: SystemTime
+    pub time_since_last_pathing: SystemTime,
 }
 
 impl GotoState {
@@ -41,7 +41,7 @@ impl GotoState {
             is_destination_blocked: false,
             finished: false,
             should_repath: false,
-            time_since_last_pathing: SystemTime::now()
+            time_since_last_pathing: SystemTime::now(),
         };
         Box::new(state)
     }
@@ -78,9 +78,9 @@ impl ThinkerState for GotoState {
             return;
         };
         let mut anim_node_state_machine = anim_tree
-            .get("parameters/playback".into())
+            .get("parameters/playback")
             .to::<Gd<AnimationNodeStateMachinePlayback>>();
-        anim_node_state_machine.travel(self.animation_name.clone().into());
+        anim_node_state_machine.travel(&self.animation_name);
     }
 
     fn physics_process(&mut self, _delta: f64, mut args: StateArguments) {
@@ -92,7 +92,14 @@ impl ThinkerState for GotoState {
             return;
         };
 
-        if self.should_repath && (self.time_since_last_pathing.elapsed().unwrap().as_secs_f64() > 0.25) {
+        if self.should_repath
+            && (self
+                .time_since_last_pathing
+                .elapsed()
+                .unwrap()
+                .as_secs_f64()
+                > 0.25)
+        {
             self.time_since_last_pathing = SystemTime::now();
             nav_agent.set_target_position(self.get_target_pos());
         }
@@ -136,7 +143,9 @@ impl ThinkerState for GotoState {
         let mut debug_node = character.get_node_as::<MeshInstance3D>("Debug/DebugNav");
         debug_node.set_global_position(look_target);
 
-        if let Some(RotationTarget::Position(current_look_target)) = args.blackboard.rotation_target.as_ref() {
+        if let Some(RotationTarget::Position(current_look_target)) =
+            args.blackboard.rotation_target.as_ref()
+        {
             if !(*current_look_target - look_target).is_zero_approx() {
                 args.blackboard.rotation_target = Some(RotationTarget::Position(look_target));
             }

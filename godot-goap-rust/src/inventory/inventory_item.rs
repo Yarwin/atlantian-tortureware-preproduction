@@ -1,6 +1,5 @@
-use godot::prelude::*;
 use crate::inventory::inventory_item_data::InventoryItemData;
-
+use godot::prelude::*;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum StackResult {
@@ -21,7 +20,7 @@ pub struct InventoryItem {
 impl InventoryItem {
     pub fn reduce_stack(&mut self, by: u32) -> StackResult {
         if self.stack <= by {
-            return StackResult::Depleted
+            return StackResult::Depleted;
         }
         self.stack -= by;
         StackResult::Updated
@@ -48,7 +47,6 @@ impl InventoryItem {
         self.stack -= free_space;
         StackResult::Updated
     }
-
 }
 
 impl From<Gd<InventoryItemData>> for InventoryItem {

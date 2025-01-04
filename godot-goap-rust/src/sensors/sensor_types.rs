@@ -4,6 +4,7 @@ use crate::ai::working_memory::WorkingMemory;
 use crate::ai::world_state::WorldState;
 use crate::ai_nodes::ai_node::AINode;
 use crate::sensors::damage_sensor::DamageSensor;
+use crate::sensors::distance_to_target_sensor::DistanceToTargetSensor;
 use crate::sensors::get_patrol_points_sensor::PatrolPointSensor;
 use crate::sensors::vision_character_sensor::VisionCharacterSensor;
 use crate::targeting::targeting_systems::TargetMask;
@@ -13,7 +14,6 @@ use godot::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use crate::sensors::distance_to_target_sensor::DistanceToTargetSensor;
 
 #[allow(unused_attributes, dead_code)]
 #[derive(Debug)]
@@ -44,7 +44,7 @@ pub enum EventSensor {
 pub enum PollingSensor {
     PatrolPointSensor,
     VisionCharacterSensor,
-    DistanceToTargetSensor
+    DistanceToTargetSensor,
 }
 
 #[enum_dispatch(PollingSensor)]

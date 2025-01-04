@@ -14,4 +14,6 @@ pub struct GoalComponent {
     pub required_state: WorldState,
 }
 
-fn is_interruptible_default() -> bool {true}
+fn is_interruptible_default() -> bool {
+    true
+}

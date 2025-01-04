@@ -1,13 +1,13 @@
 // BlackBoard is used by AI subsystems to share their requests, intents, and results.
 
+use crate::animations::animation_data::AnimationType;
 use crate::targeting::target::AITarget;
+use crate::targeting::targeting_systems::TargetMask;
+use crate::thinker_states::navigation_subsystem::RotationTarget;
 use crate::thinker_states::types::ThinkerState;
 use godot::prelude::*;
 use std::collections::VecDeque;
 use std::time::SystemTime;
-use crate::animations::animation_data::AnimationType;
-use crate::targeting::targeting_systems::TargetMask;
-use crate::thinker_states::navigation_subsystem::RotationTarget;
 
 #[derive(Default, Debug)]
 pub enum Awareness {
@@ -24,25 +24,24 @@ pub enum SpeedMod {
     Fast,
 }
 
-
 #[derive(Debug)]
 pub enum NavigationTarget {
     /// patrol point
     PatrolPoint(u32, Vector3),
-    Character(InstanceId)
+    Character(InstanceId),
 }
 
 #[derive(Debug)]
 pub struct Failed {
     pub index: usize,
-    pub time: SystemTime
+    pub time: SystemTime,
 }
 
 impl Failed {
     pub fn new(index: usize) -> Self {
         Failed {
             index,
-            time: SystemTime::now()
+            time: SystemTime::now(),
         }
     }
 }
@@ -84,7 +83,8 @@ impl Blackboard {
     }
 
     pub fn validate_failed(&mut self) {
-        self.failed_goals.retain(|fail| fail.time.elapsed().unwrap().as_secs_f64() < 1.0);
+        self.failed_goals
+            .retain(|fail| fail.time.elapsed().unwrap().as_secs_f64() < 1.0);
     }
 
     pub fn is_goal_failed(&self, goal: usize) -> bool {

@@ -1,11 +1,11 @@
-use godot::classes::{Button, Control, IControl, Label, TextureRect, Tween};
-use godot::prelude::*;
 use crate::equipment::spreadgun::{SpreadGunAmmo, SpreadGunItemComponent};
-use crate::godot_api::CONNECT_DEFERRED;
 use crate::godot_api::gamesys::GameSystem;
 use crate::godot_api::godot_inventory::InventoryAgent;
 use crate::godot_api::inventory_manager::InventoryManager;
 use crate::godot_api::item_object::Item;
+use crate::godot_api::CONNECT_DEFERRED;
+use godot::classes::{Button, Control, IControl, Label, TextureRect, Tween};
+use godot::prelude::*;
 
 #[derive(GodotClass)]
 #[class(init, base=Control)]
@@ -32,9 +32,8 @@ pub struct GunDisplay {
     status_tween: Option<Gd<Tween>>,
     /// direct pointer to given item component. Is valid as long as its Item is valid.
     pub eq_component: Option<*mut SpreadGunItemComponent>,
-    base: Base<Control>
+    base: Base<Control>,
 }
-
 
 impl GunDisplay {
     pub fn init_with_component(&mut self) {
@@ -45,17 +44,18 @@ impl GunDisplay {
             self.current_ammo = eq_component.current_ammo.clone();
             self.update_ammo_count(eq_component);
             let gun_name = eq_component.data.bind().gun_name.clone();
-            self.gun_name_label.set_text(gun_name);
+            self.gun_name_label.set_text(&gun_name);
         }
     }
 
     fn init_new_ammo(&mut self, ammo: Gd<SpreadGunAmmo>) {
         let ammo_bind = ammo.bind();
-        self.ammo_name_label.set_text(ammo_bind.ammo_name.clone());
+        self.ammo_name_label.set_text(&ammo_bind.ammo_name);
     }
 
     fn update_ammo_count_internal_only(&mut self, eq_component: &mut SpreadGunItemComponent) {
-        self.ammo_count_label.set_text(format!("{}", eq_component.ammo_count).into());
+        self.ammo_count_label
+            .set_text(&format!("{}", eq_component.ammo_count));
     }
 
     fn update_ammo_count(&mut self, eq_component: &mut SpreadGunItemComponent) {
@@ -63,22 +63,28 @@ impl GunDisplay {
         if let Some(current_ammo) = self.current_ammo.as_ref() {
             let mut ammo_count: u32 = 0;
             let ammo_bind = current_ammo.bind();
-            let Some(accepted_ammo) = ammo_bind.accepted_ammo.clone() else {return;};
+            let Some(accepted_ammo) = ammo_bind.accepted_ammo.clone() else {
+                return;
+            };
             let ammo_bind = accepted_ammo.bind();
-            let Some(inventory_item_data) = ammo_bind.inventory.clone() else { return; };
+            let Some(inventory_item_data) = ammo_bind.inventory.clone() else {
+                return;
+            };
             for inv_idx in self.inventories.iter() {
-                let items = InventoryManager::singleton().bind().get_items_of_the_same_type(*inv_idx, inventory_item_data.clone());
+                let items = InventoryManager::singleton()
+                    .bind()
+                    .get_items_of_the_same_type(*inv_idx, inventory_item_data.clone());
                 for item in items.iter_shared() {
                     let item_bind = item.bind();
                     let inv = item_bind.inventory.as_ref().unwrap();
                     ammo_count += inv.stack;
                 }
             }
-            self.ammo_count_in_inventory_label.set_text(format!("{}", ammo_count).into())
+            self.ammo_count_in_inventory_label
+                .set_text(&format!("{}", ammo_count))
         }
     }
 }
-
 
 #[godot_api]
 impl IControl for GunDisplay {
@@ -87,7 +93,7 @@ impl IControl for GunDisplay {
             self.init_player_inventories();
         } else {
             let on_inventory_manager_post_init = self.base().callable("init_player_inventories");
-            InventoryManager::singleton().connect("post_init".into(), on_inventory_manager_post_init);
+            InventoryManager::singleton().connect("post_init", &on_inventory_manager_post_init);
         }
     }
 }
@@ -99,15 +105,27 @@ impl GunDisplay {
 
     #[func]
     fn init_player_inventories(&mut self) {
-        let player_inventories = self.base().get_tree().unwrap().get_nodes_in_group("player_inventory".into());
+        let player_inventories = self
+            .base()
+            .get_tree()
+            .unwrap()
+            .get_nodes_in_group("player_inventory");
         let callable = self.base().callable("on_new_item_created");
-        for mut inventory_agent in player_inventories.iter_shared().map(|i| i.cast::<InventoryAgent>()) {
-            inventory_agent.connect_ex("new_item_created".into(), callable.clone()).flags(CONNECT_DEFERRED).done();
-            inventory_agent.connect_ex("stack_updated".into(), callable.clone()).flags(CONNECT_DEFERRED).done();
+        for mut inventory_agent in player_inventories
+            .iter_shared()
+            .map(|i| i.cast::<InventoryAgent>())
+        {
+            inventory_agent
+                .connect_ex("new_item_created", &callable)
+                .flags(CONNECT_DEFERRED)
+                .done();
+            inventory_agent
+                .connect_ex("stack_updated", &callable)
+                .flags(CONNECT_DEFERRED)
+                .done();
             self.inventories.push(inventory_agent.bind().id);
         }
         self.init_with_component();
-
     }
 
     #[func]
@@ -117,7 +135,7 @@ impl GunDisplay {
         if let Some(mut tween) = self.status_tween.take() {
             tween.kill();
         }
-        self.gun_status_label.set_text(GString::default());
+        self.gun_status_label.set_text("");
     }
 
     #[func(gd_self)]
@@ -125,38 +143,46 @@ impl GunDisplay {
         let mut change = false;
         {
             let this_bind = this.bind();
-            let Some(current_ammo) = this_bind.current_ammo.as_ref() else {return;};
+            let Some(current_ammo) = this_bind.current_ammo.as_ref() else {
+                return;
+            };
             let current_ammo_bind = current_ammo.bind();
-            let Some(item_resource) = current_ammo_bind.accepted_ammo.as_ref() else { return; };
+            let Some(item_resource) = current_ammo_bind.accepted_ammo.as_ref() else {
+                return;
+            };
             let item_resource_bind = item_resource.bind();
-            let Some(inventory_item_data) = item_resource_bind.inventory.as_ref() else { return; };
+            let Some(inventory_item_data) = item_resource_bind.inventory.as_ref() else {
+                return;
+            };
             let item_bind = item.bind();
-            let Some(other_inventory_item_data) = item_bind.inventory.as_ref().map(|i| &i.inventory_data) else { return; };
+            let Some(other_inventory_item_data) =
+                item_bind.inventory.as_ref().map(|i| &i.inventory_data)
+            else {
+                return;
+            };
             if inventory_item_data == other_inventory_item_data {
                 change = true;
             }
         }
         if change {
             let mut this_bind = this.bind_mut();
-            let Some(eq_comp) = this_bind.eq_component.as_mut().map(|c| unsafe { &mut **c }) else {return;};
+            let Some(eq_comp) = this_bind.eq_component.as_mut().map(|c| unsafe { &mut **c }) else {
+                return;
+            };
             this_bind.update_ammo_count(eq_comp);
         }
     }
 
     #[func(gd_self)]
-    fn on_new_ammo_type_selected(_this: Gd<Self>) {
-
-    }
+    fn on_new_ammo_type_selected(_this: Gd<Self>) {}
 
     #[func(gd_self)]
-    fn on_new_firemode_selected(_this: Gd<Self>) {
-
-    }
+    fn on_new_firemode_selected(_this: Gd<Self>) {}
 
     #[func]
     fn add_dot_to_status(&mut self) {
         let text = self.gun_status_label.get_text();
-        self.gun_status_label.set_text(format!("{}.", text).into());
+        self.gun_status_label.set_text(&format!("{}.", text));
     }
 
     #[func]
@@ -165,7 +191,7 @@ impl GunDisplay {
         if text.len() < 2 {
             return;
         }
-        self.gun_status_label.set_text(GString::from(&text[0.. text.len() - 1]));
+        self.gun_status_label.set_text(&text[0..text.len() - 1]);
     }
 
     #[func]
@@ -174,37 +200,65 @@ impl GunDisplay {
             tween.kill();
         }
         let is_empty = new_status.is_empty();
-        self.gun_status_label.set_text(new_status);
+        self.gun_status_label.set_text(&new_status);
 
-        if is_empty {return;}
+        if is_empty {
+            return;
+        }
         let mut tween = self.base().get_tree().unwrap().create_tween().unwrap();
         let add_dot_to_status = self.base().callable("add_dot_to_status");
         let remove_dots = self.base().callable("clear_dots_from_status");
-        tween = tween.bind_node(self.base().clone()).unwrap();
+        tween = tween.bind_node(&self.base().clone()).unwrap();
         tween = tween.set_loops().unwrap();
-        tween.tween_callback(add_dot_to_status.clone()).unwrap().set_delay(0.2).unwrap();
-        tween.tween_callback(add_dot_to_status.clone()).unwrap().set_delay(0.1).unwrap();
-        tween.tween_callback(add_dot_to_status).unwrap().set_delay(0.05).unwrap();
-        tween.tween_callback(remove_dots.clone()).unwrap().set_delay(0.2).unwrap();
-        tween.tween_callback(remove_dots.clone()).unwrap().set_delay(0.1).unwrap();
-        tween.tween_callback(remove_dots).unwrap().set_delay(0.005).unwrap();
+        tween
+            .tween_callback(&add_dot_to_status)
+            .unwrap()
+            .set_delay(0.2)
+            .unwrap();
+        tween
+            .tween_callback(&add_dot_to_status)
+            .unwrap()
+            .set_delay(0.1)
+            .unwrap();
+        tween
+            .tween_callback(&add_dot_to_status)
+            .unwrap()
+            .set_delay(0.05)
+            .unwrap();
+        tween
+            .tween_callback(&remove_dots)
+            .unwrap()
+            .set_delay(0.2)
+            .unwrap();
+        tween
+            .tween_callback(&remove_dots)
+            .unwrap()
+            .set_delay(0.1)
+            .unwrap();
+        tween
+            .tween_callback(&remove_dots)
+            .unwrap()
+            .set_delay(0.005)
+            .unwrap();
         self.status_tween = Some(tween);
     }
 
     #[func]
     fn on_reloaded(&mut self) {
-        let Some(eq_comp) = self.eq_component.as_mut().map(|c| unsafe { &mut **c }) else {return;};
+        let Some(eq_comp) = self.eq_component.as_mut().map(|c| unsafe { &mut **c }) else {
+            return;
+        };
         self.update_ammo_count(eq_comp);
     }
 
     #[func]
     fn on_shoot(&mut self) {
-        let Some(eq_comp) = self.eq_component.as_mut().map(|c| unsafe { &mut **c }) else {return;};
+        let Some(eq_comp) = self.eq_component.as_mut().map(|c| unsafe { &mut **c }) else {
+            return;
+        };
         self.update_ammo_count_internal_only(eq_comp);
     }
 
     #[func]
-    fn on_ammo_changed(&mut self, _new_ammo: Gd<SpreadGunAmmo>) {
-
-    }
+    fn on_ammo_changed(&mut self, _new_ammo: Gd<SpreadGunAmmo>) {}
 }

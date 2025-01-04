@@ -1,6 +1,5 @@
+use godot::classes::KinematicCollision3D;
 use godot::prelude::*;
-use godot::classes::{KinematicCollision3D};
-
 
 #[derive(Debug)]
 pub struct PlatformData {

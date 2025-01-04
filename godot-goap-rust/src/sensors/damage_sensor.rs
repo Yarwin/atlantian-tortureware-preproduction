@@ -1,5 +1,5 @@
 use crate::ai::ai_stimulus::AIStimulusType;
-use crate::sensors::sensor_types::{ThinkerProcessArgs, SensorEvent};
+use crate::sensors::sensor_types::{SensorEvent, ThinkerProcessArgs};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

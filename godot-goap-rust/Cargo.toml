@@ -13,11 +13,10 @@ crate-type = ["cdylib"]
 bitflags = "2.5.0"
 enum_dispatch = "0.3.13"
 godot = { git = "https://github.com/godot-rust/gdext", features = ["register-docs", "serde", "experimental-threads", "experimental-godot-api",  "api-custom", "custom-godot"], branch = "master" }
-pathfinding = "4.2.1"
+pathfinding = "4.13.0"
 rayon = "1.10.0"
 ron = "0.8"
 serde = { version = "^1.0", features = ["derive"] }
-static_enum_dispatch = { path= "static_enum_dispatch"}
 strum = "0.26.2"
 strum_macros = "0.26.4"
 rand = "0.9.0-alpha.2"

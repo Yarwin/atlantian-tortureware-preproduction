@@ -1,9 +1,9 @@
-use std::collections::HashSet;
-use std::fmt;
-use std::fmt::Formatter;
 use crate::godot_api::item_object::Item;
 use crate::inventory::grid::{Grid, InventoryResult};
 use godot::prelude::*;
+use std::collections::HashSet;
+use std::fmt;
+use std::fmt::Formatter;
 
 pub enum InventoryEntityResult {
     FreeSpace(Vec<usize>, Gd<Item>),
@@ -16,16 +16,14 @@ pub enum InventoryEntityResult {
 impl InventoryEntityResult {
     pub fn item(self) -> Gd<Item> {
         match self {
-            InventoryEntityResult::SpaceTaken(_, item) |
-            InventoryEntityResult::NoSpaceForItem(item) |
-            InventoryEntityResult::WrongItemType(item) |
-            InventoryEntityResult::FreeSpace(_, item)
-            => item,
-            _ => panic!("given item no longer exists!")
+            InventoryEntityResult::SpaceTaken(_, item)
+            | InventoryEntityResult::NoSpaceForItem(item)
+            | InventoryEntityResult::WrongItemType(item)
+            | InventoryEntityResult::FreeSpace(_, item) => item,
+            _ => panic!("given item no longer exists!"),
         }
     }
 }
-
 
 /// A struct that represents a single inventory
 #[derive(Debug)]
@@ -72,24 +70,39 @@ impl InventoryEntity {
     }
 
     pub fn check_at(&self, item: Gd<Item>, position_idx: usize) -> InventoryEntityResult {
-        let result = self.grid.check_at(position_idx, item.bind().inventory.as_ref().unwrap().inventory_data.bind().get_size_force(), Some(item.bind().id));
+        let result = self.grid.check_at(
+            position_idx,
+            item.bind()
+                .inventory
+                .as_ref()
+                .unwrap()
+                .inventory_data
+                .bind()
+                .get_size_force(),
+            Some(item.bind().id),
+        );
         match result {
-            InventoryResult::Free(free) => {InventoryEntityResult::FreeSpace(free, item)}
-            InventoryResult::OutsideRange => {InventoryEntityResult::NoSpaceForItem(item)}
-            InventoryResult::Taken(by) => {InventoryEntityResult::SpaceTaken(by, item)}
+            InventoryResult::Free(free) => InventoryEntityResult::FreeSpace(free, item),
+            InventoryResult::OutsideRange => InventoryEntityResult::NoSpaceForItem(item),
+            InventoryResult::Taken(by) => InventoryEntityResult::SpaceTaken(by, item),
             #[allow(unreachable_code)]
             _ => !unreachable!(),
         }
     }
 
-    pub fn insert_at_first_free_space(&mut self, mut item: Gd<Item>) -> Result<Gd<Item>, InventoryEntityResult> {
+    pub fn insert_at_first_free_space(
+        &mut self,
+        mut item: Gd<Item>,
+    ) -> Result<Gd<Item>, InventoryEntityResult> {
         let mut item_bind = item.bind_mut();
         let item_id = item_bind.id;
         let Some(inventory_component) = item_bind.inventory.as_mut() else {
             drop(item_bind);
-            return Err(InventoryEntityResult::WrongItemType(item))
+            return Err(InventoryEntityResult::WrongItemType(item));
         };
-        let space_check = self.grid.get_first_free_space(inventory_component.inventory_data.bind_mut().get_size());
+        let space_check = self
+            .grid
+            .get_first_free_space(inventory_component.inventory_data.bind_mut().get_size());
         match space_check {
             InventoryResult::Free(ids) => {
                 drop(item_bind);
@@ -101,7 +114,7 @@ impl InventoryEntity {
                 drop(item_bind);
                 Err(InventoryEntityResult::NoSpaceForItem(item))
             }
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
@@ -109,46 +122,51 @@ impl InventoryEntity {
         self.grid.array[at]
     }
 
-
     /// tries to insert item at given index.
-    pub fn try_insert_item_at(&mut self, mut item: Gd<Item>, at: usize) -> Result<Gd<Item>, InventoryEntityResult> {
+    pub fn try_insert_item_at(
+        &mut self,
+        mut item: Gd<Item>,
+        at: usize,
+    ) -> Result<Gd<Item>, InventoryEntityResult> {
         let mut item_bind = item.bind_mut();
         let item_id = item_bind.id;
         let Some(inventory_component) = item_bind.inventory.as_mut() else {
             std::mem::drop(item_bind);
-            return Err(InventoryEntityResult::WrongItemType(item))
+            return Err(InventoryEntityResult::WrongItemType(item));
         };
         let currently_occupied_space: Vec<usize> = self
             .grid
             .array
             .iter()
             .enumerate()
-            .filter_map(|(i, id)|
-                {
-                    let mut result = None;
-                    if id.map(|s_id| s_id == item_id).unwrap_or(false) {
-                        result = Some(i);
-                    }
-                    result
+            .filter_map(|(i, id)| {
+                let mut result = None;
+                if id.map(|s_id| s_id == item_id).unwrap_or(false) {
+                    result = Some(i);
                 }
-            ).collect();
+                result
+            })
+            .collect();
         let result = self.grid.insert_item_at(
             item_id,
             at,
-            inventory_component.inventory_data.bind_mut().get_size()
+            inventory_component.inventory_data.bind_mut().get_size(),
         );
         std::mem::drop(item_bind);
 
         match result {
             InventoryResult::Inserted(at) => {
-                let shared = currently_occupied_space.into_iter().filter(|id| !at.contains(id)).collect::<Vec<usize>>();
+                let shared = currently_occupied_space
+                    .into_iter()
+                    .filter(|id| !at.contains(id))
+                    .collect::<Vec<usize>>();
                 self.grid.clear(&shared);
                 item.bind_mut().inventory.as_mut().unwrap().location = self.index_to_coord(at[0]);
                 Ok(item)
-            },
+            }
             InventoryResult::OutsideRange => Err(InventoryEntityResult::NoSpaceForItem(item)),
-            InventoryResult::Taken(ids) => {Err(InventoryEntityResult::SpaceTaken(ids, item))}
-            _ => unreachable!()
+            InventoryResult::Taken(ids) => Err(InventoryEntityResult::SpaceTaken(ids, item)),
+            _ => unreachable!(),
         }
     }
 }

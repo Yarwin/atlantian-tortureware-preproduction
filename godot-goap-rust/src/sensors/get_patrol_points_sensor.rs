@@ -1,8 +1,8 @@
 use crate::ai::working_memory::{FactQuery, FactQueryCheck, Node, WMNodeType, WMProperty};
 use crate::ai_nodes::ai_node::AINode;
 use crate::ai_nodes::godot_ai_node::AINodeType;
-use crate::sensors::sensor_types::ThinkerProcessArgs;
 use crate::sensors::sensor_types::SensorPolling;
+use crate::sensors::sensor_types::ThinkerProcessArgs;
 use godot::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -69,7 +69,7 @@ impl SensorPolling for PatrolPointSensor {
         self.last_update_delta += delta;
         // bail if we have some target
         if args.blackboard.target.as_ref().is_some() {
-            return false
+            return false;
         }
         if self.last_update_delta < self.update_every {
             return false;
@@ -78,9 +78,7 @@ impl SensorPolling for PatrolPointSensor {
         if args.polls.get_ainodes().is_none() {
             return false;
         }
-        let fact_query = FactQuery::with_check(FactQueryCheck::Node(
-            WMNodeType::Patrol,
-        ));
+        let fact_query = FactQuery::with_check(FactQueryCheck::Node(WMNodeType::Patrol));
         let is_patrol_point_already_known = args.working_memory.find_fact(fact_query).is_some();
         if is_patrol_point_already_known {
             return false;

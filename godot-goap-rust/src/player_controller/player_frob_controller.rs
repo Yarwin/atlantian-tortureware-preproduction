@@ -1,22 +1,21 @@
-use std::ops::{Index, IndexMut};
-use std::time::SystemTime;
-use godot::classes::{CollisionObject3D, InputEvent, InputEventKey, RigidBody3D, ShapeCast3D};
-use godot::prelude::*;
 use crate::act_react::act_react_resource::ActReactResource;
 use crate::equipment::equip_component::EquipmentComponent;
-use crate::godot_api::CONNECT_DEFERRED;
-use crate::godot_api::gamesys::{GameSys};
+use crate::godot_api::gamesys::GameSys;
 use crate::godot_api::godot_inventory::InventoryAgent;
 use crate::godot_api::item_object::Item;
+use crate::godot_api::CONNECT_DEFERRED;
 use crate::godot_api_reacts::fly::FlyGameEffect;
 use crate::player_controller::grab_node::GrabNode;
 use crate::player_controller::player_frob_state_machine::{DefaultState, PlayerEvent, PlayerState};
+use godot::classes::{CollisionObject3D, InputEvent, InputEventKey, RigidBody3D, ShapeCast3D};
+use godot::prelude::*;
+use std::ops::{Index, IndexMut};
+use std::time::SystemTime;
 
 #[derive(Default, Debug)]
 pub struct EquippedItems {
-    items: [Option<Gd<Item>>; 10]
+    items: [Option<Gd<Item>>; 10],
 }
-
 
 impl Index<u32> for EquippedItems {
     type Output = Option<Gd<Item>>;
@@ -37,6 +36,8 @@ impl GodotConvert for EquippedItems {
 }
 
 impl ToGodot for EquippedItems {
+    type ToVia<'v> = Self::Via;
+
     fn to_godot(&self) -> Self::Via {
         let mut dict = Dictionary::new();
         for (i, item) in self.items.iter().enumerate() {
@@ -50,13 +51,15 @@ impl FromGodot for EquippedItems {
     fn try_from_godot(via: Self::Via) -> Result<Self, ConvertError> {
         let mut equipped_items = Self::default();
         // todo – handle convert errors
-        for (i, v) in via.iter_shared().map(|(k, v)| (k.to::<u32>() as usize, v.to::<Option<Gd<Item>>>())) {
+        for (i, v) in via
+            .iter_shared()
+            .map(|(k, v)| (k.to::<u32>() as usize, v.to::<Option<Gd<Item>>>()))
+        {
             equipped_items.items[i] = v;
         }
         Ok(equipped_items)
     }
 }
-
 
 /// A node responsible for managing the player state and iteracting with the gameworld.
 #[derive(GodotClass)]
@@ -80,19 +83,18 @@ pub struct PlayerController {
     pub(crate) equipped_items: EquippedItems,
     pub(crate) active_item: Option<Gd<Item>>,
     pub(crate) equipment_component: Option<EquipmentComponent>,
-    #[init(default = SystemTime::now() )]
+    #[init(val = SystemTime::now() )]
     pub(crate) last_shapecast_update: SystemTime,
-    #[init(default = 0.25 )]
+    #[init(val = 0.25)]
     #[export]
     shapecast_update_time: f64,
-    #[init(default = 0.5 )]
+    #[init(val = 0.5)]
     #[export]
     pub(crate) default_to_frob_time: f64,
     state: Option<Box<dyn PlayerState>>,
     pub is_frobbing: bool,
-    base: Base<Node>
+    base: Base<Node>,
 }
-
 
 impl PlayerController {
     pub(crate) fn get_inventories_ids(&mut self) -> Array<u32> {
@@ -105,10 +107,9 @@ impl PlayerController {
             }
             self.inventories_ids = Some(new_array.clone());
             new_array
-        }
+        };
     }
 }
-
 
 #[godot_api]
 impl INode for PlayerController {
@@ -118,14 +119,15 @@ impl INode for PlayerController {
             self.state = Some(state.handle_event(self, PlayerEvent::FrobEvent));
         }
 
-        if Input::singleton().is_action_just_pressed("frob".into()) {
+        if Input::singleton().is_action_just_pressed("frob") {
             let state = self.state.take().unwrap_or(DefaultState::new_boxed());
             self.state = Some(state.handle_event(self, PlayerEvent::FrobEvent));
-        } else if Input::singleton().is_action_just_released("frob".into()) {
+        } else if Input::singleton().is_action_just_released("frob") {
             let state = self.state.take().unwrap_or(DefaultState::new_boxed());
             self.state = Some(state.handle_event(self, PlayerEvent::FrobStopEvent))
         }
-        if self.last_shapecast_update.elapsed().unwrap().as_secs_f64() > self.shapecast_update_time {
+        if self.last_shapecast_update.elapsed().unwrap().as_secs_f64() > self.shapecast_update_time
+        {
             self.last_shapecast_update = SystemTime::now();
             let state = self.state.take().unwrap_or(DefaultState::new_boxed());
             self.state = Some(state.handle_event(self, PlayerEvent::ShapeCastUpdateEvent));
@@ -134,15 +136,22 @@ impl INode for PlayerController {
 
     fn ready(&mut self) {
         let on_new_item_put_into_slot = self.base().callable("on_new_item_put_into_slot");
-        GameSys::singleton().connect("new_item_put_into_slot".into(), on_new_item_put_into_slot);
+        GameSys::singleton().connect("new_item_put_into_slot", &on_new_item_put_into_slot);
         let on_item_removed_from_slot = self.base().callable("on_item_removed_from_slot");
-        GameSys::singleton().connect("item_removed_from_slot".into(), on_item_removed_from_slot);
+        GameSys::singleton().connect("item_removed_from_slot", &on_item_removed_from_slot);
         let on_item_grabbed = self.base().callable("on_item_grabbed");
-        self.grab_node.connect("object_grabbed".into(), on_item_grabbed);
+        self.grab_node.connect("object_grabbed", &on_item_grabbed);
         let on_grabbed_released = self.base().callable("on_grabbed_released");
-        self.grab_node.connect_ex("object_released".into(), on_grabbed_released).flags(CONNECT_DEFERRED).done();
-        if let Some(parent) = self.base().get_parent().map(|p| p.cast::<CollisionObject3D>()) {
-            self.interface_shape_cast.add_exception(parent);
+        self.grab_node
+            .connect_ex("object_released", &on_grabbed_released)
+            .flags(CONNECT_DEFERRED)
+            .done();
+        if let Some(parent) = self
+            .base()
+            .get_parent()
+            .map(|p| p.cast::<CollisionObject3D>())
+        {
+            self.interface_shape_cast.add_exception(&parent);
         }
         // handle load/save
         if self.active_item.is_none() {
@@ -152,10 +161,10 @@ impl INode for PlayerController {
 
     fn unhandled_input(&mut self, event: Gd<InputEvent>) {
         // is action just pressed?
-        if event.is_pressed() && !event.is_echo() && event.is_action("activate".into()) {
+        if event.is_pressed() && !event.is_echo() && event.is_action("activate") {
             let state = self.state.take().unwrap_or(DefaultState::new_boxed());
             self.state = Some(state.handle_event(self, PlayerEvent::ActivateEvent));
-        } else if !event.is_pressed() && !event.is_echo() && event.is_action("activate".into()) {
+        } else if !event.is_pressed() && !event.is_echo() && event.is_action("activate") {
             let state = self.state.take().unwrap_or(DefaultState::new_boxed());
             self.state = Some(state.handle_event(self, PlayerEvent::DeactivateEvent));
         }
@@ -167,8 +176,8 @@ impl INode for PlayerController {
         }
         if let Ok(e) = event.try_cast::<InputEventKey>() {
             for i in 0..6 {
-                let action_name = format!("slot_{}", i+1);
-                if e.is_action(StringName::from(action_name)) {
+                let action_name = format!("slot_{}", i + 1);
+                if e.is_action(&action_name) {
                     let state = self.state.take().unwrap_or(DefaultState::new_boxed());
                     self.state = Some(state.handle_event(self, PlayerEvent::SlotSelected(i)));
                 }
@@ -176,7 +185,6 @@ impl INode for PlayerController {
         }
     }
 }
-
 
 #[godot_api]
 impl PlayerController {
@@ -221,10 +229,13 @@ impl PlayerController {
                 .iter()
                 .enumerate()
                 .filter_map(|(index, slotted_item)| {
-                    if slotted_item.as_ref().map(|i| *i ==item).unwrap_or(false) {
+                    if slotted_item.as_ref().map(|i| *i == item).unwrap_or(false) {
                         Some(index)
-                    } else { None }
-                }).next();
+                    } else {
+                        None
+                    }
+                })
+                .next();
             if let Some(index) = is_slotted_index {
                 this.bind_mut().equipped_items.items[index] = None;
             }
@@ -232,13 +243,20 @@ impl PlayerController {
             removed_item
         };
         if let Some(removed_item) = removed_item {
-            GameSys::singleton().emit_signal("item_removed_from_slot".into(), &[slot_idx.to_variant(), removed_item.to_variant()]);
+            GameSys::singleton().emit_signal(
+                "item_removed_from_slot",
+                &[slot_idx.to_variant(), removed_item.to_variant()],
+            );
         }
     }
 
     #[func(gd_self)]
     fn on_item_removed_from_slot(mut this: Gd<Self>, slot: u32, item: Gd<Item>) {
-        if this.bind_mut().equipped_items[slot].as_ref().map(|i| *i == item).unwrap_or(false) {
+        if this.bind_mut().equipped_items[slot]
+            .as_ref()
+            .map(|i| *i == item)
+            .unwrap_or(false)
+        {
             this.bind_mut().equipped_items[slot] = None;
         }
     }

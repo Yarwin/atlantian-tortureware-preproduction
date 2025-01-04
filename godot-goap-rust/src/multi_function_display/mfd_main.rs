@@ -1,8 +1,8 @@
-use godot::classes::{Control, IControl};
-use godot::prelude::*;
 use crate::equipment::equip_component::{Equipment, EquipmentComponent};
 use crate::equipment::gun_ui::GunDisplay;
 use crate::godot_api::gamesys::GameSys;
+use godot::classes::{Control, IControl};
+use godot::prelude::*;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -14,14 +14,12 @@ pub enum DisplayType {
     EnergyGunDisplay,
 }
 
-
-
 #[derive(GodotClass)]
 #[class(init, base=Control)]
 pub struct MultiFunctionDisplay {
     #[init(node = "ActualDisplayContainer/GunDisplay/GunUiDisplay")]
     spreadgun_ui_display: OnReady<Gd<GunDisplay>>,
-    base: Base<Control>
+    base: Base<Control>,
 }
 
 impl MultiFunctionDisplay {
@@ -38,9 +36,9 @@ impl MultiFunctionDisplay {
 impl IControl for MultiFunctionDisplay {
     fn ready(&mut self) {
         let on_new_ui_item_equipped = self.base().callable("on_new_ui_item_equipped");
-        GameSys::singleton().connect("new_ui_item_equipped".into(), on_new_ui_item_equipped);
+        GameSys::singleton().connect("new_ui_item_equipped", &on_new_ui_item_equipped);
         let on_ui_item_taken_off = self.base().callable("on_ui_item_taken_off");
-        GameSys::singleton().connect("ui_item_taken_off".into(), on_ui_item_taken_off);
+        GameSys::singleton().connect("ui_item_taken_off", &on_ui_item_taken_off);
     }
 }
 
@@ -57,7 +55,7 @@ impl MultiFunctionDisplay {
     fn hide_and_disconnect_displays(&mut self, display_type_to_keep: DisplayType) {
         for display in DisplayType::iter() {
             if display == display_type_to_keep {
-                continue
+                continue;
             }
             if let Some(mut control) = self.get_display_control(display) {
                 control.hide();

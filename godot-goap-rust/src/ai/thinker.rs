@@ -2,6 +2,7 @@ use crate::ai::blackboard::Blackboard;
 use crate::ai::working_memory::WorkingMemory;
 use crate::ai::world_state::WorldState;
 use crate::animations::animation_data::AnimationsData;
+use crate::goap_actions::action_component::ActionComponent;
 use crate::goap_goals::goal_component::GoalComponent;
 use crate::godot_api::godot_thinker::GodotThinker;
 use crate::sensors::sensor_types::{EventSensor, PollingSensor};
@@ -11,7 +12,6 @@ use crate::thinker_states::types::ThinkerState;
 use godot::obj::InstanceId;
 use godot::prelude::*;
 use std::sync::{Arc, Mutex};
-use crate::goap_actions::action_component::ActionComponent;
 
 #[derive(Default, Debug)]
 pub struct Thinker {

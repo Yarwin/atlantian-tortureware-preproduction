@@ -1,5 +1,5 @@
-use godot::prelude::*;
 use crate::act_react::stimulis::Stimuli;
+use godot::prelude::*;
 
 #[derive(GodotClass, Debug)]
 #[class(init, base=Resource)]
@@ -9,7 +9,7 @@ pub struct ActCombine {
     #[export]
     pub combinator: StringName,
     #[var]
-    #[init(default = Stimuli::Combine)]
+    #[init(val = Stimuli::Combine)]
     stim_type: Stimuli,
 }
 

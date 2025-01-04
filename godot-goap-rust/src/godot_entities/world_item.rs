@@ -1,10 +1,9 @@
-use godot::classes::{IRigidBody3D, RigidBody3D};
-use godot::prelude::*;
 use crate::godot_api::gamesys::GameSystem;
 use crate::godot_api::godot_inventory::ItemToSpawn;
 use crate::godot_api::inventory_manager::InventoryManager;
-use crate::godot_api::item_object::{Item};
-
+use crate::godot_api::item_object::Item;
+use godot::classes::{IRigidBody3D, RigidBody3D};
+use godot::prelude::*;
 
 /// a representation of given item in 3D space
 #[derive(GodotClass, Debug)]
@@ -14,20 +13,33 @@ pub struct WorldItem {
     pub item_to_spawn: Option<Gd<ItemToSpawn>>,
     #[var]
     pub item: Option<Gd<Item>>,
-    base: Base<RigidBody3D>
+    base: Base<RigidBody3D>,
 }
 
 #[godot_api]
 impl IRigidBody3D for WorldItem {
     fn ready(&mut self) {
         if self.item.is_none() {
-            self.item = Some(InventoryManager::singleton().bind_mut().create_item(self.item_to_spawn.clone().unwrap()));
+            self.item = Some(
+                InventoryManager::singleton()
+                    .bind_mut()
+                    .create_item(self.item_to_spawn.clone().unwrap()),
+            );
         }
         let callable = self.base().callable("on_item_removed");
-        self.item.as_mut().unwrap().connect("item_deleted".into(), callable.clone());
+        self.item
+            .as_mut()
+            .unwrap()
+            .connect("item_deleted", &callable);
         let callable = self.base().callable("on_item_picked_up");
-        self.item.as_mut().unwrap().connect("inventory_switched".into(), callable.clone());
-        self.item.as_mut().unwrap().connect("item_equipped".into(), callable);
+        self.item
+            .as_mut()
+            .unwrap()
+            .connect("inventory_switched", &callable);
+        self.item
+            .as_mut()
+            .unwrap()
+            .connect("item_equipped", &callable);
     }
 }
 
@@ -35,7 +47,9 @@ impl IRigidBody3D for WorldItem {
 impl WorldItem {
     #[func]
     fn get_name_display(&self) -> GString {
-        let Some(item) = self.item.as_ref() else {return GString::default()};
+        let Some(item) = self.item.as_ref() else {
+            return GString::default();
+        };
         let display_text = item.bind().get_item_display();
         display_text
     }

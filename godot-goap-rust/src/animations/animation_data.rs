@@ -1,11 +1,22 @@
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use std::ops::Index;
 use crate::thinker_states::animate::AnimationMode;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::ops::Index;
 use strum_macros::{EnumIter, EnumString, IntoStaticStr};
 
-#[derive(IntoStaticStr)]
-#[derive(Debug, Clone, Copy, Hash, EnumIter, EnumString, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    IntoStaticStr,
+    Debug,
+    Clone,
+    Copy,
+    Hash,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+)]
 pub enum AnimationType {
     Attack = 0,
     AttackExhaustion,
@@ -19,9 +30,8 @@ pub enum AnimationType {
     Patrol,
     Surprised,
     Walk,
-    Max
+    Max,
 }
-
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AnimationProps {
@@ -32,7 +42,7 @@ pub struct AnimationProps {
 
 #[derive(Debug, Default, Clone)]
 pub struct AnimationsData {
-    pub(crate) fields: [Option<AnimationProps>; AnimationType::Max as usize]
+    pub(crate) fields: [Option<AnimationProps>; AnimationType::Max as usize],
 }
 
 impl From<HashMap<AnimationType, AnimationProps>> for AnimationsData {
@@ -49,7 +59,7 @@ impl Index<AnimationType> for AnimationsData {
     type Output = AnimationProps;
 
     fn index(&self, index: AnimationType) -> &Self::Output {
-        return self.index(&index)
+        return self.index(&index);
     }
 }
 
@@ -57,6 +67,6 @@ impl Index<&AnimationType> for AnimationsData {
     type Output = AnimationProps;
 
     fn index(&self, index: &AnimationType) -> &Self::Output {
-        return self.fields[*index as usize].as_ref().unwrap()
+        return self.fields[*index as usize].as_ref().unwrap();
     }
 }

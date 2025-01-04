@@ -1,7 +1,7 @@
-use std::sync::atomic;
 use crate::ai_nodes::godot_ai_node::{AINodeType, GodotAINode};
-use godot::prelude::*;
 use atomic::{AtomicU32, Ordering};
+use godot::prelude::*;
+use std::sync::atomic;
 
 /// an abstraction that allows level designer to specify various points of interest for an AI
 #[derive(Debug, Default)]
@@ -55,7 +55,7 @@ impl AINode {
             AINode::Patrol { base, .. } => {
                 let val = base.status.load(Ordering::Acquire);
                 !((val != not_by) || (val == 0))
-                },
+            }
             _ => todo!(),
         }
     }

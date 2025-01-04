@@ -1,12 +1,12 @@
-use std::time::SystemTime;
-use crate::ai::working_memory::{FactQuery, FactQueryCheck, Knowledge, AIStimuli, WMProperty};
+use crate::ai::working_memory::Desire::Surprise;
+use crate::ai::working_memory::{AIStimuli, FactQuery, FactQueryCheck, Knowledge, WMProperty};
 use crate::godot_api::godot_visible_area_3d::GodotVisibilityArea3D;
-use crate::sensors::sensor_types::{ThinkerProcessArgs, SensorPolling};
+use crate::sensors::sensor_types::{SensorPolling, ThinkerProcessArgs};
+use crate::targeting::targeting_systems::TargetMask;
 use godot::classes::{PhysicsRayQueryParameters3D, PhysicsServer3D};
 use godot::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::ai::working_memory::Desire::Surprise;
-use crate::targeting::targeting_systems::TargetMask;
+use std::time::SystemTime;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VisionCharacterSensor {
@@ -59,7 +59,7 @@ impl SensorPolling for VisionCharacterSensor {
             ray_params.set_from(args.head_position);
             ray_params.set_collide_with_areas(true);
             ray_params.set_collide_with_bodies(true);
-            ray_params.set_exclude(array![args.character_rid]);
+            ray_params.set_exclude(&array![args.character_rid]);
             let space_rid = PhysicsServer3D::singleton().body_get_space(args.character_rid);
             let Some(mut direct_space) =
                 PhysicsServer3D::singleton().space_get_direct_state(space_rid)
@@ -73,10 +73,13 @@ impl SensorPolling for VisionCharacterSensor {
 
             for raycast_target in raycast_directions {
                 ray_params.set_to(raycast_target);
-                let intersection_result = direct_space.intersect_ray(ray_params.clone());
+                let intersection_result = direct_space.intersect_ray(&ray_params);
                 let Some(intersection_point) = intersection_result
                     .get("position")
-                    .map(|v| v.to::<Vector3>()) else {continue};
+                    .map(|v| v.to::<Vector3>())
+                else {
+                    continue;
+                };
 
                 is_target_visible = intersection_result
                     .get("rid")
@@ -103,12 +106,9 @@ impl SensorPolling for VisionCharacterSensor {
             let detection_strength = ((16.0 - distance_to_target.min(16.0)) / 16.0).min(1.);
             let mut previous_stimulation: f32 = 0.0;
             let current_stimulation: f32;
-            let fact_query =
-                FactQuery::with_check(
-                    FactQueryCheck::Match(
-                        WMProperty::AIStimuli(AIStimuli::Character(character_id.unwrap(), None))
-                    )
-                );
+            let fact_query = FactQuery::with_check(FactQueryCheck::Match(WMProperty::AIStimuli(
+                AIStimuli::Character(character_id.unwrap(), None),
+            )));
             // update fact
             if let Some(fact) = args.working_memory.find_fact_mut(fact_query) {
                 fact.update_time = SystemTime::now();
@@ -130,41 +130,54 @@ impl SensorPolling for VisionCharacterSensor {
 
             // new target spotted
             if current_stimulation >= 1.0 && previous_stimulation < 1.0 {
-                let fact_query =
-                    FactQuery::with_check(
-                        FactQueryCheck::Match(WMProperty::Knowledge(Knowledge::Character(character_id.unwrap(), None))));
+                let fact_query = FactQuery::with_check(FactQueryCheck::Match(
+                    WMProperty::Knowledge(Knowledge::Character(character_id.unwrap(), None)),
+                ));
                 if let Some(fact) = args.working_memory.find_fact_mut(fact_query) {
                     // update
-                    let WMProperty::Knowledge(Knowledge::Character(_i, pos)) = &mut fact.f_type else { return false };
+                    let WMProperty::Knowledge(Knowledge::Character(_i, pos)) = &mut fact.f_type
+                    else {
+                        return false;
+                    };
                     *pos = see_point;
                     fact.confidence = distance_to_target;
                     fact.update_time = SystemTime::now();
                 } else {
                     // new character spotted!!
                     args.working_memory.add_working_memory_fact(
-                        WMProperty::Knowledge(Knowledge::Character(character_id.unwrap(), see_point)),
+                        WMProperty::Knowledge(Knowledge::Character(
+                            character_id.unwrap(),
+                            see_point,
+                        )),
                         distance_to_target,
-                        240.0
+                        240.0,
                     );
                     // add desire to be surprised upon spotting new enemy
                     args.working_memory.add_working_memory_fact(
                         WMProperty::Desire(Surprise),
                         1.0,
-                        15.0
+                        15.0,
                     );
                 }
                 // force retargeting
                 args.blackboard.invalidate_target = true;
-                args.blackboard.valid_targets = args.blackboard.valid_targets.union(TargetMask::VisibleCharacter);
+                args.blackboard.valid_targets = args
+                    .blackboard
+                    .valid_targets
+                    .union(TargetMask::VisibleCharacter);
             } else if current_stimulation > 1.0 {
                 // update character knowledge with latest known position
-                let fact_query =
-                    FactQuery::with_check(
-                        FactQueryCheck::Match(WMProperty::Knowledge(Knowledge::Character(character_id.unwrap(), None))));
-                let Some(fact) = args.working_memory.find_fact_mut(fact_query) else {return false};
+                let fact_query = FactQuery::with_check(FactQueryCheck::Match(
+                    WMProperty::Knowledge(Knowledge::Character(character_id.unwrap(), None)),
+                ));
+                let Some(fact) = args.working_memory.find_fact_mut(fact_query) else {
+                    return false;
+                };
                 fact.confidence = distance_to_target;
                 fact.update_time = SystemTime::now();
-                let WMProperty::Knowledge(Knowledge::Character(_i, pos)) = &mut fact.f_type else { return false };
+                let WMProperty::Knowledge(Knowledge::Character(_i, pos)) = &mut fact.f_type else {
+                    return false;
+                };
                 *pos = see_point;
             }
         }

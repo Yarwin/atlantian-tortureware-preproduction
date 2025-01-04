@@ -1,13 +1,13 @@
 pub mod basic_goal;
+mod chase_enemy_goal;
 mod dodge_goal;
+mod execute_attack_goal;
 pub mod goal_component;
 pub mod goal_types;
 mod kill_enemy_goal;
 mod patrol_goal;
-mod chase_enemy_goal;
 mod react_to_damage_goal;
 mod satisfy_desire_by_animation_goal;
-mod execute_attack_goal;
 
 // rust doesn't allow partial borrows in the Context of the struct – therefore we are creating the proper view using this macro.
 #[macro_export]

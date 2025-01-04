@@ -1,10 +1,10 @@
+use crate::ai::planner::PlanAction;
 use crate::ai::world_state::WorldState;
 use crate::animations::animation_data::AnimationType;
+use crate::goap_actions::action_types::ActionBehavior;
+use crate::goap_actions::action_types::{Action, ActionType, AgentActionPlanContext};
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
-use crate::ai::planner::PlanAction;
-use crate::goap_actions::action_types::{Action, ActionType, AgentActionPlanContext};
-use crate::goap_actions::action_types::ActionBehavior;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ActionComponent {
@@ -13,7 +13,7 @@ pub struct ActionComponent {
     pub preconditions: WorldState,
     pub effects: WorldState,
     pub animation: AnimationType,
-    pub action_type: Action
+    pub action_type: Action,
 }
 
 impl Hash for ActionComponent {
@@ -27,9 +27,10 @@ impl Eq for ActionComponent {}
 
 impl PartialEq for ActionComponent {
     fn eq(&self, other: &Self) -> bool {
-        let are_actions_the_same = ActionType::from(&self.action_type) == ActionType::from(&other.action_type);
+        let are_actions_the_same =
+            ActionType::from(&self.action_type) == ActionType::from(&other.action_type);
         if !are_actions_the_same {
-            return false
+            return false;
         }
 
         let are_preconditions_the_same = self
@@ -39,7 +40,7 @@ impl PartialEq for ActionComponent {
             && self.effects.count_state_differences(&other.effects) == 0;
 
         if !are_preconditions_the_same {
-            return false
+            return false;
         }
 
         true
@@ -51,12 +52,19 @@ impl PlanAction<AgentActionPlanContext<'_>> for ActionComponent {
         &self.preconditions
     }
 
-    fn check_action_procedural_preconditions(&self, action_arguments: &AgentActionPlanContext<'_>) -> bool {
-        self.action_type.check_procedural_preconditions(action_arguments)
+    fn check_action_procedural_preconditions(
+        &self,
+        action_arguments: &AgentActionPlanContext<'_>,
+    ) -> bool {
+        self.action_type
+            .check_procedural_preconditions(action_arguments)
     }
 
     #[allow(unused_variables)]
-    fn get_action_effects<'a, 'b: 'a>(&'a self, action_arguments: &'b AgentActionPlanContext<'_>) -> &'a WorldState {
+    fn get_action_effects<'a, 'b: 'a>(
+        &'a self,
+        action_arguments: &'b AgentActionPlanContext<'_>,
+    ) -> &'a WorldState {
         &self.effects
     }
 

@@ -1,23 +1,22 @@
-use std::collections::HashMap;
-use crate::goap_actions::action_component::ActionComponent;
 use crate::ai::blackboard::Blackboard;
 use crate::ai::working_memory::WorkingMemory;
 use crate::ai::world_state::WorldState;
-use crate::animations::animation_data::AnimationsData;
-use godot::builtin::Rid;
-use serde::{Deserialize, Serialize};
-use std::sync::{Arc, RwLock};
-use enum_dispatch::enum_dispatch;
-use strum_macros::EnumDiscriminants;
 use crate::ai_nodes::ai_node::AINode;
+use crate::animations::animation_data::AnimationsData;
+use crate::goap_actions::action_component::ActionComponent;
 use crate::goap_actions::aim_action::AimWeapon;
 use crate::goap_actions::animate_action::Animate;
-use crate::goap_actions::attack_ranged_action::RangedAttack;
 use crate::goap_actions::arm_weapon_action::ArmWeapon;
+use crate::goap_actions::attack_ranged_action::RangedAttack;
 use crate::goap_actions::goto_action::GoTo;
 use crate::goap_actions::patrol_action::Patrol;
 use crate::goap_actions::release_weapon_action::ReleaseWeapon;
-
+use enum_dispatch::enum_dispatch;
+use godot::builtin::Rid;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
+use strum_macros::EnumDiscriminants;
 
 #[derive(Debug)]
 pub struct AgentActionWorldContext<'a> {
@@ -39,8 +38,7 @@ pub struct AgentActionPlanContext<'a> {
 
 #[allow(clippy::derivable_impls, clippy::enum_variant_names)]
 #[enum_dispatch]
-#[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
-#[derive(EnumDiscriminants)]
+#[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq, EnumDiscriminants)]
 #[strum_discriminants(name(ActionType))]
 pub enum Action {
     GoTo,
@@ -51,7 +49,6 @@ pub enum Action {
     RangedAttack,
     ReleaseWeapon,
 }
-
 
 // #[allow(clippy::enum_variant_names)]
 // #[derive(Debug, Clone, ActionDispatchEnum, Serialize, Deserialize, Hash, PartialEq, Eq)]
@@ -122,7 +119,6 @@ pub enum Action {
 
 #[enum_dispatch(Action)]
 pub trait ActionBehavior {
-
     /// called when action is being activated
     fn execute_action(&self, inner: &ActionComponent, action_arguments: AgentActionWorldContext);
 
@@ -134,11 +130,17 @@ pub trait ActionBehavior {
 
     /// returns true if action can be interrupted
     #[allow(unused_variables)]
-    fn is_action_interruptible(&self, action_arguments: &AgentActionWorldContext) -> bool {true}
+    fn is_action_interruptible(&self, action_arguments: &AgentActionWorldContext) -> bool {
+        true
+    }
 
     #[allow(unused_variables)]
-    fn check_procedural_preconditions(&self, action_arguments: &AgentActionPlanContext) -> bool {true}
+    fn check_procedural_preconditions(&self, action_arguments: &AgentActionPlanContext) -> bool {
+        true
+    }
 
     #[allow(unused_variables)]
-    fn get_cost(&self, action_arguments: &AgentActionPlanContext) -> u32 {0}
+    fn get_cost(&self, action_arguments: &AgentActionPlanContext) -> u32 {
+        0
+    }
 }

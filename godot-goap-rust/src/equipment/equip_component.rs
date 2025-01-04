@@ -1,11 +1,10 @@
-use std::collections::HashMap;
-use godot::classes::Control;
-use godot::prelude::*;
-use godot::obj::Bounds;
-use godot::obj::bounds::DeclUser;
 use crate::godot_api::item_object::Item;
 use crate::multi_function_display::mfd_main::DisplayType;
-
+use godot::classes::Control;
+use godot::obj::bounds::DeclUser;
+use godot::obj::Bounds;
+use godot::prelude::*;
+use std::collections::HashMap;
 
 type EqDispatchSelf = fn(Gd<Node3D>, fn(&mut dyn Equipment));
 type EqDispatchItem = fn(Gd<Node3D>, Gd<Item>, fn(&mut dyn Equipment, Gd<Item>));
@@ -21,8 +20,8 @@ pub struct EqDispatch {
 
 impl EqDispatch {
     fn new<T>() -> Self
-        where
-            T: Inherits<Node3D> + GodotClass + Bounds<Declarer = DeclUser> + Equipment
+    where
+        T: Inherits<Node3D> + GodotClass + Bounds<Declarer = DeclUser> + Equipment,
     {
         Self {
             dispatch_self: |base, closure| {
@@ -44,11 +43,9 @@ impl EqDispatch {
     }
 }
 
-
 static mut EQUIPMENT_COMPONENT_REGISTRY: Option<HashMap<GString, EqDispatch>> = None;
 
 pub fn equipment_component_registry() -> &'static HashMap<GString, EqDispatch> {
-
     unsafe {
         if EQUIPMENT_COMPONENT_REGISTRY.is_none() {
             EQUIPMENT_COMPONENT_REGISTRY = Some(HashMap::new());
@@ -59,24 +56,27 @@ pub fn equipment_component_registry() -> &'static HashMap<GString, EqDispatch> {
 
 // todo – these abominations could be some kind of plugin/macro or whatever
 pub fn register_equipment_component<T>(name: GString)
-    where
-        T: Inherits<Node3D> + GodotClass + Bounds<Declarer = DeclUser> + Equipment
+where
+    T: Inherits<Node3D> + GodotClass + Bounds<Declarer = DeclUser> + Equipment,
 {
     unsafe {
         if EQUIPMENT_COMPONENT_REGISTRY.is_none() {
             EQUIPMENT_COMPONENT_REGISTRY = Some(HashMap::new());
         }
-        EQUIPMENT_COMPONENT_REGISTRY.as_mut().unwrap().entry(name).or_insert_with(
-            || EqDispatch::new::<T>()
-        );
+        EQUIPMENT_COMPONENT_REGISTRY
+            .as_mut()
+            .unwrap()
+            .entry(name)
+            .or_insert_with(|| EqDispatch::new::<T>());
     }
 }
 
 pub type ItemEquipmentComponentInit = fn(Gd<Resource>) -> Box<dyn ItemEquipmentComponent>;
-static mut ITEM_EQUIPMENT_COMPONENT_REGISTRY: Option<HashMap<GString, ItemEquipmentComponentInit>> = None;
+static mut ITEM_EQUIPMENT_COMPONENT_REGISTRY: Option<HashMap<GString, ItemEquipmentComponentInit>> =
+    None;
 
-pub fn item_equipment_component_registry() -> &'static HashMap<GString, ItemEquipmentComponentInit> {
-
+pub fn item_equipment_component_registry() -> &'static HashMap<GString, ItemEquipmentComponentInit>
+{
     unsafe {
         if ITEM_EQUIPMENT_COMPONENT_REGISTRY.is_none() {
             ITEM_EQUIPMENT_COMPONENT_REGISTRY = Some(HashMap::new());
@@ -86,22 +86,24 @@ pub fn item_equipment_component_registry() -> &'static HashMap<GString, ItemEqui
 }
 
 pub fn register_item_equipment_component<T>(name: GString)
-    where
-        T: Inherits<Resource> + GodotClass + Bounds<Declarer = DeclUser> + EquipmentComponentResource
+where
+    T: Inherits<Resource> + GodotClass + Bounds<Declarer = DeclUser> + EquipmentComponentResource,
 {
     unsafe {
         if ITEM_EQUIPMENT_COMPONENT_REGISTRY.is_none() {
             ITEM_EQUIPMENT_COMPONENT_REGISTRY = Some(HashMap::new());
         }
-        ITEM_EQUIPMENT_COMPONENT_REGISTRY.as_mut().unwrap().entry(name).or_insert_with(
-            || {
+        ITEM_EQUIPMENT_COMPONENT_REGISTRY
+            .as_mut()
+            .unwrap()
+            .entry(name)
+            .or_insert_with(|| {
                 |base| {
                     let mut instance = base.cast::<T>();
                     let guard: GdMut<T> = instance.bind_mut();
                     guard.init_component()
                 }
-            }
-        );
+            });
     }
 }
 
@@ -109,12 +111,16 @@ pub fn register_item_equipment_component<T>(name: GString)
 #[derive(Debug, Clone)]
 pub struct EquipmentComponent {
     pub base: Gd<Node3D>,
-    dispatch: *const EqDispatch
+    dispatch: *const EqDispatch,
 }
 
-impl GodotConvert for EquipmentComponent { type Via = Gd<Node3D>; }
+impl GodotConvert for EquipmentComponent {
+    type Via = Gd<Node3D>;
+}
 
 impl ToGodot for EquipmentComponent {
+    type ToVia<'v> = Self::Via;
+
     fn to_godot(&self) -> Self::Via {
         self.base.to_godot()
     }
@@ -140,40 +146,73 @@ impl EquipmentComponent {
 
         Self {
             base: base.clone(),
-            dispatch
+            dispatch,
         }
     }
 }
 
 impl Equipment for EquipmentComponent {
     fn initialize(&mut self, item: Gd<Item>) {
-        unsafe { ((*self.dispatch).dispatch_item)(self.base.clone(), item, |e: &mut dyn Equipment, item: Gd<Item>| { e.initialize(item) }) }
+        unsafe {
+            ((*self.dispatch).dispatch_item)(
+                self.base.clone(),
+                item,
+                |e: &mut dyn Equipment, item: Gd<Item>| e.initialize(item),
+            )
+        }
     }
 
     fn take_off(&mut self) {
-        unsafe { ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| { e.take_off() }) }
+        unsafe {
+            ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| {
+                e.take_off()
+            })
+        }
     }
     fn activate(&mut self) {
-        unsafe { ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| { e.activate() }) }
+        unsafe {
+            ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| {
+                e.activate()
+            })
+        }
     }
     fn deactivate(&mut self) {
-        unsafe { ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| { e.deactivate() }) }
+        unsafe {
+            ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| {
+                e.deactivate()
+            })
+        }
     }
     fn reload(&mut self) {
-        unsafe { ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| { e.reload() }) }
+        unsafe {
+            ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| e.reload())
+        }
     }
     fn point_down(&mut self) {
-        unsafe { ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| { e.point_down() }) }
+        unsafe {
+            ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| {
+                e.point_down()
+            })
+        }
     }
     fn point_up(&mut self) {
-        unsafe { ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| { e.point_up() }) }
+        unsafe {
+            ((*self.dispatch).dispatch_self)(self.base.clone(), |e: &mut dyn Equipment| {
+                e.point_up()
+            })
+        }
     }
 
     fn connect_component_to_ui(&mut self, ui: Gd<Control>) {
-        unsafe { ((*self.dispatch).dispatch_control)(self.base.clone(), ui, |e: &mut dyn Equipment, ui: Gd<Control>| { e.connect_component_to_ui(ui) }) }
+        unsafe {
+            ((*self.dispatch).dispatch_control)(
+                self.base.clone(),
+                ui,
+                |e: &mut dyn Equipment, ui: Gd<Control>| e.connect_component_to_ui(ui),
+            )
+        }
     }
 }
-
 
 pub trait EquipmentComponentResource {
     fn init_component(&self) -> Box<dyn ItemEquipmentComponent>;
@@ -187,7 +226,6 @@ pub trait ItemEquipmentComponent {
     /// initializes given packed scene and returns Node ready to be attached to the scene tree
     fn initialize_equipment_scene(&mut self) -> (EquipmentComponent, DisplayType);
 }
-
 
 pub trait Equipment {
     fn initialize(&mut self, item: Gd<Item>);

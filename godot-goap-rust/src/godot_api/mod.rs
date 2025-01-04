@@ -1,10 +1,10 @@
 pub(crate) mod ai_manager;
+pub mod gamesys;
+pub mod godot_inventory;
 pub(crate) mod godot_thinker;
 pub(crate) mod godot_visible_area_3d;
 pub mod inventory_manager;
 pub mod item_object;
-pub mod godot_inventory;
-pub mod gamesys;
 mod main_loop;
 
 #[allow(dead_code)]

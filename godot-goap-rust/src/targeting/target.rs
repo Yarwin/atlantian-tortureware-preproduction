@@ -1,7 +1,7 @@
+use godot::classes::Node3D;
 use godot::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumDiscriminants;
-use godot::classes::{Node3D};
 
 /// todo – use some generational id instead of instances ids
 
@@ -30,8 +30,8 @@ impl AITarget {
                 let obj: Gd<Node3D> = Gd::from_instance_id(*i);
                 Some(obj.get_global_position())
             }
-            AITarget::Disturbance(pos) | AITarget::Interest(pos) => {Some(*pos)}
-            AITarget::CombatOpportunity | AITarget::Object(_) | AITarget::SmartObject(_) => {None}
+            AITarget::Disturbance(pos) | AITarget::Interest(pos) => Some(*pos),
+            AITarget::CombatOpportunity | AITarget::Object(_) | AITarget::SmartObject(_) => None,
         }
     }
 }

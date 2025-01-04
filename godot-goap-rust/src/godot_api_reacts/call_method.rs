@@ -1,8 +1,7 @@
-use godot::classes::Resource;
-use godot::prelude::*;
 use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
 use crate::act_react::game_effect_builder::GameEffectInitializer;
-
+use godot::classes::Resource;
+use godot::prelude::*;
 
 #[derive(GodotClass, Debug)]
 #[class(init, base=Resource)]
@@ -13,7 +12,7 @@ pub struct CallMethodGameEffect {
     args: Array<Variant>,
     #[export]
     method_display: GString,
-    base: Base<Resource>
+    base: Base<Resource>,
 }
 
 #[godot_api]
@@ -28,12 +27,18 @@ impl CallMethodGameEffect {
 }
 
 impl GameEffectInitializer for CallMethodGameEffect {
-    fn build(&self, _act_context: &Dictionary, context: &Dictionary) -> Option<GameEffectProcessor> {
-        let Some(target) = context.get("reactor").map(|v| v.to::<Gd<Object>>()) else {panic!("tried to instantiate command without proper context!")};
+    fn build(
+        &self,
+        _act_context: &Dictionary,
+        context: &Dictionary,
+    ) -> Option<GameEffectProcessor> {
+        let Some(target) = context.get("reactor").map(|v| v.to::<Gd<Object>>()) else {
+            panic!("tried to instantiate command without proper context!")
+        };
         let effect = CallMethod {
             target: Some(target),
             args: self.args.clone(),
-            method: self.method_name.clone()
+            method: self.method_name.clone(),
         };
         let obj = Gd::from_object(effect);
         Some(GameEffectProcessor::new(obj))
@@ -49,10 +54,12 @@ pub struct CallMethod {
     method: StringName,
 }
 
-
 impl GameEffect for CallMethod {
     fn execute(&mut self) -> EffectResult {
-        self.target.as_mut().unwrap().callv(self.method.clone(), self.args.clone());
+        self.target
+            .as_mut()
+            .unwrap()
+            .callv(&self.method, &self.args);
         EffectResult::Free
     }
     fn revert(&mut self) -> EffectResult {

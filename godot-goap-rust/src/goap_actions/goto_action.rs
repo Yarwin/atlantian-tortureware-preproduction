@@ -1,16 +1,18 @@
 #![allow(warnings, unused)]
 
-use crate::goap_actions::action_component::ActionComponent;
-use crate::goap_actions::action_types::{ActionBehavior, AgentActionPlanContext, AgentActionWorldContext};
+use crate::ai::blackboard::NavigationTarget;
 use crate::ai::world_state::{WSProperty, WorldState, WorldStateProperty};
+use crate::animations::animation_data::AnimationType;
+use crate::goap_actions::action_component::ActionComponent;
+use crate::goap_actions::action_types::{
+    ActionBehavior, AgentActionPlanContext, AgentActionWorldContext,
+};
 use crate::targeting::target::AITarget;
 use crate::thinker_states::goto::{Destination, GotoState};
-use godot::classes::NavigationServer3D;
 use godot::classes::CharacterBody3D;
+use godot::classes::NavigationServer3D;
 use godot::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::ai::blackboard::NavigationTarget;
-use crate::animations::animation_data::AnimationType;
 
 #[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
 pub struct GoTo;
@@ -24,9 +26,9 @@ impl ActionBehavior for GoTo {
             .navigation_target
             .as_ref()
             .map(|t| get_destination(&t))
-            else {
-                panic!("no target")
-            };
+        else {
+            panic!("no target")
+        };
         let anim = &action_arguments.animations[AnimationType::Walk];
         let new_state = GotoState::new_boxed(anim.tree_name.clone(), target);
         action_arguments.blackboard.new_state = Some(new_state);
@@ -61,9 +63,9 @@ impl ActionBehavior for GoTo {
             .navigation_target
             .as_ref()
             .map(|t| get_destination(&t))
-            else {
-                return false;
-            };
+        else {
+            return false;
+        };
         let start_pos = action_arguments.blackboard.thinker_position;
         if let Destination::Position(target_pos) = target {
             let navpath: PackedVector3Array =
@@ -79,10 +81,8 @@ impl ActionBehavior for GoTo {
 
 fn get_destination(target: &NavigationTarget) -> Destination {
     match target {
-        NavigationTarget::PatrolPoint(ainode_id, pos) => {
-            Destination::Position(*pos)}
-        NavigationTarget::Character(instance_id) => {
-            Destination::Character(*instance_id) }
+        NavigationTarget::PatrolPoint(ainode_id, pos) => Destination::Position(*pos),
+        NavigationTarget::Character(instance_id) => Destination::Character(*instance_id),
     }
 }
 

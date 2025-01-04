@@ -1,8 +1,8 @@
 use crate::ai_nodes::ai_node::AINodeStatus;
 use crate::godot_api::ai_manager::GodotAIManager;
+use crate::godot_api::gamesys::GameSystem;
 use godot::classes::{Area3D, IArea3D, Marker3D};
 use godot::prelude::*;
-use crate::godot_api::gamesys::{GameSystem};
 
 #[derive(GodotConvert, Var, Export, Clone, Debug, Copy, Default, PartialEq, Eq)]
 #[godot(via = u32)]
@@ -19,7 +19,7 @@ pub enum AINodeType {
 #[class(init, base=Area3D, rename=AINode)]
 pub struct GodotAINode {
     #[export]
-    #[init(default = 0)]
+    #[init(val = 0)]
     pub ainode_id: u32,
     #[export]
     pub node_type: AINodeType,

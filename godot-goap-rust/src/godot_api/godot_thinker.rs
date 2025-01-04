@@ -1,21 +1,19 @@
-use crate::godot_api::ai_manager::GodotAIManager;
-use godot::classes::{
-    AnimationTree, Marker3D, NavigationAgent3D, Shape3D,
-};
-use godot::prelude::*;
 use crate::ai::working_memory::Event::AnimationCompleted;
 use crate::ai::working_memory::{AIStimuli, Desire, WMProperty};
 use crate::character_controler::character_controller_3d::CharacterController3D;
-use crate::godot_api::gamesys::{GameSystem};
+use crate::godot_api::ai_manager::GodotAIManager;
+use crate::godot_api::gamesys::GameSystem;
 use crate::receiver::damage_receptor_component::ReceivedDamage;
 use crate::utils::generate_id::ToCreate;
+use godot::classes::{AnimationTree, Marker3D, NavigationAgent3D, Shape3D};
+use godot::prelude::*;
 
 /// an interface to speak with AI manager
 #[derive(GodotClass)]
 #[class(init, base=Node3D, rename=Thinker)]
 pub struct GodotThinker {
     #[var]
-    #[init(default = true)]
+    #[init(val = true)]
     pub is_active: bool,
     /// thinker id, used for load/save
     #[export]
@@ -85,14 +83,16 @@ impl GodotThinker {
         let mut ai_manager = GodotAIManager::singleton();
         let to_create = ToCreate {
             id: this.bind().thinker_id,
-            instance: this.clone()
+            instance: this.clone(),
         };
         ai_manager.bind_mut().register_thinker(to_create);
     }
 
     #[func]
     fn get_target(&self) -> Variant {
-        if self.thinker_id == 0 {return Variant::nil();}
+        if self.thinker_id == 0 {
+            return Variant::nil();
+        }
         let ai_manager = GodotAIManager::singleton();
         let t = ai_manager.bind().get_thinker_target(self.thinker_id);
         t
@@ -100,36 +100,52 @@ impl GodotThinker {
 
     #[func]
     fn on_animation_finished(&self, animation_name: StringName) {
-        if self.thinker_id == 0 {return;}
+        if self.thinker_id == 0 {
+            return;
+        }
         let fact = WMProperty::Event(AnimationCompleted(animation_name.into()));
         let mut ai_manager = GodotAIManager::singleton();
-        ai_manager.bind_mut().add_new_wm_fact(self.thinker_id, fact, 1.0, 16.0);
+        ai_manager
+            .bind_mut()
+            .add_new_wm_fact(self.thinker_id, fact, 1.0, 16.0);
     }
 
     #[func]
     fn on_damage_received(&self, damage: ReceivedDamage) {
-        if self.thinker_id == 0 {return;}
+        if self.thinker_id == 0 {
+            return;
+        }
         let fact = WMProperty::AIStimuli(AIStimuli::Damage(damage));
         let mut ai_manager = GodotAIManager::singleton();
-        ai_manager.bind_mut().add_new_wm_fact(self.thinker_id, fact, 1.0, 30.0);
+        ai_manager
+            .bind_mut()
+            .add_new_wm_fact(self.thinker_id, fact, 1.0, 30.0);
         ai_manager.bind_mut().invalidate_plan(self.thinker_id);
     }
 
     #[func]
     fn on_pain_threshold_achieved(&self) {
-        if self.thinker_id == 0 {return;}
+        if self.thinker_id == 0 {
+            return;
+        }
         let fact = WMProperty::Desire(Desire::Stagger);
         let mut ai_manager = GodotAIManager::singleton();
-        ai_manager.bind_mut().add_new_wm_fact(self.thinker_id, fact, 1.0, 30.0);
+        ai_manager
+            .bind_mut()
+            .add_new_wm_fact(self.thinker_id, fact, 1.0, 30.0);
         ai_manager.bind_mut().invalidate_plan(self.thinker_id);
     }
 
     #[func]
     fn on_health_depleted(&self) {
-        if self.thinker_id == 0 {return;}
+        if self.thinker_id == 0 {
+            return;
+        }
         let fact = WMProperty::Desire(Desire::Death);
         let mut ai_manager = GodotAIManager::singleton();
-        ai_manager.bind_mut().add_new_wm_fact(self.thinker_id, fact, 1.0, 999.0);
+        ai_manager
+            .bind_mut()
+            .add_new_wm_fact(self.thinker_id, fact, 1.0, 999.0);
         ai_manager.bind_mut().invalidate_plan(self.thinker_id);
     }
 }
@@ -137,6 +153,6 @@ impl GodotThinker {
 #[godot_api]
 impl INode3D for GodotThinker {
     fn ready(&mut self) {
-        self.base_mut().call_deferred("register_self".into(), &[]);
+        self.base_mut().call_deferred("register_self", &[]);
     }
 }

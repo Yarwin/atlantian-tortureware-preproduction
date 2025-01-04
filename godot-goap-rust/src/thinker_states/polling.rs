@@ -1,8 +1,8 @@
-use godot::builtin::{Dictionary, Rid, Transform3D};
-use godot::obj::{Gd, NewGd};
-use godot::classes::{PhysicsServer3D, PhysicsShapeQueryParameters3D};
 use crate::ai_nodes::godot_ai_node::{AINodeType, GodotAINode};
 use crate::godot_api::godot_thinker::GodotThinker;
+use godot::builtin::{Dictionary, Rid, Transform3D};
+use godot::classes::{PhysicsServer3D, PhysicsShapeQueryParameters3D};
+use godot::obj::{Gd, NewGd};
 
 /// a struct that lazily polls the world around an agent
 #[derive(Debug)]

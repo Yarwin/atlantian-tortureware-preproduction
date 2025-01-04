@@ -1,15 +1,15 @@
 use crate::ai::thinker::Thinker;
+use crate::ai::world_state::WSProperty::{Target, Truth};
+use crate::ai::world_state::WorldStateProperty;
 use crate::ai_nodes::ai_node::AINode;
-use crate::sensors::sensor_types::{ThinkerProcessArgs, SensorPolling};
+use crate::sensors::sensor_types::{SensorPolling, ThinkerProcessArgs};
+use crate::targeting::targeting_systems::TargetMask;
 use crate::thinker_states::navigation_subsystem::{navigate, NavigationArguments};
+use crate::thinker_states::polling::PollingResult;
 use crate::thinker_states::types::StateArguments;
 use godot::prelude::*;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use crate::ai::world_state::WorldStateProperty;
-use crate::ai::world_state::WSProperty::{Target, Truth};
-use crate::targeting::targeting_systems::TargetMask;
-use crate::thinker_states::polling::PollingResult;
 
 pub fn process_thinker(
     thinker: &mut Thinker,
@@ -54,20 +54,20 @@ pub fn process_thinker(
     // todo – replace with some more sophisticated target selectors (sensors-like)
     if sensor_args.blackboard.invalidate_target {
         sensor_args.blackboard.target = None;
-        let valid_target_selectors = TargetMask::valid_target_selectors(sensor_args.blackboard.valid_targets);
+        let valid_target_selectors =
+            TargetMask::valid_target_selectors(sensor_args.blackboard.valid_targets);
         for (_target_mask, target_type, target_selector) in valid_target_selectors {
             if let Some(target) = target_selector(&mut sensor_args) {
                 sensor_args.blackboard.invalidate_target = false;
                 sensor_args.blackboard.target = Some(target);
                 sensor_args.world_state[WorldStateProperty::HasTarget] = Some(Target(target_type));
-                break
+                break;
             }
         }
         if sensor_args.blackboard.target.is_none() {
             sensor_args.world_state[WorldStateProperty::HasTarget] = Some(Truth(false));
         }
     }
-
 
     // state change
     let new_bb_state = shared.blackboard.new_state.take();

@@ -24,7 +24,7 @@
         effects: {AnimPlayed: Truth(true)},
         animation: Idle,
         action_type: Animate(),
-    ),    
+    ),
     ActionComponent(
         // Prepare Spit Attack
         name: "ArmWeapon",

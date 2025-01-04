@@ -6,9 +6,9 @@ use std::hash::{Hash, Hasher};
 use std::ops::{Index, IndexMut};
 
 use crate::targeting::target::TargetType;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{MapAccess, Visitor};
 use serde::ser::SerializeMap;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -21,7 +21,7 @@ pub enum AIWorldStateEvent {
     EnemyInPlaceForSurpriseAttack,
     Stunned,
     Staggered,
-    Surprised
+    Surprised,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
@@ -55,7 +55,6 @@ pub enum DistanceToTarget {
     OutsideReach,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum WSProperty {
     String(String),
@@ -66,7 +65,6 @@ pub enum WSProperty {
     DistanceToTarget(DistanceToTarget),
     Target(TargetType),
 }
-
 
 /// An abstraction that keeps symbolic representation of the world
 /// for planing purposes
@@ -95,32 +93,29 @@ pub enum WorldStateProperty {
     IsWeaponLoaded,
     IsRecoveringFromAttack,
     ReactedToWorldStateEvent,
-    Max
+    Max,
 }
 
 #[derive(Clone, Default)]
 pub struct WorldState {
-    pub inner: [Option<WSProperty>; WorldStateProperty::Max as usize]
+    pub inner: [Option<WSProperty>; WorldStateProperty::Max as usize],
 }
 
-
 impl Serialize for WorldState {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-        let map_size = self
-            .inner
-            .iter()
-            .fold(
-                0usize,
-                |mut a, b| {
-                    if b.is_some() {
-                        a += 1;
-                    }
-                    a
-                });
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let map_size = self.inner.iter().fold(0usize, |mut a, b| {
+            if b.is_some() {
+                a += 1;
+            }
+            a
+        });
         let mut map = serializer.serialize_map(Some(map_size))?;
         for (idx, p) in self.inner.iter().enumerate() {
             if let Some(property) = p {
-                let k = unsafe {std::mem::transmute::<u8, WorldStateProperty>(idx as u8)};
+                let k = unsafe { std::mem::transmute::<u8, WorldStateProperty>(idx as u8) };
                 map.serialize_entry(&k, property)?;
             }
         }
@@ -138,7 +133,8 @@ impl<'de> Visitor<'de> for WorldStateVisitor {
     }
 
     fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-        where A: MapAccess<'de>
+    where
+        A: MapAccess<'de>,
     {
         let mut new_map: HashMap<WorldStateProperty, WSProperty> = HashMap::new();
         while let Some((key, value)) = map.next_entry()? {
@@ -149,9 +145,11 @@ impl<'de> Visitor<'de> for WorldStateVisitor {
 }
 
 impl<'de> Deserialize<'de> for WorldState {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
         deserializer.deserialize_map(WorldStateVisitor {})
-
     }
 }
 
@@ -179,7 +177,9 @@ impl Debug for WorldState {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut output = String::from("WorldState: ");
         for key in WorldStateProperty::iter() {
-            if key == WorldStateProperty::Max {break}
+            if key == WorldStateProperty::Max {
+                break;
+            }
             if self[key].is_some() {
                 output.push_str(&format!("{:?}: {:?}; ", key, self[key].as_ref().unwrap()))
             }
@@ -205,7 +205,9 @@ impl IndexMut<WorldStateProperty> for WorldState {
 impl Hash for WorldState {
     fn hash<H: Hasher>(&self, state: &mut H) {
         for k in WorldStateProperty::iter() {
-            if k == WorldStateProperty::Max {break}
+            if k == WorldStateProperty::Max {
+                break;
+            }
             self[k].hash(state);
         }
     }
@@ -222,7 +224,9 @@ impl WorldState {
     /// insert other worldstate properties into its state
     pub fn apply_world_state(&mut self, other: &WorldState) {
         for k in WorldStateProperty::iter() {
-            if k == WorldStateProperty::Max {break}
+            if k == WorldStateProperty::Max {
+                break;
+            }
             if let Some(p) = other[k].clone() {
                 self[k] = Some(p);
             }
@@ -233,7 +237,9 @@ impl WorldState {
     pub fn count_state_differences(&self, other: &WorldState) -> u32 {
         let mut count: u32 = 0;
         for key in WorldStateProperty::iter() {
-            if key == WorldStateProperty::Max {break}
+            if key == WorldStateProperty::Max {
+                break;
+            }
             let (property, other_property) = (self[key].as_ref(), other[key].as_ref());
             if let Some(other_val) = property {
                 if let Some(equality) = other_property.map(|v| v == other_val) {
@@ -253,11 +259,16 @@ impl WorldState {
     pub fn count_unsatisfied_world_state_props(&self, other: &WorldState) -> u32 {
         let mut count: u32 = 0;
         for key in WorldStateProperty::iter() {
-            if key == WorldStateProperty::Max {break}
+            if key == WorldStateProperty::Max {
+                break;
+            }
             if let Some(property) = self[key].as_ref() {
-                let are_props_equal = other[key].as_ref().map(|other_property| other_property == property).unwrap_or(false);
+                let are_props_equal = other[key]
+                    .as_ref()
+                    .map(|other_property| other_property == property)
+                    .unwrap_or(false);
                 if are_props_equal {
-                    continue
+                    continue;
                 }
 
                 count += 1;

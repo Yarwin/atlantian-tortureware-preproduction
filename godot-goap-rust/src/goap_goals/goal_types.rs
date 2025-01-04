@@ -3,17 +3,16 @@ use crate::ai::working_memory::WorkingMemory;
 use crate::ai::world_state::WorldState;
 use crate::ai_nodes::ai_node::AINode;
 use crate::goap_goals::basic_goal::BasicGoal;
+use crate::goap_goals::chase_enemy_goal::ChaseEnemyGoal;
 use crate::goap_goals::dodge_goal::DodgeGoal;
 use crate::goap_goals::goal_component::GoalComponent;
 use crate::goap_goals::kill_enemy_goal::KillEnemyGoal;
 use crate::goap_goals::patrol_goal::PatrolGoal;
+use crate::goap_goals::satisfy_desire_by_animation_goal::SatisfyDesireByPlayingAnimationGoal;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use crate::goap_goals::chase_enemy_goal::ChaseEnemyGoal;
-use crate::goap_goals::satisfy_desire_by_animation_goal::SatisfyDesireByPlayingAnimationGoal;
-
 
 #[derive(Debug)]
 pub struct AgentGoalWorldContext<'a> {
@@ -23,7 +22,6 @@ pub struct AgentGoalWorldContext<'a> {
     pub blackboard: &'a mut Blackboard,
     pub ai_nodes: &'a mut Option<Arc<RwLock<HashMap<u32, AINode>>>>,
 }
-
 
 #[allow(clippy::derivable_impls, clippy::enum_variant_names)]
 #[enum_dispatch]
@@ -35,9 +33,8 @@ pub enum GoalType {
     DodgeGoal,
     KillEnemyGoal,
     PatrolGoal,
-    SatisfyDesireByPlayingAnimationGoal
+    SatisfyDesireByPlayingAnimationGoal,
 }
-
 
 #[enum_dispatch(GoalType)]
 pub trait GoalBehaviour {

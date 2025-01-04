@@ -1,9 +1,20 @@
 use godot::prelude::*;
-use strum_macros::{AsRefStr, EnumIter};
 use strum_macros::EnumString;
+use strum_macros::{AsRefStr, EnumIter};
 
 #[derive(
-    Default, Export, Var, GodotConvert, Debug, Clone, Eq, PartialEq, Copy, EnumString, EnumIter, AsRefStr
+    Default,
+    Export,
+    Var,
+    GodotConvert,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Copy,
+    EnumString,
+    EnumIter,
+    AsRefStr,
 )]
 #[repr(usize)]
 #[godot(via = i32)]
@@ -32,5 +43,5 @@ pub enum Stimuli {
     Water,
     #[allow(clippy::upper_case_acronyms)]
     #[strum(disabled)]
-    MAX
+    MAX,
 }

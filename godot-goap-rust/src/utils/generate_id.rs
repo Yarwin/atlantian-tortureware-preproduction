@@ -1,11 +1,11 @@
-use std::cmp::Ordering;
-use godot::obj::Bounds;
 use godot::obj::bounds::DeclUser;
+use godot::obj::Bounds;
 use godot::prelude::*;
+use std::cmp::Ordering;
 
 pub struct ToCreate<T: Inherits<Object> + GodotClass + Bounds<Declarer = DeclUser>> {
     pub(crate) id: u32,
-    pub(crate) instance: Gd<T>
+    pub(crate) instance: Gd<T>,
 }
 
 impl<T: Inherits<Object> + GodotClass + Bounds<Declarer = DeclUser>> PartialEq for ToCreate<T> {
@@ -28,13 +28,12 @@ impl<T: Inherits<Object> + GodotClass + Bounds<Declarer = DeclUser>> Ord for ToC
     }
 }
 
-
 pub fn assign_id(initial_id: u32, current_max: &mut u32) -> u32 {
     if initial_id != 0 {
         if *current_max < initial_id {
             *current_max = initial_id;
         }
-        return initial_id
+        return initial_id;
     }
     *current_max += 1;
     *current_max
