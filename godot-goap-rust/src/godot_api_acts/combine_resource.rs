@@ -1,3 +1,4 @@
+use crate::act_react::act_react_resource::Emitter;
 use crate::act_react::stimulis::Stimuli;
 use godot::prelude::*;
 
@@ -13,9 +14,12 @@ pub struct ActCombine {
     stim_type: Stimuli,
 }
 
-#[godot_api]
-impl ActCombine {
-    #[func]
+#[godot_dyn]
+impl Emitter for ActCombine {
+    fn get_stim_type(&self) -> Stimuli {
+        Stimuli::Combine
+    }
+
     fn get_context(&self) -> Dictionary {
         dict! {
             "reduce_stack": self.reduce_stack,

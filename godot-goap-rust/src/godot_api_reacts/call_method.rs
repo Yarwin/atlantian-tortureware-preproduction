@@ -1,5 +1,5 @@
-use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
-use crate::act_react::game_effect_builder::GameEffectInitializer;
+use crate::act_react::act_react_resource::Reaction;
+use crate::act_react::game_effect::{EffectResult, GameEffect};
 use godot::classes::Resource;
 use godot::prelude::*;
 
@@ -15,23 +15,19 @@ pub struct CallMethodGameEffect {
     base: Base<Resource>,
 }
 
-#[godot_api]
-impl CallMethodGameEffect {
-    #[func]
-    fn get_react_display(&self) -> GString {
+#[godot_dyn]
+impl Reaction for CallMethodGameEffect {
+    fn get_react_display(&self) -> Option<GString> {
         if self.method_display.is_empty() {
-            return GString::from("Use");
+            return Some(GString::from("Use"));
         }
-        self.method_display.clone()
+        Some(self.method_display.clone())
     }
-}
-
-impl GameEffectInitializer for CallMethodGameEffect {
-    fn build(
+    fn build_effect(
         &self,
-        _act_context: &Dictionary,
+        act_context: &Dictionary,
         context: &Dictionary,
-    ) -> Option<GameEffectProcessor> {
+    ) -> Option<DynGd<Object, dyn GameEffect>> {
         let Some(target) = context.get("reactor").map(|v| v.to::<Gd<Object>>()) else {
             panic!("tried to instantiate command without proper context!")
         };
@@ -41,7 +37,7 @@ impl GameEffectInitializer for CallMethodGameEffect {
             method: self.method_name.clone(),
         };
         let obj = Gd::from_object(effect);
-        Some(GameEffectProcessor::new(obj))
+        Some(obj.into_dyn::<dyn GameEffect>().upcast())
     }
 }
 
@@ -54,6 +50,7 @@ pub struct CallMethod {
     method: StringName,
 }
 
+#[godot_dyn]
 impl GameEffect for CallMethod {
     fn execute(&mut self) -> EffectResult {
         self.target

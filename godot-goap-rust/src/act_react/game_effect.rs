@@ -1,7 +1,3 @@
-use godot::obj::bounds::DeclUser;
-use godot::obj::Bounds;
-use godot::prelude::*;
-use std::fmt::Debug;
 
 pub enum EffectResult {
     /// effect has been executed and command object can be freed
@@ -25,57 +21,57 @@ impl PartialEq for EffectResult {
 
 impl Eq for EffectResult {}
 
-pub type GameEffectDispatch =
-    fn(Gd<Object>, fn(&mut dyn GameEffect) -> EffectResult) -> EffectResult;
-
-#[derive(Debug)]
-pub struct GameEffectProcessor {
-    base: Gd<Object>,
-    // TW: programming crimes
-    // stupid but works
-    // we are creating reference to GameObject – "hidden" behind Gd<Object> smart pointer
-    // on "fly" and use closure to run generic GameEffect trait
-    // it is stupid, but massively decreases boilerplate
-    trait_object_dispatch: GameEffectDispatch,
-}
-
-impl GameEffectProcessor {
-    /// removes the command object at the end of the physics frame
-    pub fn free(&mut self) {
-        self.base.call_deferred("free", &[]);
-    }
-
-    pub fn instance_id(&self) -> InstanceId {
-        self.base.instance_id()
-    }
-
-    pub fn new<T>(base: Gd<T>) -> Self
-    where
-        T: Inherits<Object> + GodotClass + Bounds<Declarer = DeclUser> + GameEffect,
-    {
-        Self {
-            base: base.upcast(),
-            trait_object_dispatch: |base, closure| {
-                let mut effect_obj: Gd<T> = base.cast::<T>();
-                let mut guard: GdMut<T> = effect_obj.bind_mut();
-                closure(&mut *guard)
-            },
-        }
-    }
-}
-
-impl GameEffect for GameEffectProcessor {
-    fn execute(&mut self) -> EffectResult {
-        (self.trait_object_dispatch)(self.base.clone(), |effect: &mut dyn GameEffect| {
-            effect.execute()
-        })
-    }
-    fn revert(&mut self) -> EffectResult {
-        (self.trait_object_dispatch)(self.base.clone(), |effect: &mut dyn GameEffect| {
-            effect.revert()
-        })
-    }
-}
+// pub type GameEffectDispatch =
+//     fn(Gd<Object>, fn(&mut dyn GameEffect) -> EffectResult) -> EffectResult;
+//
+// #[derive(Debug)]
+// pub struct GameEffectProcessor {
+//     base: Gd<Object>,
+//     // TW: programming crimes
+//     // stupid but works
+//     // we are creating reference to GameObject – "hidden" behind Gd<Object> smart pointer
+//     // on "fly" and use closure to run generic GameEffect trait
+//     // it is stupid, but massively decreases boilerplate
+//     trait_object_dispatch: GameEffectDispatch,
+// }
+//
+// impl GameEffectProcessor {
+//     /// removes the command object at the end of the physics frame
+//     pub fn free(&mut self) {
+//         self.base.call_deferred("free", &[]);
+//     }
+//
+//     pub fn instance_id(&self) -> InstanceId {
+//         self.base.instance_id()
+//     }
+//
+//     pub fn new<T>(base: Gd<T>) -> Self
+//     where
+//         T: Inherits<Object> + GodotClass + Bounds<Declarer = DeclUser> + GameEffect,
+//     {
+//         Self {
+//             base: base.upcast(),
+//             trait_object_dispatch: |base, closure| {
+//                 let mut effect_obj: Gd<T> = base.cast::<T>();
+//                 let mut guard: GdMut<T> = effect_obj.bind_mut();
+//                 closure(&mut *guard)
+//             },
+//         }
+//     }
+// }
+//
+// impl GameEffect for GameEffectProcessor {
+//     fn execute(&mut self) -> EffectResult {
+//         (self.trait_object_dispatch)(self.base.clone(), |effect: &mut dyn GameEffect| {
+//             effect.execute()
+//         })
+//     }
+//     fn revert(&mut self) -> EffectResult {
+//         (self.trait_object_dispatch)(self.base.clone(), |effect: &mut dyn GameEffect| {
+//             effect.revert()
+//         })
+//     }
+// }
 
 // /// a godot wrapper for commands
 // #[derive(GodotClass, Debug)]
@@ -87,7 +83,7 @@ impl GameEffect for GameEffectProcessor {
 //     base: Base<Object>
 // }
 
-pub trait GameEffect: Debug {
+pub trait GameEffect {
     fn execute(&mut self) -> EffectResult;
     fn revert(&mut self) -> EffectResult {
         EffectResult::Free

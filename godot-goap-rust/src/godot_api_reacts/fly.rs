@@ -1,9 +1,9 @@
-use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
-use crate::act_react::game_effect_builder::GameEffectInitializer;
+use crate::act_react::act_react_resource::Reaction;
+use crate::act_react::game_effect::{EffectResult, GameEffect};
 use godot::classes::RigidBody3D;
 use godot::prelude::*;
 
-#[derive(GodotClass, Debug)]
+#[derive(GodotClass)]
 #[class(init, base=Resource)]
 pub(crate) struct FlyGameEffect {
     #[export]
@@ -12,8 +12,12 @@ pub(crate) struct FlyGameEffect {
     base: Base<Resource>,
 }
 
-impl GameEffectInitializer for FlyGameEffect {
-    fn build(&self, act_context: &Dictionary, context: &Dictionary) -> Option<GameEffectProcessor> {
+impl Reaction for FlyGameEffect {
+    fn build_effect(
+        &self,
+        act_context: &Dictionary,
+        context: &Dictionary,
+    ) -> Option<DynGd<Object, dyn GameEffect>> {
         let Some(flier) = context.get("reactor").map(|v| v.to::<Gd<RigidBody3D>>()) else {
             panic!("no reactor!")
         };
@@ -36,11 +40,11 @@ impl GameEffectInitializer for FlyGameEffect {
             direction,
         };
         let obj = Gd::from_object(effect);
-        Some(GameEffectProcessor::new(obj))
+        Some(obj.into_dyn::<dyn GameEffect>().upcast())
     }
 }
 
-#[derive(GodotClass, Debug)]
+#[derive(GodotClass)]
 #[class(init, base=Object)]
 pub struct Fly {
     target: Option<Gd<RigidBody3D>>,
@@ -49,6 +53,7 @@ pub struct Fly {
     direction: Vector3,
 }
 
+#[godot_dyn]
 impl GameEffect for Fly {
     fn execute(&mut self) -> EffectResult {
         self.target

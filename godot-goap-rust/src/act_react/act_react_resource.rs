@@ -1,18 +1,18 @@
+use crate::act_react::game_effect::GameEffect;
 use crate::act_react::stimulis::Stimuli;
 use godot::meta::PropertyInfo;
 use godot::prelude::*;
 use std::ops::Index;
 use strum::IntoEnumIterator;
 
-#[derive(GodotClass, Debug)]
+#[derive(GodotClass)]
 #[class(init, tool, base=Resource)]
 pub struct ActReactResource {
     /// metaproperties used by given entity.
     /// All acts and reacts defined in metaproperties are being applied before ones defined by given entity.
     pub metaproperties: Array<Gd<ActReactResource>>,
-    pub emits: Array<Gd<Resource>>,
-    pub reacts: [Array<Gd<Resource>>; Stimuli::MAX as usize],
-
+    pub emits: Array<DynGd<Resource, dyn Emitter>>,
+    pub reacts: [Array<DynGd<Resource, dyn Reaction>>; Stimuli::MAX as usize],
     base: Base<Resource>,
 }
 
@@ -42,7 +42,7 @@ impl IResource for ActReactResource {
             self.metaproperties = value.to::<Array<Gd<ActReactResource>>>();
             return true;
         } else if prop_str == "emits" {
-            self.emits = value.to::<Array<Gd<Resource>>>();
+            self.emits = value.to::<Array<DynGd<Resource, dyn Emitter>>>();
             return true;
         }
         for stim in Stimuli::iter() {
@@ -50,7 +50,7 @@ impl IResource for ActReactResource {
                 break;
             }
             if prop_str == stim.as_ref() {
-                self.reacts[stim as usize] = value.to::<Array<Gd<Resource>>>();
+                self.reacts[stim as usize] = value.to::<Array<DynGd<Resource, dyn Reaction>>>();
                 return true;
             }
         }
@@ -78,40 +78,36 @@ impl IResource for ActReactResource {
 
 impl ActReactResource {
     pub fn get_playerfrob_display(&self) -> GString {
-        if let Some(mut act_with_display) = self[Stimuli::PlayerFrob]
+        if let Some(display) = self[Stimuli::PlayerFrob]
             .iter_shared()
-            .find(|a| a.has_method("get_react_display"))
+            .find_map(|react| react.dyn_bind().get_react_display())
         {
-            return act_with_display
-                .call("get_react_display", &[])
-                .to::<GString>();
-        } else {
-            for meta in self.metaproperties.iter_shared() {
-                if let Some(mut act_with_display) = meta.bind()[Stimuli::PlayerFrob]
-                    .iter_shared()
-                    .find(|a| a.has_method("get_react_display"))
-                {
-                    return act_with_display
-                        .call("get_react_display", &[])
-                        .to::<GString>();
-                }
+            return display;
+        }
+        for meta in self.metaproperties.iter_shared() {
+            if let Some(display) = meta.bind()[Stimuli::PlayerFrob]
+                .iter_shared()
+                .find_map(|react| react.dyn_bind().get_react_display())
+            {
+                return display;
             }
         }
         GString::default()
     }
+
     pub fn is_reacting(&self, other: Gd<ActReactResource>) -> bool {
-        for mut act in other.bind().emits.iter_shared() {
-            let stimuli: Stimuli = act.get("stim_type").to::<Stimuli>();
-            if self[stimuli].is_empty() {
+        for act in other.bind().emits.iter_shared() {
+            let stim_type = act.dyn_bind().get_stim_type();
+            let reacts = &self[stim_type];
+            if reacts.is_empty() {
                 continue;
             }
-            let act_context = act.call("get_context", &[]);
-            if let Some(mut react) = self[stimuli].iter_shared().next() {
-                return if react.has_method("can_react") {
-                    react.call("can_react", &[act_context.clone()]).to::<bool>()
-                } else {
-                    true
-                };
+
+            let context = act.dyn_bind().get_context();
+            for react in reacts.iter_shared() {
+                if react.dyn_bind().can_react(&context) {
+                    return true;
+                }
             }
         }
         false
@@ -119,9 +115,30 @@ impl ActReactResource {
 }
 
 impl Index<Stimuli> for ActReactResource {
-    type Output = Array<Gd<Resource>>;
+    type Output = Array<DynGd<Resource, dyn Reaction>>;
 
     fn index(&self, index: Stimuli) -> &Self::Output {
         &self.reacts[index as usize]
     }
+}
+
+pub trait Emitter {
+    fn get_stim_type(&self) -> Stimuli;
+    fn get_context(&self) -> Dictionary;
+}
+
+pub trait Reaction {
+    fn can_react(&self, _context: &Dictionary) -> bool {
+        true
+    }
+
+    fn get_react_display(&self) -> Option<GString> {
+        None
+    }
+
+    fn build_effect(
+        &self,
+        act_context: &Dictionary,
+        context: &Dictionary,
+    ) -> Option<DynGd<Object, dyn GameEffect>>;
 }

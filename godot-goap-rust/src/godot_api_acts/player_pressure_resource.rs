@@ -1,8 +1,9 @@
+use crate::act_react::act_react_resource::Emitter;
 use crate::act_react::stimulis::Stimuli;
 use godot::builtin::{dict, Dictionary};
-use godot::prelude::{godot_api, GodotClass};
+use godot::prelude::*;
 
-#[derive(GodotClass, Debug)]
+#[derive(GodotClass)]
 #[class(init, base=Resource)]
 pub struct ActPlayerPressure {
     #[var]
@@ -10,9 +11,12 @@ pub struct ActPlayerPressure {
     stim_type: Stimuli,
 }
 
-#[godot_api]
-impl ActPlayerPressure {
-    #[func]
+#[godot_dyn]
+impl Emitter for ActPlayerPressure {
+    fn get_stim_type(&self) -> Stimuli {
+        Stimuli::PlayerPressure
+    }
+
     fn get_context(&self) -> Dictionary {
         dict! {}
     }

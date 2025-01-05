@@ -1,5 +1,5 @@
-use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
-use crate::act_react::game_effect_builder::GameEffectInitializer;
+use crate::act_react::act_react_resource::Reaction;
+use crate::act_react::game_effect::{EffectResult, GameEffect};
 use godot::prelude::*;
 
 #[derive(GodotClass, Debug)]
@@ -10,25 +10,17 @@ pub struct PrintMessageGameEffect {
     base: Base<Resource>,
 }
 
-#[godot_api]
-impl IResource for PrintMessageGameEffect {
-    // fn init(base: Base<Self::Base>) -> Self {
-    //     register_effect_builder::<Self>(Self::class_name().to_gstring());
-    //     PrintMessageGameEffect{ message: Default::default(), base }
-    // }
-}
-
-impl GameEffectInitializer for PrintMessageGameEffect {
-    fn build(
+impl Reaction for PrintMessageGameEffect {
+    fn build_effect(
         &self,
         _act_context: &Dictionary,
         _context: &Dictionary,
-    ) -> Option<GameEffectProcessor> {
+    ) -> Option<DynGd<Object, dyn GameEffect>> {
         let print_message = PrintMessage {
             message: self.message.clone(),
         };
         let obj = Gd::from_object(print_message);
-        Some(GameEffectProcessor::new(obj))
+        Some(obj.into_dyn::<dyn GameEffect>().upcast())
     }
 }
 
@@ -38,6 +30,7 @@ pub struct PrintMessage {
     pub message: GString,
 }
 
+#[godot_dyn]
 impl GameEffect for PrintMessage {
     fn execute(&mut self) -> EffectResult {
         godot_print!("{}", self.message);

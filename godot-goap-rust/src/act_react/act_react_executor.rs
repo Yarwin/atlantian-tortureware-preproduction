@@ -1,7 +1,5 @@
-use crate::act_react::act_react_resource::ActReactResource;
-use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
-use crate::act_react::game_effect_builder::effects_registry;
-use crate::act_react::stimulis::Stimuli;
+use crate::act_react::act_react_resource::{ActReactResource, Emitter};
+use crate::act_react::game_effect::{EffectResult, GameEffect};
 use crate::godot_api::gamesys::{GameSys, GameSystem};
 use crate::godot_api::{CONNECT_DEFERRED, CONNECT_ONE_SHOT};
 use godot::prelude::*;
@@ -13,8 +11,8 @@ use std::collections::{HashMap, VecDeque};
 #[class(init, base=Object)]
 pub struct ActReactExecutor {
     #[init(val = Some(VecDeque::new()))]
-    to_execute: Option<VecDeque<GameEffectProcessor>>,
-    to_revert: HashMap<InstanceId, GameEffectProcessor>,
+    to_execute: Option<VecDeque<DynGd<Object, dyn GameEffect>>>,
+    to_revert: HashMap<InstanceId, DynGd<Object, dyn GameEffect>>,
     pub base: Base<Object>,
 }
 
@@ -39,7 +37,7 @@ impl ActReactExecutor {
     #[func]
     pub fn react_single(
         &mut self,
-        act: Gd<Resource>,
+        act: DynGd<Resource, dyn Emitter>,
         mut reactor: Gd<ActReactResource>,
         context: Dictionary,
     ) {
@@ -54,7 +52,8 @@ impl ActReactExecutor {
             panic!("no event queue!")
         };
         for mut effect in to_execute.drain(..) {
-            match effect.execute() {
+            let execution_effect = effect.dyn_bind_mut().execute();
+            match execution_effect {
                 EffectResult::Free => {
                     effect.free();
                 }
@@ -88,35 +87,30 @@ impl ActReactExecutor {
         let Some(mut effect) = self.to_revert.remove(&effect_id) else {
             return;
         };
-        effect.revert();
+        effect.dyn_bind_mut().revert();
         effect.free();
     }
 }
 
 impl ActReactExecutor {
-    pub fn add_effect(&mut self, effect: GameEffectProcessor) {
-        let to_execute = self.to_execute.as_mut().unwrap();
+    pub fn add_effect(&mut self, effect: DynGd<Object, dyn GameEffect>) {
+        let to_execute = self
+            .to_execute
+            .as_mut()
+            .expect("no deque of effects to execute!");
         to_execute.push_back(effect);
     }
 
     fn create_reacts_for_act(
         &mut self,
-        mut act: Gd<Resource>,
+        act: DynGd<Resource, dyn Emitter>,
         reactor: &mut GdMut<ActReactResource>,
         context: &Dictionary,
     ) {
-        let stimuli: Stimuli = act.get("stim_type").to::<Stimuli>();
-        let act_context = act.call("get_context", &[]).to::<Dictionary>();
+        let stimuli = act.dyn_bind().get_stim_type();
+        let act_context = act.dyn_bind().get_context();
         for react in reactor[stimuli].iter_shared() {
-            let command_init_fn = effects_registry()[&react.get_class()];
-
-            let effect = (command_init_fn)(
-                react.clone(),
-                &act_context,
-                context,
-                |effect, a_context, world_context| effect.build(a_context, world_context),
-            );
-            if let Some(e) = effect {
+            if let Some(e) = react.dyn_bind().build_effect(&act_context, context) {
                 self.add_effect(e);
             }
         }

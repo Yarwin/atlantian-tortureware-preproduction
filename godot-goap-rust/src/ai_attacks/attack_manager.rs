@@ -6,7 +6,7 @@ use crate::animations::animation_data::AnimationProps;
 use crate::sensors::sensor_types::ThinkerProcessArgs;
 use godot::global::is_zero_approx;
 use rand::prelude::*;
-use rand::{rng};
+use rand::rng;
 use serde::{Deserialize, Serialize};
 
 /// Immutable struct that keeps all the data related to given attack.

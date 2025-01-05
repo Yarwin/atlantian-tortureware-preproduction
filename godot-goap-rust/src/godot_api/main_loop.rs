@@ -3,7 +3,6 @@ use crate::equipment::register_equipment_dispatch;
 use crate::godot_api::ai_manager::GodotAIManager;
 use crate::godot_api::gamesys::GameSystem;
 use crate::godot_api::inventory_manager::InventoryManager;
-use crate::godot_api_reacts::register_reacts_dispatch;
 use godot::prelude::*;
 
 #[derive(GodotClass)]
@@ -20,7 +19,6 @@ impl ISceneTree for AtlantianTorturewareGameLoop {
         self.inventory_manager = Some(InventoryManager::initialize());
         self.ai_manager = Some(GodotAIManager::initialize());
         self.act_react_executor = Some(ActReactExecutor::initialize());
-        register_reacts_dispatch();
         register_equipment_dispatch();
     }
 

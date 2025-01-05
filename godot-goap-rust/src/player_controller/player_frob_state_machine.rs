@@ -1,6 +1,5 @@
 #![allow(clippy::boxed_local)]
 use crate::act_react::act_react_executor::ActReactExecutor;
-use crate::act_react::game_effect_builder::effects_registry;
 use crate::act_react::react_area_3d::ActReactArea3D;
 use crate::equipment::equip_component::Equipment;
 use crate::godot_api::gamesys::{GameSys, GameSystem};
@@ -397,16 +396,17 @@ impl PlayerState for GrabState {
                     "direction": player_frob_controller.camera.get_global_basis().col_c(),
                     "reactor": reactor
                 };
-                let command_init_fn = effects_registry()[&throw_effect.get_class()];
-                let effect = (command_init_fn)(
-                    throw_effect.clone().upcast::<Resource>(),
-                    &Dictionary::new(),
-                    &context,
-                    |effect, a_context, world_context| effect.build(a_context, world_context),
-                );
-                ActReactExecutor::singleton()
-                    .bind_mut()
-                    .add_effect(effect.unwrap());
+                // let effect = throw_effect.
+                // let command_init_fn = effects_registry()[&throw_effect.get_class()];
+                // let effect = (command_init_fn)(
+                //     throw_effect.clone().upcast::<Resource>(),
+                //     &Dictionary::new(),
+                //     &context,
+                //     |effect, a_context, world_context| effect.build(a_context, world_context),
+                // );
+                // ActReactExecutor::singleton()
+                //     .bind_mut()
+                //     .add_effect(effect.unwrap());
             }
             PlayerEvent::FrobEvent => {
                 player_frob_controller.grab_node.bind_mut().detach();

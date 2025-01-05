@@ -1,5 +1,5 @@
-use crate::act_react::game_effect::{EffectResult, GameEffect, GameEffectProcessor};
-use crate::act_react::game_effect_builder::GameEffectInitializer;
+use crate::act_react::act_react_resource::Reaction;
+use crate::act_react::game_effect::{EffectResult, GameEffect};
 use crate::godot_api::gamesys::{GameSys, GameSystem};
 use crate::godot_api::inventory_manager::InventoryManager;
 use crate::godot_api::item_object::Item;
@@ -7,26 +7,23 @@ use crate::inventory::inventory_item::StackResult;
 use godot::classes::Resource;
 use godot::prelude::*;
 
-#[derive(GodotClass, Debug)]
+#[derive(GodotClass)]
 #[class(init, base=Resource)]
 pub struct PickupItemGameEffect {
     base: Base<Resource>,
 }
 
-#[godot_api]
-impl PickupItemGameEffect {
-    #[func]
-    fn get_react_display(&self) -> GString {
-        GString::from("Pickup item")
+#[godot_dyn]
+impl Reaction for PickupItemGameEffect {
+    fn get_react_display(&self) -> Option<GString> {
+        Some(GString::from("Pickup item"))
     }
-}
 
-impl GameEffectInitializer for PickupItemGameEffect {
-    fn build(
+    fn build_effect(
         &self,
-        _act_context: &Dictionary,
+        act_context: &Dictionary,
         context: &Dictionary,
-    ) -> Option<GameEffectProcessor> {
+    ) -> Option<DynGd<Object, dyn GameEffect>> {
         let reactor = context.get("reactor").map(|v| v.to::<Gd<Node>>())?;
 
         let item = reactor.get("item").try_to::<Gd<Item>>().ok()?;
@@ -37,11 +34,11 @@ impl GameEffectInitializer for PickupItemGameEffect {
             inventories_ids: inventories,
         };
         let obj = Gd::from_object(pickup_item);
-        Some(GameEffectProcessor::new(obj))
+        Some(obj.into_dyn::<dyn GameEffect>().upcast())
     }
 }
 
-#[derive(GodotClass, Debug)]
+#[derive(GodotClass)]
 #[class(init, base=Object)]
 pub struct PickupItem {
     pub item: Option<Gd<Item>>,
@@ -124,6 +121,7 @@ impl PickupItem {
     }
 }
 
+#[godot_dyn]
 impl GameEffect for PickupItem {
     fn execute(&mut self) -> EffectResult {
         let mut item = self.item.take().unwrap();

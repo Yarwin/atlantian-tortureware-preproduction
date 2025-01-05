@@ -1,10 +1,11 @@
+use crate::act_react::act_react_resource::Emitter;
 use crate::act_react::stimulis::Stimuli;
 use godot::builtin::math::FloatExt;
 use godot::prelude::*;
 use rand::prelude::*;
 use rand::rng;
 
-#[derive(GodotClass, Debug)]
+#[derive(GodotClass)]
 #[class(init, base=Resource)]
 pub struct ActDamageStandard {
     #[var]
@@ -49,9 +50,12 @@ impl ActDamageStandard {
     }
 }
 
-#[godot_api]
-impl ActDamageStandard {
-    #[func]
+#[godot_dyn]
+impl Emitter for ActDamageStandard {
+    fn get_stim_type(&self) -> Stimuli {
+        Stimuli::DamageStandard
+    }
+
     fn get_context(&self) -> Dictionary {
         let mut rng = rng();
         let strength: f64 =
